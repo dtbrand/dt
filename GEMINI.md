@@ -127,10 +127,10 @@ input:focus, select:focus, textarea:focus, .dt-input-field:focus, .co-input:focu
 ### 🌐 Live Server & FTP Details
 
 - **FTP Host / IP**: `147.93.99.134` (Port `21`)
-- **FTP Username**: `u602484543.jaihanumantex.in`
+- **FTP Username**: `u602484543.yourdomain.com`
 - **FTP Password**: `Gautam@9006`
 - **Remote Folder**: `/public_html`
-- **Live URL**: `https://jaihanumantex.in/`
+- **Live URL**: `https://yourdomain.com/`
 
 ### 🗄️ Hostinger Live MySQL Database Credentials
 
@@ -138,7 +138,7 @@ input:focus, select:focus, textarea:focus, .dt-input-field:focus, .co-input:focu
 - **Database User**: `u602484543_demodt121`
 - **Database Password**: `Gautam@9006`
 - **Database Host**: `localhost` (Port `3306`)
-- **Website Base URL**: `https://jaihanumantex.in/`
+- **Website Base URL**: `https://yourdomain.com/`
 
 ### 📱 Official DT Brand WhatsApp Master Contact
 - **Official WhatsApp Number**: `917046363528` (Formatting: `+91 70463 63528`)

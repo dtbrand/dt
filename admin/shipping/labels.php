@@ -335,7 +335,7 @@ $rupeeSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke=
                         <strong>RETURN IF UNDELIVERED TO:</strong><br>
                         DT Brand's &amp; Jai Hanuman Tex Central Logistics Godown,<br>
                         Plot #42, Ring Road Textile Market Hub, Surat, Gujarat - 395002.<br>
-                        Contact: +91 70463 63528 | Web: https://jaihanumantex.in
+                        Contact: +91 70463 63528 | Web: https://yourdomain.com
                     </div>
                 </div>
             </div>

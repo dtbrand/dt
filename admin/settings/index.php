@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
 // Load settings from DB
 $dbSettings = [
     'site_name' => "DT Brand's (Jai Hanuman Tex)",
-    'support_email' => 'support@jaihanumantex.in',
+    'support_email' => 'support@yourdomain.com',
     'whatsapp_number' => '+91 70463 63528',
     'company_gstin' => '',
     'warehouse_address' => 'Ring Road Textile Market, Surat, Gujarat - 395002'

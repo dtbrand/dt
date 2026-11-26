@@ -169,7 +169,7 @@ $providers = NotificationManager::getProviders();
                             <span class="dt-status-badge delivered"><span class="dt-radar-dot-green"></span> Live</span>
                         </div>
                         <p style="font-size:0.8rem; color:#475569; margin:8px 0 14px 0; line-height:1.4;">
-                            Sends PDF invoices, order confirmations, and reseller dispatch statements via concierge@jaihanumantex.in.
+                            Sends PDF invoices, order confirmations, and reseller dispatch statements via concierge@yourdomain.com.
                         </p>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #EAE5D9; padding-top:12px; margin-top:10px;">

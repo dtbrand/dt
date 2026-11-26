@@ -2,8 +2,8 @@
 """
 deploy_triple_sync.py — Unified Dual-FTP Deployment & Synchronizer
 Deploys all updated code across BOTH live production storefronts:
-1. HarmitEthnic (https://harmitethnic.com/) -> u602484543.harmitethnic.com
-2. JaiHanumanTex (https://jaihanumantex.in/) -> u602484543.jaihanumantex.in
+1. HarmitEthnic (https://yourdomain.com/) -> u602484543.yourdomain.com
+2. JaiHanumanTex (https://yourdomain.com/) -> u602484543.yourdomain.com
 DT Brand's & Jai Hanuman Tex
 """
 import ftplib
@@ -21,20 +21,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SERVERS = [
     {
-        'name': 'HarmitEthnic (harmitethnic.com)',
-        'url': 'https://harmitethnic.com',
+        'name': 'HarmitEthnic (yourdomain.com)',
+        'url': 'https://yourdomain.com',
         'host': FTP_HOST,
         'port': FTP_PORT,
-        'user': 'u602484543.harmitethnic.com',
+        'user': 'u602484543.yourdomain.com',
         'pass': FTP_PASS,
         'root': '/public_html'
     },
     {
-        'name': 'JaiHanumanTex (jaihanumantex.in)',
-        'url': 'https://jaihanumantex.in',
+        'name': 'JaiHanumanTex (yourdomain.com)',
+        'url': 'https://yourdomain.com',
         'host': FTP_HOST,
         'port': FTP_PORT,
-        'user': 'u602484543.jaihanumantex.in',
+        'user': 'u602484543.yourdomain.com',
         'pass': FTP_PASS,
         'root': '/public_html'
     }

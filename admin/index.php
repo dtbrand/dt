@@ -2091,7 +2091,7 @@ $dashPayload = [
 Dear {Name},
 Explore our latest 2026 Pure Silk Sarees & Designer Lehengas crafted for premium festive collections.
 
-*View & Order Online:* https://jaihanumantex.in/shop
+*View & Order Online:* https://yourdomain.com/shop
 
 _Special 15% VIP Discount Applied!_</textarea>
                             </div>
@@ -2103,7 +2103,7 @@ _Special 15% VIP Discount Applied!_</textarea>
                                     <strong>DT BRAND'S LUXURY ETHNIC FRESH CATALOGUE</strong><br><br>
                                     Dear Rajesh Kumar,<br>
                                     Explore our latest 2026 Pure Silk Sarees &amp; Designer Lehengas crafted for premium festive collections.<br><br>
-                                    <strong>View &amp; Order Online:</strong> https://jaihanumantex.in/shop<br><br>
+                                    <strong>View &amp; Order Online:</strong> https://yourdomain.com/shop<br><br>
                                     <em>Special 15% VIP Discount Applied!</em>
                                 </div>
                             </div>
@@ -2355,7 +2355,7 @@ _Special 15% VIP Discount Applied!_</textarea>
                                 </div>
                                 <div class="adm-form-group">
                                     <label class="adm-form-label">Support Email</label>
-                                    <input type="email" class="adm-form-input" value="support@jaihanumantex.in">
+                                    <input type="email" class="adm-form-input" value="support@yourdomain.com">
                                 </div>
                             </div>
                             <button type="submit" class="adm-btn-primary" style="margin-top:10px; align-self:flex-start;">
@@ -3059,14 +3059,14 @@ _Special 15% VIP Discount Applied!_</textarea>
                             <tbody>
                                 <tr>
                                     <td><strong>Gautam Sethi</strong></td>
-                                    <td>gautam@jaihanumantex.in</td>
+                                    <td>gautam@yourdomain.com</td>
                                     <td><span class="adm-badge gold">Super Admin</span></td>
                                     <td>Active Now</td>
                                     <td><span class="adm-badge success">Active</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Surat Catalog Team</strong></td>
-                                    <td>catalog@jaihanumantex.in</td>
+                                    <td>catalog@yourdomain.com</td>
                                     <td><span class="adm-badge info">Catalog Manager</span></td>
                                     <td>Today, 11:15 AM</td>
                                     <td><span class="adm-badge success">Active</span></td>

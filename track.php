@@ -76,7 +76,7 @@ $curStage = $statusPipeline[$curStatus] ?? 2;
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Track Order &amp; Shipment — DT Brand's &amp; Jai Hanuman Tex</title>
     <meta name="description" content="Live real-time order and shipment tracking for DT Brand's & Jai Hanuman Tex. Enter your order ID and mobile number to track dispatch and delivery." />
-    <link rel="canonical" href="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in') ?>/track" />
+    <link rel="canonical" href="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'yourdomain.com') ?>/track" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

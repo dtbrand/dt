@@ -6,7 +6,7 @@ import time
 import io
 
 FTP_HOST = '147.93.99.134'
-FTP_USER = 'u602484543.harmitethnic.com'
+FTP_USER = 'u602484543.yourdomain.com'
 FTP_PASS = 'Gautam@9006'
 
 PATCH_PHP = """<?php
@@ -100,7 +100,7 @@ ftp.quit()
 
 print("2. Executing master price schema patch on live server...")
 ctx = ssl._create_unverified_context()
-req = urllib.request.Request('https://harmitethnic.com/db_patch_master_prices.php', headers={'User-Agent': 'Mozilla/5.0'})
+req = urllib.request.Request('https://yourdomain.com/db_patch_master_prices.php', headers={'User-Agent': 'Mozilla/5.0'})
 try:
     with urllib.request.urlopen(req, context=ctx, timeout=30) as resp:
         res = resp.read().decode('utf-8')

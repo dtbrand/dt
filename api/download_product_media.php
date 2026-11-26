@@ -134,7 +134,7 @@ try {
     $txt .= "• 7-Day Fast Doorstep Exchange\r\n";
     $txt .= "• Complimentary Royal Box Packaging\r\n";
     $txt .= "--------------------------------------------------------\r\n";
-    $txt .= "View Online: https://jaihanumantex.in/product.php?id=" . (int)$product['id'] . "\r\n";
+    $txt .= "View Online: https://yourdomain.com/product.php?id=" . (int)$product['id'] . "\r\n";
     $txt .= "Order on WhatsApp: " . $waDisplay . "\r\n";
 
     if ($mode === 'json') {

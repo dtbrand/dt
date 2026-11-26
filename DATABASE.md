@@ -134,7 +134,7 @@ price_history         (every price change, who + when + old/new)
 # Apply all pending migrations (idempotent, lexicographic order)
 php install.php                     # fresh install + seed
 # or on a live box:
-curl "https://jaihanumantex.in/api/db_health.php?action=migrate"   # admin session required
+curl "https://yourdomain.com/api/db_health.php?action=migrate"   # admin session required
 
 # Backup (local)
 php scripts/backup-database.php

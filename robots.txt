@@ -47,5 +47,5 @@ Disallow: /bootstrap/
 Crawl-delay: 1
 
 # Official Dynamic Sitemaps
-Sitemap: https://jaihanumantex.in/sitemap.xml
-Sitemap: https://harmitethnic.com/sitemap.xml
+Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://yourdomain.com/sitemap.xml

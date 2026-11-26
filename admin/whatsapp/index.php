@@ -211,7 +211,7 @@ $current_subnav = "chat";
 
                     <div class="adm-form-group" style="margin-bottom:12px;">
                         <label class="adm-form-label" style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:4px;">Message Content (Live Synchronized)</label>
-                        <textarea id="waBroadcastMsg" class="wa-textarea" rows="3" style="width:100%; border:1px solid #CBD5E1; border-radius:6px; padding:8px 10px; font-size:12.5px; box-sizing:border-box; resize:none;" oninput="DTWhatsApp.syncMockup('waBroadcastMsg', 'mockupChatBubble')">Namaste! DT Brand's &amp; Jai Hanuman Tex Festive Pure Silk Weaves Catalogue is now live. Explore factory-direct wholesale rates: https://jaihanumantex.in/shop</textarea>
+                        <textarea id="waBroadcastMsg" class="wa-textarea" rows="3" style="width:100%; border:1px solid #CBD5E1; border-radius:6px; padding:8px 10px; font-size:12.5px; box-sizing:border-box; resize:none;" oninput="DTWhatsApp.syncMockup('waBroadcastMsg', 'mockupChatBubble')">Namaste! DT Brand's &amp; Jai Hanuman Tex Festive Pure Silk Weaves Catalogue is now live. Explore factory-direct wholesale rates: https://yourdomain.com/shop</textarea>
                     </div>
 
                     <!-- Live Mini Phone Preview -->
@@ -222,7 +222,7 @@ $current_subnav = "chat";
                             </div>
                             <strong style="font-size:11.5px; color:#075E54;">Customer Phone Preview</strong>
                         </div>
-                        <div id="mockupChatBubble" style="background:#DCF8C6; border:1px solid #C4E8A8; border-radius:8px; padding:8px 10px; font-size:12px; color:#111827; line-height:1.45; white-space:pre-wrap;">Namaste! DT Brand's &amp; Jai Hanuman Tex Festive Pure Silk Weaves Catalogue is now live. Explore factory-direct wholesale rates: https://jaihanumantex.in/shop</div>
+                        <div id="mockupChatBubble" style="background:#DCF8C6; border:1px solid #C4E8A8; border-radius:8px; padding:8px 10px; font-size:12px; color:#111827; line-height:1.45; white-space:pre-wrap;">Namaste! DT Brand's &amp; Jai Hanuman Tex Festive Pure Silk Weaves Catalogue is now live. Explore factory-direct wholesale rates: https://yourdomain.com/shop</div>
                     </div>
 
                     <!-- Progress Bar for Queueing -->

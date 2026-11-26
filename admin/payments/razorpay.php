@@ -210,7 +210,7 @@ $rupeeSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke=
                     </h3>
                     <p style="font-size:0.8rem; color:#64748B; margin:0 0 8px 0;">Configure this URL in your Razorpay Dashboard ➔ Settings ➔ Webhooks:</p>
                     <div class="dt-copy-box">
-                        <span id="webhookUrl">https://jaihanumantex.in/api/webhooks/razorpay.php</span>
+                        <span id="webhookUrl">https://yourdomain.com/api/webhooks/razorpay.php</span>
                         <button type="button" class="dt-btn dt-btn-pale dt-btn-sm" onclick="copyWebhookUrl()" style="padding:2px 8px; font-size:0.75rem;">Copy</button>
                     </div>
                     <div style="margin-top:12px; font-size:0.78rem; color:#64748B;">

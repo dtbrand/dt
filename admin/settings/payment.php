@@ -368,8 +368,8 @@ $waCfg = $waGate['config'] ?? [];
                             <div class="adm-form-group" style="grid-column: 1 / -1;">
                                 <label class="adm-form-label">Webhook URL for Razorpay Dashboard</label>
                                 <div class="dt-webhook-box">
-                                    <span id="rzpWebhookUrl">https://jaihanumantex.in/api/webhooks/razorpay.php</span>
-                                    <button type="button" class="dt-btn dt-btn-pale dt-copy-btn" onclick="copyText('https://jaihanumantex.in/api/webhooks/razorpay.php', this)">Copy URL</button>
+                                    <span id="rzpWebhookUrl">https://yourdomain.com/api/webhooks/razorpay.php</span>
+                                    <button type="button" class="dt-btn dt-btn-pale dt-copy-btn" onclick="copyText('https://yourdomain.com/api/webhooks/razorpay.php', this)">Copy URL</button>
                                 </div>
                                 <span style="font-size:11px; color:#64748B; margin-top:4px; display:block;">Paste this into your Razorpay Dashboard -> Settings -> Webhooks with events: <code>payment.captured</code>, <code>order.paid</code>, <code>payment.failed</code>.</span>
                             </div>
@@ -431,8 +431,8 @@ $waCfg = $waGate['config'] ?? [];
                             <div class="adm-form-group" style="grid-column: 1 / -1;">
                                 <label class="adm-form-label">Webhook URL for Cashfree Dashboard</label>
                                 <div class="dt-webhook-box">
-                                    <span id="cfWebhookUrl">https://jaihanumantex.in/api/webhooks/cashfree.php</span>
-                                    <button type="button" class="dt-btn dt-btn-pale dt-copy-btn" onclick="copyText('https://jaihanumantex.in/api/webhooks/cashfree.php', this)">Copy URL</button>
+                                    <span id="cfWebhookUrl">https://yourdomain.com/api/webhooks/cashfree.php</span>
+                                    <button type="button" class="dt-btn dt-btn-pale dt-copy-btn" onclick="copyText('https://yourdomain.com/api/webhooks/cashfree.php', this)">Copy URL</button>
                                 </div>
                                 <span style="font-size:11px; color:#64748B; margin-top:4px; display:block;">Paste this into Cashfree Merchant Dashboard -> Developers -> Webhooks with event: <code>PAYMENT_SUCCESS_WEBHOOK</code>.</span>
                             </div>

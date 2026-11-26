@@ -36,7 +36,7 @@ class DeveloperManager
             'event_type' => 'payment.captured',
             'direction' => 'inbound',
             'source_gateway' => 'razorpay',
-            'target_url' => 'https://jaihanumantex.in/api/webhooks/razorpay.php',
+            'target_url' => 'https://yourdomain.com/api/webhooks/razorpay.php',
             'payload_json' => '{"entity":"event","event":"payment.captured","payload":{"payment":{"id":"pay_live_019283","amount":450000,"currency":"INR","status":"captured"}}}',
             'status' => 'delivered',
             'http_status' => 200,
@@ -51,7 +51,7 @@ class DeveloperManager
             'event_type' => 'order.paid',
             'direction' => 'inbound',
             'source_gateway' => 'cashfree',
-            'target_url' => 'https://jaihanumantex.in/api/webhooks/cashfree.php',
+            'target_url' => 'https://yourdomain.com/api/webhooks/cashfree.php',
             'payload_json' => '{"type":"PAYMENT_SUCCESS_WEBHOOK","data":{"order":{"order_id":"JH-2026-9021","order_amount":6200.00}}}',
             'status' => 'delivered',
             'http_status' => 200,
@@ -66,7 +66,7 @@ class DeveloperManager
             'event_type' => 'message.status',
             'direction' => 'inbound',
             'source_gateway' => 'whatsapp',
-            'target_url' => 'https://jaihanumantex.in/api/whatsapp/webhook.php',
+            'target_url' => 'https://yourdomain.com/api/whatsapp/webhook.php',
             'payload_json' => '{"entry":[{"changes":[{"field":"messages","value":{"statuses":[{"id":"wamid.HBgMOTE3MDQ2MzYzNTI4","status":"delivered"}]}}]}]}',
             'status' => 'delivered',
             'http_status' => 200,
@@ -633,13 +633,13 @@ class DeveloperManager
      */
     public static function getBaseUrl(): string
     {
-        $host = $_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in';
+        $host = $_SERVER['HTTP_HOST'] ?? 'yourdomain.com';
         $host = preg_replace('/:[0-9]+$/', '', (string)$host);
         if (in_array($host, ['localhost', '127.0.0.1'], true)) {
             $port = !empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] !== 80 ? ':' . $_SERVER['SERVER_PORT'] : '';
             return 'http://' . $host . $port;
         }
-        return 'https://' . ($host ?: 'jaihanumantex.in');
+        return 'https://' . ($host ?: 'yourdomain.com');
     }
 
     /**

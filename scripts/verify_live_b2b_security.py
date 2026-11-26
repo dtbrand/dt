@@ -3,8 +3,8 @@ import urllib.error
 import json
 
 domains = [
-    'https://harmitethnic.com',
-    'https://jaihanumantex.in'
+    'https://yourdomain.com',
+    'https://yourdomain.com'
 ]
 
 endpoints = [

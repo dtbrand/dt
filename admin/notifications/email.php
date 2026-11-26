@@ -69,7 +69,7 @@ $emailLogs = NotificationManager::getLogs(['channel' => 'email', 'limit' => 20])
                         </div>
                         <div>
                             <strong style="font-size:0.95rem; color:#111827; display:block;">Hostinger Enterprise SMTP Relay</strong>
-                            <span style="font-size:0.78rem; color:#64748B;">Server: <code>smtp.hostinger.com:465 (SSL)</code> &bull; Sender: <code>concierge@jaihanumantex.in</code></span>
+                            <span style="font-size:0.78rem; color:#64748B;">Server: <code>smtp.hostinger.com:465 (SSL)</code> &bull; Sender: <code>concierge@yourdomain.com</code></span>
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:12px;">
@@ -179,7 +179,7 @@ DT Brand's Master Concierge
                         </div>
                         <!-- Email Footer -->
                         <div style="background:#FAF5E8; padding:12px 20px; text-align:center; font-size:0.72rem; color:#705114; border-top:1px solid #EAE5D9;">
-                            Official Support: concierge@jaihanumantex.in &bull; +91 70463 63528 &bull; Surat, Gujarat
+                            Official Support: concierge@yourdomain.com &bull; +91 70463 63528 &bull; Surat, Gujarat
                         </div>
                     </div>
                 </div>
@@ -267,7 +267,7 @@ function applyEmailTemplate() {
                              .replace(/\{\{item_count\}\}/g, '10 Sarees B2B Bale')
                              .replace(/\{\{courier\}\}/g, 'Delhivery')
                              .replace(/\{\{tracking_no\}\}/g, 'DL8891234')
-                             .replace(/\{\{tracking_url\}\}/g, 'https://jaihanumantex.in/track');
+                             .replace(/\{\{tracking_url\}\}/g, 'https://yourdomain.com/track');
 
     document.getElementById('emailSubject').value = renderedSubj;
     document.getElementById('emailContent').value = renderedCont;

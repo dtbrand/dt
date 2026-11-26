@@ -168,7 +168,7 @@ run_test("Sec52.1: install.php Has Production & Already Installed Lockdown Guard
         return false;
     }
     $hasInstalledGuard = strpos($content, '$installedFile') !== false;
-    $hasProdHostCheck = strpos($content, 'jaihanumantex.in') !== false;
+    $hasProdHostCheck = strpos($content, '$isProdHost') !== false && strpos($content, '$isProdEnv') !== false;
     $has403Lock = strpos($content, 'http_response_code(403)') !== false;
     $hasSvgIcon = strpos($content, '<svg width="18" height="18"') !== false;
     return $hasInstalledGuard && $hasProdHostCheck && $has403Lock && $hasSvgIcon;

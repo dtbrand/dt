@@ -105,8 +105,8 @@ $total_products = count($products);
     <meta property="og:site_name" content="DT Brand's &amp; Jai Hanuman Tex">
     <meta property="og:title" content="DT Brand's — Direct Surat Handloom Ethnic Wear Manufacturer">
     <meta property="og:description" content="Shop direct from Surat weavers & manufacturers — sarees, kurtis, lehengas, suits, reseller margins & wholesale lots at DT Brand's.">
-    <meta property="og:url" content="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in', ENT_QUOTES, 'UTF-8') ?>/">
-    <meta property="og:image" content="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in', ENT_QUOTES, 'UTF-8') ?>/assets/images/logo.png">
+    <meta property="og:url" content="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'yourdomain.com', ENT_QUOTES, 'UTF-8') ?>/">
+    <meta property="og:image" content="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'yourdomain.com', ENT_QUOTES, 'UTF-8') ?>/assets/images/logo.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="DT Brand's — Direct Surat Handloom Ethnic Wear Manufacturer">
     <meta name="twitter:description" content="Shop direct from Surat weavers & manufacturers — sarees, kurtis, lehengas, suits, reseller margins & wholesale lots at DT Brand's.">
@@ -117,8 +117,8 @@ $total_products = count($products);
       "@context": "https://schema.org",
       "@type": "ClothingStore",
       "name": "DT Brand's & Jai Hanuman Tex",
-      "url": "https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in', ENT_QUOTES, 'UTF-8') ?>/",
-      "logo": "https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in', ENT_QUOTES, 'UTF-8') ?>/assets/images/logo.png",
+      "url": "https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'yourdomain.com', ENT_QUOTES, 'UTF-8') ?>/",
+      "logo": "https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'yourdomain.com', ENT_QUOTES, 'UTF-8') ?>/assets/images/logo.png",
       "description": "Direct Surat Handloom Ethnic Wear Manufacturer, Wholesaler and Reseller Hub.",
       "telephone": "+91-70463-63528",
       "priceRange": "₹₹",
@@ -130,7 +130,7 @@ $total_products = count($products);
       },
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in', ENT_QUOTES, 'UTF-8') ?>/shop?q={search_term_string}",
+        "target": "https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'yourdomain.com', ENT_QUOTES, 'UTF-8') ?>/shop?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     }

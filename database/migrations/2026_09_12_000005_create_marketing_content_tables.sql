@@ -138,5 +138,5 @@ VALUES
 
 INSERT IGNORE INTO `seo_metadata` (`page_route`, `meta_title`, `meta_description`, `meta_keywords`, `canonical_url`)
 VALUES 
-('home', "DT Brand's & Jai Hanuman Tex — Premier Surat Sarees Wholesale & Reseller HUB", "Direct from Surat weaving mill. Premium designer sarees, wedding silks, georgette, and cotton at direct wholesale mill prices. 100% COD & fast delivery.", 'surat sarees wholesale, b2b saree manufacturer, jai hanuman tex, dt brands, reseller sarees', 'https://jaihanumantex.in/'),
-('wholesale', "Wholesale Saree Catalogue & Bulk Lot Inquiry — DT Brand's", "Wholesale saree catalogues, MOQ lots, GST invoicing, and factory direct pricing for textile showrooms and bulk retailers.", 'wholesale sarees, bulk sarees surat, mill direct sarees, b2b textile', 'https://jaihanumantex.in/wholesale.php');
+('home', "DT Brand's & Jai Hanuman Tex — Premier Surat Sarees Wholesale & Reseller HUB", "Direct from Surat weaving mill. Premium designer sarees, wedding silks, georgette, and cotton at direct wholesale mill prices. 100% COD & fast delivery.", 'surat sarees wholesale, b2b saree manufacturer, jai hanuman tex, dt brands, reseller sarees', 'https://yourdomain.com/'),
+('wholesale', "Wholesale Saree Catalogue & Bulk Lot Inquiry — DT Brand's", "Wholesale saree catalogues, MOQ lots, GST invoicing, and factory direct pricing for textile showrooms and bulk retailers.", 'wholesale sarees, bulk sarees surat, mill direct sarees, b2b textile', 'https://yourdomain.com/wholesale.php');

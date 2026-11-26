@@ -4,7 +4,7 @@
  * DT Brand's & Jai Hanuman Tex — Production SEO Engine
  *
  * Fully compliant with Google & Bing XML Sitemap 0.9 schema.
- * Dynamically resolves canonical domain (jaihanumantex.in / harmitethnic.com)
+ * Dynamically resolves canonical domain (yourdomain.com / yourdomain.com)
  * Includes active public products, collections, and core storefront landing pages.
  * Section 64 Compliant: Zero role-specific confidential pricing leakage in structured feeds.
  */
@@ -23,7 +23,7 @@ header('X-Content-Type-Options: nosniff');
 header('Cache-Control: public, max-age=3600');
 
 // ── 2. Determine Canonical Base URL ──
-$host = $_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in';
+$host = $_SERVER['HTTP_HOST'] ?? 'yourdomain.com';
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
     || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);

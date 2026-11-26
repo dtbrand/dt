@@ -115,7 +115,7 @@ $smsLogs = NotificationManager::getLogs(['channel' => 'sms', 'limit' => 20]);
                                     <label style="font-size:0.75rem; font-weight:700; color:#111827;">DLT SMS Text *</label>
                                     <span id="smsCharCount" style="font-size:0.72rem; color:#8A681F; font-weight:700;">118 / 160 chars (1 SMS credit)</span>
                                 </div>
-                                <textarea id="smsContent" rows="4" required oninput="updateSmsMockup()" style="width:100%; border:1.5px solid #EAE5D9; border-radius:6px; padding:8px 10px; font-size:0.82rem; font-weight:600; box-sizing:border-box; resize:none;">DT Brand order #DT-88902 dispatched via Delhivery AWB DL98234112. Track at https://jaihanumantex.in/track - DTHNTX</textarea>
+                                <textarea id="smsContent" rows="4" required oninput="updateSmsMockup()" style="width:100%; border:1.5px solid #EAE5D9; border-radius:6px; padding:8px 10px; font-size:0.82rem; font-weight:600; box-sizing:border-box; resize:none;">DT Brand order #DT-88902 dispatched via Delhivery AWB DL98234112. Track at https://yourdomain.com/track - DTHNTX</textarea>
                             </div>
                         </div>
                         <div style="margin-top:16px; display:flex; justify-content:flex-end;">
@@ -142,7 +142,7 @@ $smsLogs = NotificationManager::getLogs(['channel' => 'sms', 'limit' => 20]);
                         </div>
                         <div style="background:#FAF5E8; border:1.5px solid #D4AF37; border-radius:12px; padding:12px; font-size:0.8rem; color:#181512; line-height:1.45; box-shadow:0 2px 6px rgba(184,134,11,0.15);">
                             <div id="mockSmsBody" style="white-space:pre-wrap; font-family:sans-serif;">
-DT Brand order #DT-88902 dispatched via Delhivery AWB DL98234112. Track at https://jaihanumantex.in/track - DTHNTX
+DT Brand order #DT-88902 dispatched via Delhivery AWB DL98234112. Track at https://yourdomain.com/track - DTHNTX
                             </div>
                             <div style="text-align:right; font-size:0.65rem; color:#8A681F; margin-top:6px; font-weight:700;">
                                 Delivered &bull; Just now
@@ -238,7 +238,7 @@ function applySmsTemplate() {
                         .replace(/\{\{amount\}\}/g, '2,400')
                         .replace(/\{\{courier\}\}/g, 'Delhivery')
                         .replace(/\{\{tracking_no\}\}/g, 'DL98234112')
-                        .replace(/\{\{tracking_url\}\}/g, 'https://jaihanumantex.in/track');
+                        .replace(/\{\{tracking_url\}\}/g, 'https://yourdomain.com/track');
 
     document.getElementById('smsContent').value = rendered;
     updateSmsMockup();

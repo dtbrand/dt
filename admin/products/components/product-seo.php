@@ -54,7 +54,7 @@ $seoDesc = trim((string)($prod['description'] ?? ''));
         <div style="margin-top:12px;">
             <label class="adm-form-label" style="margin-bottom:6px; display:block;">Google Search Snippet Preview</label>
             <div class="dt-google-snippet" style="background:#f8f9fa; border:1px solid #dfe1e5; border-radius:6px; padding:12px;">
-                <div class="dt-google-url" id="dtGoogleUrlPreview" style="font-size:12px; color:#202124;">https://jaihanumantex.in/product/<?php echo htmlspecialchars($seoSlug !== '' ? $seoSlug : '...'); ?></div>
+                <div class="dt-google-url" id="dtGoogleUrlPreview" style="font-size:12px; color:#202124;">https://yourdomain.com/product/<?php echo htmlspecialchars($seoSlug !== '' ? $seoSlug : '...'); ?></div>
                 <div class="dt-google-title" id="dtGoogleTitlePreview" style="font-size:15px; color:#1a0dab; font-weight:500; margin:2px 0;"><?php echo $seoTitle !== '' ? htmlspecialchars($seoTitle . " | DT Brand's") : 'Product title not set'; ?></div>
                 <div class="dt-google-desc" id="dtGoogleDescPreview" style="font-size:12px; color:#4d5156;"><?php echo $seoDesc !== '' ? htmlspecialchars(mb_substr($seoDesc, 0, 160)) : 'No description yet — Google will pick its own snippet.'; ?></div>
             </div>

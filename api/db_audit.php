@@ -390,7 +390,7 @@ try {
         $sample_settings = [
             ['key_name' => 'store_name', 'value_text' => "DT Brand's & Jai Hanuman Tex", 'category' => 'general'],
             ['key_name' => 'whatsapp_number', 'value_text' => '+91 70463 63528', 'category' => 'whatsapp'],
-            ['key_name' => 'support_email', 'value_text' => 'contact@jaihanumantex.in', 'category' => 'general'],
+            ['key_name' => 'support_email', 'value_text' => 'contact@yourdomain.com', 'category' => 'general'],
             ['key_name' => 'gstin_number', 'value_text' => '24AAACJ1234F1Z5', 'category' => 'tax'],
             ['key_name' => 'currency_symbol', 'value_text' => '₹', 'category' => 'pricing']
         ];

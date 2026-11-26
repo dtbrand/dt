@@ -6,11 +6,11 @@
     Usage: powershell -ExecutionPolicy Bypass -File scripts\ftp-deploy.ps1
 #>
 
-# ─── FTP CONFIGURATION (Updated for harmitethnic.com) ───
+# ─── FTP CONFIGURATION (Updated for yourdomain.com) ───
 $ftpConfig = @{
     Host      = '147.93.99.134'
     Port      = 21
-    User      = 'u602484543.harmitethnic.com'
+    User      = 'u602484543.yourdomain.com'
     Pass      = 'Gautam@9006'
     RemoteDir = '/'        # FTP root IS public_html on this server
     LocalDir  = 'C:\Users\sai\Desktop\DT Reseller HUB'
@@ -121,7 +121,7 @@ $requiredDirs = @(
 )
 
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host " DT BRAND'S FTP DEPLOYMENT TO HOSTINGER (harmitethnic.com)" -ForegroundColor Cyan
+Write-Host " DT BRAND'S FTP DEPLOYMENT TO HOSTINGER (yourdomain.com)" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Target: $($ftpConfig.User)@$($ftpConfig.Host):$($ftpConfig.Port)" -ForegroundColor Gray

@@ -371,7 +371,7 @@ echo "==========================================================================
 $testCustomerData = [
     'name' => 'Agent Autonomous Test Customer',
     'phone' => '+91 98980 00099',
-    'email' => 'agent.test.' . time() . '@jaihanumantex.in',
+    'email' => 'agent.test.' . time() . '@yourdomain.com',
     'type' => 'retail',
     'city' => 'Surat',
     'state' => 'Gujarat',
@@ -412,7 +412,7 @@ echo "==========================================================================
 $testOrderData = [
     'customer_name' => 'Agent Test Wholesale Partner',
     'customer_phone' => '+91 91704 63528',
-    'customer_email' => 'agent.order.' . time() . '@jaihanumantex.in',
+    'customer_email' => 'agent.order.' . time() . '@yourdomain.com',
     'channel' => 'retail',
     'shipping_address' => 'Shop 42, Textile Market, Ring Road, Surat, Gujarat - 395002',
     'payment_method' => 'direct_upi',

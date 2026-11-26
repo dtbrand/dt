@@ -248,7 +248,7 @@ try {
         $finalSellingPrice = $resellerBase + $marginAmount;
         $userName = $currentUser['name'] ?? 'Reseller Partner';
 
-        $siteHost = !empty($_SERVER['HTTP_HOST']) ? (($_SERVER['HTTPS'] ?? 'off') !== 'off' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] : (getenv('APP_URL') ?: 'https://jaihanumantex.in');
+        $siteHost = !empty($_SERVER['HTTP_HOST']) ? (($_SERVER['HTTPS'] ?? 'off') !== 'off' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] : (getenv('APP_URL') ?: 'https://yourdomain.com');
         $shareUrl = rtrim($siteHost, '/') . "/product.php?id={$product['id']}&ref=reseller_" . ($currentUser['id'] ?? 'vip');
 
         echo json_encode([

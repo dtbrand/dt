@@ -9,9 +9,9 @@
 
 ## 2. Monitored URLs
 
-1. Home Page: `https://jaihanumantex.in/Frontend/Home/home.php`
-2. Product Catalog: `https://jaihanumantex.in/Frontend/Shop/shop.php`
-3. Single Saree Showcase: `https://jaihanumantex.in/Frontend/Single-Product/singleproduct.php`
+1. Home Page: `https://yourdomain.com/Frontend/Home/home.php`
+2. Product Catalog: `https://yourdomain.com/Frontend/Shop/shop.php`
+3. Single Saree Showcase: `https://yourdomain.com/Frontend/Single-Product/singleproduct.php`
 
 ## 3. Investigation Protocol
 

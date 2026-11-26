@@ -249,8 +249,8 @@ function applyWaTemplate() {
                         .replace(/\{\{bale_qty\}\}/g, '25')
                         .replace(/\{\{courier\}\}/g, 'Delhivery')
                         .replace(/\{\{tracking_no\}\}/g, 'DL8891234')
-                        .replace(/\{\{tracking_url\}\}/g, 'https://jaihanumantex.in/track')
-                        .replace(/\{\{quote_url\}\}/g, 'https://jaihanumantex.in/quote/view');
+                        .replace(/\{\{tracking_url\}\}/g, 'https://yourdomain.com/track')
+                        .replace(/\{\{quote_url\}\}/g, 'https://yourdomain.com/quote/view');
 
     document.getElementById('waContent').value = rendered;
     updateWaMockup();

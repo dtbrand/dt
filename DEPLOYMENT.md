@@ -1,7 +1,7 @@
 # Deployment Guide — DT Brand's & Jai Hanuman Tex
 
 Target platform: **Hostinger Business** (PHP 8.2 + MySQL 8.0), live site
-`https://jaihanumantex.in/`. This guide reflects the tree as audited on 2026-09-13.
+`https://yourdomain.com/`. This guide reflects the tree as audited on 2026-09-13.
 
 ## 1. One-time setup
 
@@ -12,7 +12,7 @@ Target platform: **Hostinger Business** (PHP 8.2 + MySQL 8.0), live site
    ```ini
    APP_ENV=production
    APP_DEBUG=false
-   APP_URL=https://jaihanumantex.in
+   APP_URL=https://yourdomain.com
 
    DB_HOST=localhost
    DB_PORT=3306
@@ -40,7 +40,7 @@ Target platform: **Hostinger Business** (PHP 8.2 + MySQL 8.0), live site
 ## 2. Run the installer
 
 ```bash
-cd ~/domains/jaihanumantex.in/public_html
+cd ~/domains/yourdomain.com/public_html
 php install.php
 ```
 
@@ -58,14 +58,14 @@ Seeded admin login: `/admin/login.php` — change the password immediately on fi
 ## 3. Cron jobs (Hostinger → Cron Jobs)
 
 ```cron
-*/5 * * * * php /home/uXXXX/domains/jaihanumantex.in/public_html/api/db_health.php >/dev/null 2>&1
+*/5 * * * * php /home/uXXXX/domains/yourdomain.com/public_html/api/db_health.php >/dev/null 2>&1
 ```
 
 Optional daily maintenance (log rotation, backups):
 
 ```cron
-0 3 * * * php /home/uXXXX/domains/jaihanumantex.in/public_html/scripts/rotate-logs.php >/dev/null 2>&1
-0 4 * * * php /home/uXXXX/domains/jaihanumantex.in/public_html/scripts/backup-database.php >/dev/null 2>&1
+0 3 * * * php /home/uXXXX/domains/yourdomain.com/public_html/scripts/rotate-logs.php >/dev/null 2>&1
+0 4 * * * php /home/uXXXX/domains/yourdomain.com/public_html/scripts/backup-database.php >/dev/null 2>&1
 ```
 
 ## 4. Triple-sync deployment (Local → GitHub → Hostinger FTP)
@@ -102,7 +102,7 @@ php scripts/smoke-test.php
 
 Checklist:
 
-- [ ] `https://jaihanumantex.in/` returns HTTP 200.
+- [ ] `https://yourdomain.com/` returns HTTP 200.
 - [ ] `/api/health.php` healthy; DB diagnostics green.
 - [ ] Admin login works; password already rotated.
 - [ ] Test order end-to-end (UPI deep link + webhook capture) on a cheap product.

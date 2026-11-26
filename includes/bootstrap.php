@@ -68,3 +68,20 @@ if (function_exists('dt_session_start')) {
     ]);
     session_start();
 }
+
+if (!function_exists('dt_request_origin')) {
+    /**
+     * Resolve the active request origin dynamically without hardcoding a domain.
+     */
+    function dt_request_origin(): string
+    {
+        $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+        if ($host !== '') {
+            $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+                (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+            return ($isHttps ? 'https://' : 'http://') . $host;
+        }
+        $envUrl = trim((string)(getenv('APP_URL') ?: ''));
+        return $envUrl !== '' ? rtrim($envUrl, '/') : 'https://yourdomain.com';
+    }
+}

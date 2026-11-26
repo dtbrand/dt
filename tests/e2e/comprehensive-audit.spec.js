@@ -3,8 +3,9 @@ import { test, expect } from '@playwright/test';
 test.describe('DT Brand\'s Master Comprehensive E2E & Real-World UI Audit', () => {
 
   test('1. Storefront: Search, Category Filtering, and Navigation', async ({ page }) => {
+    const expectedHost = new URL(process.env.BASE_URL || 'https://dt.gkv906128.workers.dev').hostname;
     await page.goto('/index.php', { waitUntil: 'domcontentloaded' });
-    expect(page.url()).toContain('jaihanumantex.in');
+    expect(page.url()).toContain(expectedHost);
 
     // Verify main header logo
     const logo = page.locator('.header-brand-link, .header-brand-real-logo, .dt-brand-logo, .brand-logo, a.dt-brand-link, .logo').first();

@@ -3,7 +3,7 @@
 ## 1. Repository Secrets
 
 - `FTP_HOST`: Production FTP server IP/Hostname (`147.93.99.134`)
-- `FTP_USERNAME`: Production FTP user (`u602484543.jaihanumantex.in`)
+- `FTP_USERNAME`: Production FTP user (`u602484543.yourdomain.com`)
 - `FTP_PASSWORD`: Production FTP password (Managed in GitHub Secrets only)
 - `GH_PAT`: Fine-grained Personal Access Token for automation and releases
 

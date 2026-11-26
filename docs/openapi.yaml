@@ -5,10 +5,10 @@ info:
   version: "3.5.0"
   contact:
     name: "DT Brand's & Jai Hanuman Tex Engineering Desk"
-    email: "care@jaihanumantex.in"
-    url: "https://jaihanumantex.in/contact"
+    email: "care@yourdomain.com"
+    url: "https://yourdomain.com/contact"
 servers:
-  - url: "https://jaihanumantex.in"
+  - url: "https://yourdomain.com"
     description: "Hostinger Production Server"
   - url: "http://localhost"
     description: "Local Development Server"

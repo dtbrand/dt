@@ -1,7 +1,7 @@
 # 👑 DT Brand's & Jai Hanuman Tex — Production Performance Benchmarks & Measurement Standard
 
 > **Benchmark Standard & Quality Protocol**  
-> This specification establishes real-world production performance standards, measurement tooling, and benchmark audit results across all storefront, single product PDP, checkout, customer account, and B2B wholesale/retailer/reseller portal routes on `https://jaihanumantex.in/`.
+> This specification establishes real-world production performance standards, measurement tooling, and benchmark audit results across all storefront, single product PDP, checkout, customer account, and B2B wholesale/retailer/reseller portal routes on `https://yourdomain.com/`.
 
 ---
 

@@ -6031,7 +6031,7 @@ ${senderName} (Reseller Partner)`;
             }
             var customers = getResellerCustomers();
             var selected = customers.filter(function(c) { return selectedCustomerIds.has(c.id); });
-            var msg = prompt('Enter WhatsApp broadcast message template:', 'Namaste! Check out our latest festive saree catalogue at exclusive reseller discounts: https://jaihanumantex.in/shop.php');
+            var msg = prompt('Enter WhatsApp broadcast message template:', 'Namaste! Check out our latest festive saree catalogue at exclusive reseller discounts: ' + window.location.origin + '/shop.php');
             if (!msg) return;
 
             var first = selected[0];

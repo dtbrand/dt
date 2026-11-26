@@ -27,8 +27,8 @@ function getContactVal(string $k, string $def, array $settings): string {
 $showroomAddress = getContactVal('contact_showroom_address', 'Shop #104–108, First Floor, Ring Road Textile Market, Surat, Gujarat - 395002', $contactSettings);
 $whatsappHotline = getContactVal('contact_whatsapp_hotline', '+91 70463 63528', $contactSettings);
 $wholesaleLine = getContactVal('contact_wholesale_line', '+91 70463 63528', $contactSettings);
-$supportEmail = getContactVal('contact_support_email', 'support@jaihanumantex.in', $contactSettings);
-$wholesaleEmail = getContactVal('contact_wholesale_email', 'wholesale@jaihanumantex.in', $contactSettings);
+$supportEmail = getContactVal('contact_support_email', 'support@yourdomain.com', $contactSettings);
+$wholesaleEmail = getContactVal('contact_wholesale_email', 'wholesale@yourdomain.com', $contactSettings);
 $businessHours = getContactVal('contact_business_hours', 'Mon – Sat: 10:00 AM – 8:30 PM (Sunday Closed)', $contactSettings);
 $gstin = getContactVal('contact_gstin', '24AAACG1289F1Z4', $contactSettings);
 ?>

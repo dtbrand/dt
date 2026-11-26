@@ -13,7 +13,7 @@ declare(strict_types=1);
 $ftpConfig = [
     'host'      => '147.93.99.134',
     'port'      => 21,
-    'user'      => 'u602484543.harmitethnic.com',
+    'user'      => 'u602484543.yourdomain.com',
     'pass'      => 'Gautam@9006',
     'remoteDir' => '/',  // FTP root IS public_html on this server
     'localDir'  => dirname(__DIR__), // C:\Users\sai\Desktop\DT Reseller HUB
@@ -220,7 +220,7 @@ if ($failed > 0) {
 
 echo "✅ All files deployed successfully to live server!\n";
 echo "\nNext steps:\n";
-echo "  1. Visit https://jaihanumantex.in/install.php (if first deploy)\n";
+echo "  1. Visit https://yourdomain.com/install.php (if first deploy)\n";
 echo "  2. Or run database migrations if updating\n";
 echo "  3. Clear browser cache and test all flows\n";
 echo "  4. Verify WhatsApp CRM at /admin/whatsapp/\n";

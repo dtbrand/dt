@@ -1173,7 +1173,7 @@ class ContentManager
             'meta_keywords'    => "surat sarees wholesale, b2b saree manufacturer, jai hanuman tex, dt brands, reseller sarees",
             'og_title'         => "DT Brand's & Jai Hanuman Tex — Premier Surat Sarees Wholesale",
             'og_description'   => "Direct from Surat weaving mill. Premium designer sarees, wedding silks, georgette, and cotton at direct wholesale mill prices.",
-            'canonical_url'    => "https://jaihanumantex.in" . ($pageRoute === '/' ? '/' : $pageRoute),
+            'canonical_url'    => "https://yourdomain.com" . ($pageRoute === '/' ? '/' : $pageRoute),
             'og_image_url'     => "/assets/images/hero-banner.png",
             'og_image'         => "/assets/images/hero-banner.png"
         ];

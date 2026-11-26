@@ -8,8 +8,11 @@
  * Marks order paid, adjusts stock, sends confirmation
  */
 
+$host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+$proto = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')) ? 'https://' : 'http://';
+$allowOrigin = $host !== '' ? ($proto . $host) : rtrim((string)(getenv('APP_URL') ?: 'https://yourdomain.com'), '/');
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: https://jaihanumantex.in');
+header('Access-Control-Allow-Origin: ' . $allowOrigin);
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 

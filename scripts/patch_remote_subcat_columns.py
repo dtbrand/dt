@@ -16,13 +16,13 @@ FTP_PASS = 'Gautam@9006'
 SERVERS = [
     {
         'name': 'HarmitEthnic',
-        'user': 'u602484543.harmitethnic.com',
-        'url': 'https://harmitethnic.com/db_patch_subcat.php'
+        'user': 'u602484543.yourdomain.com',
+        'url': 'https://yourdomain.com/db_patch_subcat.php'
     },
     {
         'name': 'JaiHanumanTex',
-        'user': 'u602484543.jaihanumantex.in',
-        'url': 'https://jaihanumantex.in/db_patch_subcat.php'
+        'user': 'u602484543.yourdomain.com',
+        'url': 'https://yourdomain.com/db_patch_subcat.php'
     }
 ]
 

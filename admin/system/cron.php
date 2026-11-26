@@ -162,7 +162,7 @@ $page_title    = 'Cron Scheduler — DT Brand\'s';
                 </div>
                 <div class="sys-card-body">
                     <p style="font-size:12.5px;color:#64748B;margin:0 0 12px;">Add the following command to Hostinger hPanel → Cron Jobs (every minute):</p>
-                    <pre class="sys-log-pre" style="max-height:60px;font-size:12px;">* * * * * php <?= htmlspecialchars($_SERVER['DOCUMENT_ROOT'] ?? '/home/u602484543/domains/jaihanumantex.in/public_html') ?>/cron/runner.php >> /dev/null 2>&1</pre>
+                    <pre class="sys-log-pre" style="max-height:60px;font-size:12px;">* * * * * php <?= htmlspecialchars($_SERVER['DOCUMENT_ROOT'] ?? '/home/u602484543/domains/yourdomain.com/public_html') ?>/cron/runner.php >> /dev/null 2>&1</pre>
                     <p style="font-size:11.5px;color:#94A3B8;margin:10px 0 0;">Alternatively set up individual jobs per-task for more granular control.</p>
                 </div>
             </div>

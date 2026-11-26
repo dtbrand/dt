@@ -67,7 +67,7 @@ jobs:
       - name: Run Playwright E2E & Accessibility Tests
         run: npx playwright test
         env:
-          BASE_URL: 'https://jaihanumantex.in'
+          BASE_URL: 'https://dt.gkv906128.workers.dev'
 
   security-audit:
     name: Supply-Chain & Dependency Security Audit

@@ -12,7 +12,7 @@ class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
 
 opener = urllib.request.build_opener(NoRedirectHandler)
 
-for domain in ['harmitethnic.com', 'jaihanumantex.in']:
+for domain in ['yourdomain.com', 'yourdomain.com']:
     print(f"\n{'='*65}")
     print(f"=== TESTING CART & ORDER PIPELINE ON {domain} ===")
     print(f"{'='*65}")

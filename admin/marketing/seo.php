@@ -62,7 +62,7 @@ $seo = ContentManager::getSeoMetadata($currentRoute);
 $metaTitle = $seo['meta_title'] ?? 'DT Brand\'s & Jai Hanuman Tex — Direct Loom Pure Silk Sarees Wholesale';
 $metaDesc = $seo['meta_description'] ?? 'Wholesale manufacturer & direct loom exporter of authentic Paithani, Banarasi, Kanjivaram and South Silk sarees. Surat, India.';
 $metaKeywords = $seo['meta_keywords'] ?? 'silk sarees, wholesale sarees surat, paithani saree, banarasi silk, direct loom';
-$canonicalUrl = $seo['canonical_url'] ?? 'https://jaihanumantex.in' . $currentRoute;
+$canonicalUrl = $seo['canonical_url'] ?? 'https://yourdomain.com' . $currentRoute;
 $ogTitle = $seo['og_title'] ?? $metaTitle;
 $ogDesc = $seo['og_description'] ?? $metaDesc;
 $ogImage = $seo['og_image_url'] ?? '/assets/images/hero-banner.png';
@@ -201,7 +201,7 @@ $ogImage = $seo['og_image_url'] ?? '/assets/images/hero-banner.png';
                     <div style="font-size:11px; color:#10B981; font-weight:700;">Live Preview</div>
                 </div>
                 <div class="dt-serp-cite">
-                    <span>https://jaihanumantex.in</span>
+                    <span>https://yourdomain.com</span>
                     <span>&rsaquo;</span>
                     <span><?php echo ltrim($currentRoute, '/') ?: 'home'; ?></span>
                 </div>

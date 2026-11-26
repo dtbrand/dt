@@ -137,7 +137,7 @@ $grand_total = isset($order['total_amount']) ? (float)$order['total_amount'] : (
     <div class="dt-doc-footer" style="border-top:1px solid #E2DFD7; padding-top:12px; font-size:10px; color:#64748B; display:flex; justify-content:space-between; align-items:center;">
         <div>
             This is a computer-generated GST Tax Invoice from DT Brand's &amp; Jai Hanuman Tex Surat Central Depot.<br>
-            Direct Central Inquiries: accounts@jaihanumantex.in • Helpline: +91 70463 63528
+            Direct Central Inquiries: accounts@yourdomain.com • Helpline: +91 70463 63528
         </div>
         <div style="text-align:right; font-weight:700; color:#181512;">
             Authorized Accounting Signatory<br>
