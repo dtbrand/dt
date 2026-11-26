@@ -32,6 +32,12 @@
       "database_id": "e88559da-f892-4d67-819d-7ea81a8719ff"
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "2d2d99c601bf4724862812d3e7ceb685"
+    }
+  ],
   "vars": {
     "ORIGIN_URL": "https://yourdomain.com"
   },
@@ -43,6 +49,12 @@
       {
         "binding": "DB",
         "database_id": "e88559da-f892-4d67-819d-7ea81a8719ff"
+      }
+    ],
+    "kv_namespaces": [
+      {
+        "binding": "KV",
+        "id": "2d2d99c601bf4724862812d3e7ceb685"
       }
     ]
   }
