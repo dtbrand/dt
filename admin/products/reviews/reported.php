@@ -1,0 +1,9 @@
+<?php
+/* DT admin access guard (auto-inserted) */ $__dtg = $_SERVER['DOCUMENT_ROOT'] . '/admin/includes/adminguard.php'; if (is_file($__dtg)) require_once $__dtg;
+
+/**
+ * reported.php — Product Reported Reviews View
+ * DT Brand's & Jai Hanuman Tex
+ */
+header("Location: /admin/products/reviews/index.php?status=reported");
+exit;

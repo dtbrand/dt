@@ -1,0 +1,2806 @@
+<?php
+
+namespace DTBrand;
+
+require_once __DIR__ . '/Database.php';
+
+/**
+ * ProductCatalog — Master Ethnic Saree Inventory & Merchandising Engine
+ * DT Brand's & Jai Hanuman Tex — Live Hostinger Production Engine
+ */
+class ProductCatalog
+{
+    /** Neutral placeholder shown when a product genuinely has no photo on file. */
+    public const NO_IMAGE = '/assets/images/no-image.svg';
+
+    /** Statuses a customer-facing listing may show. 'draft' is deliberately absent. */
+    private const PUBLIC_STATUSES = "'in_stock','low_stock','out_of_stock'";
+
+    /** Per-request memo: one page render calls getAll() many times over. */
+    private static array $memo = [];
+
+    /** Cached list of column names present in the products table */
+    private static ?array $productTableColumns = null;
+
+    /** Every write path calls this so the next read re-queries the database. */
+    public static function invalidateCache(): void
+    {
+        self::$memo = [];
+        self::$productTableColumns = null;
+    }
+
+    /**
+     * Inspect and return an associative map of column names present in the products table.
+     */
+    public static function getProductTableColumns(): array
+    {
+        if (self::$productTableColumns !== null) {
+            return self::$productTableColumns;
+        }
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return [];
+        }
+        $cols = [];
+        try {
+            $driver = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+            if ($driver === 'sqlite') {
+                $stmt = $pdo->query("PRAGMA table_info(products)");
+                while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                    if (isset($row['name'])) {
+                        $cols[$row['name']] = true;
+                    }
+                }
+            } else {
+                $stmt = $pdo->query("SHOW COLUMNS FROM products");
+                while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                    $field = $row['Field'] ?? ($row['field'] ?? null);
+                    if ($field) {
+                        $cols[$field] = true;
+                    }
+                }
+            }
+            self::$productTableColumns = $cols;
+        } catch (\Exception $e) {
+            self::$productTableColumns = [];
+        }
+        return self::$productTableColumns;
+    }
+
+    /**
+     * Turn whatever is stored in a media column into a URL a browser can load,
+     * or '' when the stored value cannot be one.
+     *
+     * @param mixed $raw
+     */
+    private static function mediaPath($raw): string
+    {
+        $p = trim((string)$raw);
+        if ($p === '' || $p === '0' || $p === 'null' || $p === 'undefined') {
+            return '';
+        }
+        // A failed browser-side upload used to post an entire
+        // "data:image/png;base64,..." URL into primary_image VARCHAR(255).
+        // What survived the truncation is not an image, so it must not be
+        // emitted as one.
+        if (stripos($p, 'data:') === 0) {
+            return '';
+        }
+        // The seed data shipped /assets/images/, a directory that
+        // does not exist in this docroot, so every seeded row served a 404.
+        $p = str_replace('/assets/images/', '/assets/images/', $p);
+        if (stripos($p, 'http://') === 0 || stripos($p, 'https://') === 0) {
+            return $p;
+        }
+        return $p[0] === '/' ? $p : '/' . $p;
+    }
+
+    /** product_media stores only image_url, so video is identified by extension. */
+    private static function isVideo(string $path): bool
+    {
+        $clean = (string)(parse_url($path, PHP_URL_PATH) ?: $path);
+        $ext = strtolower((string)pathinfo($clean, PATHINFO_EXTENSION));
+        return in_array($ext, ['mp4', 'webm', 'ogg', 'ogv', 'mov', 'm4v'], true);
+    }
+
+    /**
+     * A pasted YouTube / Instagram / Vimeo link. It has no file extension, so
+     * without this test it would be classified as an image and rendered inside an
+     * <img> tag - a guaranteed broken thumbnail. These need an iframe instead.
+     */
+    private static function isEmbed(string $path): bool
+    {
+        $host = strtolower((string)(parse_url($path, PHP_URL_HOST) ?: ''));
+        if ($host === '') {
+            return false;
+        }
+        foreach (['youtube.com', 'youtu.be', 'instagram.com', 'vimeo.com', 'facebook.com', 'fb.watch', 'dailymotion.com'] as $known) {
+            if ($host === $known || str_ends_with($host, '.' . $known)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Turn a watch/share link into its embeddable player URL. Returns '' when the
+     * link cannot be embedded, so the caller can refuse it rather than render an
+     * iframe that shows an error page.
+     */
+    public static function embedUrl(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '' || !self::isEmbed($raw)) {
+            return '';
+        }
+        $host = strtolower((string)(parse_url($raw, PHP_URL_HOST) ?: ''));
+        $path = (string)(parse_url($raw, PHP_URL_PATH) ?: '');
+        parse_str((string)(parse_url($raw, PHP_URL_QUERY) ?: ''), $qs);
+
+        if (str_contains($host, 'youtu.be')) {
+            $id = trim($path, '/');
+            return $id !== '' ? 'https://www.youtube.com/embed/' . rawurlencode($id) : '';
+        }
+        if (str_contains($host, 'youtube.com')) {
+            if (!empty($qs['v'])) {
+                return 'https://www.youtube.com/embed/' . rawurlencode((string)$qs['v']);
+            }
+            if (preg_match('#/(shorts|embed|live)/([^/?&]+)#', $path, $m)) {
+                return 'https://www.youtube.com/embed/' . rawurlencode($m[2]);
+            }
+            return '';
+        }
+        if (str_contains($host, 'instagram.com')) {
+            if (preg_match('#/(reel|reels|p|tv)/([^/?&]+)#', $path, $m)) {
+                return 'https://www.instagram.com/' . ($m[1] === 'reels' ? 'reel' : $m[1]) . '/' . rawurlencode($m[2]) . '/embed';
+            }
+            return '';
+        }
+        if (str_contains($host, 'vimeo.com')) {
+            if (preg_match('#/(\d+)#', $path, $m)) {
+                return 'https://player.vimeo.com/video/' . $m[1];
+            }
+            return '';
+        }
+        return '';
+    }
+
+    /** Slug form of a name: lowercase, hyphen-separated, ASCII only. */
+    public static function slugify(string $text): string
+    {
+        $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $text), '-'));
+        return $slug === '' ? '' : $slug;
+    }
+
+    /**
+     * One query per side table for the whole page, keyed by product id, rather
+     * than N queries inside the row loop.
+     */
+    private static function sideTables(array $ids): array
+    {
+        $out = ['media' => [], 'variants' => [], 'reviews' => []];
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($ids)) {
+            return $out;
+        }
+        $in = implode(',', $ids);
+
+        $media = Database::query(
+            "SELECT product_id, image_url, is_primary, sort_order FROM product_media
+             WHERE product_id IN ($in)
+             ORDER BY product_id ASC, is_primary DESC, sort_order ASC, id ASC"
+        );
+        foreach ($media as $m) {
+            $url = self::mediaPath($m['image_url'] ?? '');
+            if ($url === '') {
+                continue;
+            }
+            $out['media'][(int)($m['product_id'] ?? 0)][] = $url;
+        }
+
+        $variants = Database::query(
+            "SELECT * FROM product_variants WHERE product_id IN ($in) ORDER BY id ASC"
+        );
+        foreach ($variants as $v) {
+            $out['variants'][(int)($v['product_id'] ?? 0)][] = [
+                'id' => (int)($v['id'] ?? 0),
+                'variant_id' => (int)($v['id'] ?? 0),
+                'sku' => trim((string)($v['sku'] ?? '')),
+                'color' => trim((string)($v['color_name'] ?? '')),
+                'size' => trim((string)($v['size_name'] ?? '')),
+                'stock_qty' => (int)($v['stock_qty'] ?? 0),
+                
+                // Single Piece Price Fields (per variant)
+                'price' => isset($v['price']) && $v['price'] !== null ? (float)$v['price'] : null,
+                'retail_price' => isset($v['retail_price']) && $v['retail_price'] !== null ? (float)$v['retail_price'] : (isset($v['retailer_price']) && $v['retailer_price'] !== null ? (float)$v['retailer_price'] : null),
+                'retailer_price' => isset($v['retailer_price']) && $v['retailer_price'] !== null ? (float)$v['retailer_price'] : (isset($v['retail_price']) && $v['retail_price'] !== null ? (float)$v['retail_price'] : null),
+                'wholesale_price' => isset($v['wholesale_price']) && $v['wholesale_price'] !== null ? (float)$v['wholesale_price'] : null,
+                'reseller_price' => isset($v['reseller_price']) && $v['reseller_price'] !== null ? (float)$v['reseller_price'] : null,
+                
+                // Single Piece Sale Price Fields (per variant)
+                'retail_sale_price' => isset($v['retail_sale_price']) && $v['retail_sale_price'] !== null ? (float)$v['retail_sale_price'] : (isset($v['retailer_sale_price']) && $v['retailer_sale_price'] !== null ? (float)$v['retailer_sale_price'] : null),
+                'retailer_sale_price' => isset($v['retailer_sale_price']) && $v['retailer_sale_price'] !== null ? (float)$v['retailer_sale_price'] : (isset($v['retail_sale_price']) && $v['retail_sale_price'] !== null ? (float)$v['retail_sale_price'] : null),
+                'wholesale_sale_price' => isset($v['wholesale_sale_price']) && $v['wholesale_sale_price'] !== null ? (float)$v['wholesale_sale_price'] : null,
+                'reseller_sale_price' => isset($v['reseller_sale_price']) && $v['reseller_sale_price'] !== null ? (float)$v['reseller_sale_price'] : null,
+                
+                // Customer Price Fields (per variant)
+                'customer_price' => isset($v['customer_price']) && $v['customer_price'] !== null ? (float)$v['customer_price'] : null,
+                'customer_sale_price' => isset($v['customer_sale_price']) && $v['customer_sale_price'] !== null ? (float)$v['customer_sale_price'] : null,
+                
+                // Full Set Price Fields (per variant)
+                'full_set_retailer_price' => isset($v['full_set_retailer_price']) && $v['full_set_retailer_price'] !== null ? (float)$v['full_set_retailer_price'] : null,
+                'full_set_wholesale_price' => isset($v['full_set_wholesale_price']) && $v['full_set_wholesale_price'] !== null ? (float)$v['full_set_wholesale_price'] : null,
+                'full_set_retailer_sale_price' => isset($v['full_set_retailer_sale_price']) && $v['full_set_retailer_sale_price'] !== null ? (float)$v['full_set_retailer_sale_price'] : null,
+                'full_set_wholesale_sale_price' => isset($v['full_set_wholesale_sale_price']) && $v['full_set_wholesale_sale_price'] !== null ? (float)$v['full_set_wholesale_sale_price'] : null,
+                
+                'selling_type' => trim((string)($v['selling_type'] ?? 'single_piece')),
+                'image' => self::mediaPath($v['image'] ?? '')
+            ];
+        }
+
+        // products.rating and products.reviews_count carry schema DEFAULTs of
+        // 4.9 and 120, so every inserted row is born claiming reviews it does
+        // not have. The reviews table is the only real source.
+        $reviews = Database::query(
+            "SELECT product_id, COUNT(*) AS n, AVG(rating) AS avg_rating FROM reviews
+             WHERE status = 'approved' AND product_id IN ($in) GROUP BY product_id"
+        );
+        foreach ($reviews as $rv) {
+            $out['reviews'][(int)($rv['product_id'] ?? 0)] = [
+                'count' => (int)($rv['n'] ?? 0),
+                'avg' => round((float)($rv['avg_rating'] ?? 0), 1)
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Shape one products row for rendering. Every value here comes from the
+     * database or is honestly empty; nothing is invented to fill a gap.
+     */
+    private static function mapRow(array $r, array $media, array $variants, array $review): array
+    {
+        $pid = (int)($r['id'] ?? 0);
+        $mrp = (float)($r['mrp'] ?? 0);
+        $retail = (float)($r['retail_price'] ?? 0);
+        $wholesale = (float)($r['wholesale_price'] ?? 0);
+        $reseller = (float)($r['reseller_price'] ?? 0);
+
+        // Gallery order comes from product_media (already primary-first), with
+        // primary_image folded in so a product saved before it had media rows
+        // still shows its photo. Videos and embeds are separated out:
+        // <img src="clip.mp4"> is a broken image, and a pasted YouTube or
+        // Instagram link is neither a photo nor a file a <video> tag can play.
+        $images = [];
+        $videos = [];
+        $embeds = [];
+        foreach ($media as $url) {
+            if (self::isEmbed($url)) {
+                $embeds[] = $url;
+            } elseif (self::isVideo($url)) {
+                $videos[] = $url;
+            } else {
+                $images[] = $url;
+            }
+        }
+        $primary = self::mediaPath($r['primary_image'] ?? '');
+        if ($primary !== '' && !self::isVideo($primary) && !self::isEmbed($primary) && !in_array($primary, $images, true)) {
+            array_unshift($images, $primary);
+        }
+        $images = array_values(array_unique($images));
+        $videos = array_values(array_unique($videos));
+        $embeds = array_values(array_unique($embeds));
+        $hasPhoto = !empty($images);
+
+        // Per-product colour and size exist only through product_variants;
+        // product_colors and product_sizes are global palettes with no
+        // product_id column, so they cannot describe one product.
+        $colors = [];
+        $sizes = [];
+        foreach ($variants as $v) {
+            if ($v['color'] !== '' && !in_array($v['color'], $colors, true)) {
+                $colors[] = $v['color'];
+            }
+            if ($v['size'] !== '' && !in_array($v['size'], $sizes, true)) {
+                $sizes[] = $v['size'];
+            }
+        }
+
+        $stock = (int)($r['stock_qty'] ?? 0);
+        $status = (string)($r['status'] ?? 'in_stock');
+        $disc = ($mrp > 0 && $retail > 0 && $retail < $mrp)
+            ? (int)round((($mrp - $retail) / $mrp) * 100) : 0;
+        $rc = (int)($review['count'] ?? 0);
+
+        $sellingType = trim((string)($r['selling_type'] ?? 'single_piece')) ?: 'single_piece';
+        
+        // Read all price fields per master specification
+        $custPrice = (isset($r['customer_price']) && $r['customer_price'] !== null && (float)$r['customer_price'] > 0)
+            ? (float)$r['customer_price'] : null;
+        $custSalePrice = (isset($r['customer_sale_price']) && $r['customer_sale_price'] !== null && (float)$r['customer_sale_price'] > 0)
+            ? (float)$r['customer_sale_price'] : null;
+
+        $activeVariants = array_values(array_filter($variants, static function ($v) {
+            return !empty($v['color']) || !empty($v['size']);
+        }));
+        $fullSetPieces = max(1, count($activeVariants));
+
+        // Wholesaler MCQ = Available Colors × Available Sizes (Unified with calculateWholesalerMcq)
+        $mcqData = self::calculateWholesalerMcq(['variants' => $variants]);
+        $wholesalerMcq = $mcqData['mcq'];
+        $availableColors = $mcqData['colors'];
+        $availableSizes = $mcqData['sizes'];
+        $wholesalerMcqVariants = $mcqData['variants'];
+
+        $saleDisc = (float)($r['sale_price'] ?? 0);
+        
+        // Specific role sale prices (Single Piece)
+        $retailerSalePrice = (isset($r['retailer_sale_price']) && $r['retailer_sale_price'] !== null && (float)$r['retailer_sale_price'] > 0)
+            ? (float)$r['retailer_sale_price'] : null;
+        $resellerSalePrice = (isset($r['reseller_sale_price']) && $r['reseller_sale_price'] !== null && (float)$r['reseller_sale_price'] > 0)
+            ? (float)$r['reseller_sale_price'] : null;
+        $wholesaleSalePrice = (isset($r['wholesale_sale_price']) && $r['wholesale_sale_price'] !== null && (float)$r['wholesale_sale_price'] > 0)
+            ? (float)$r['wholesale_sale_price'] : null;
+
+        // MASTER PRICE MATRIX - Single Piece
+        // Effective prices after flat sale discount or explicit role sale price
+        $effRetail = ($retailerSalePrice !== null) ? max(0, $retailerSalePrice) : max(0, $retail - $saleDisc);
+        $effWholesale = ($wholesaleSalePrice !== null) ? max(0, $wholesaleSalePrice) : ($wholesale > 0 ? max(0, $wholesale - $saleDisc) : $effRetail);
+        $effReseller = ($resellerSalePrice !== null) ? max(0, $resellerSalePrice) : ($reseller > 0 ? max(0, $reseller - $saleDisc) : $effRetail);
+        
+        // Customer/Guest effective price
+        if ($custSalePrice !== null && $custSalePrice > 0) {
+            // Customer Sale Price takes precedence
+            $effCustomer = max(0, $custSalePrice);
+        } elseif ($custPrice !== null && $custPrice > 0) {
+            $effCustomer = max(0, $custPrice - $saleDisc);
+        } else {
+            $effCustomer = $effRetail;
+        }
+
+        // Full Set effective prices (Retailer/Wholesaler only)
+        // For Full Set, the per-piece price is used, multiplied by full_set_pieces
+        $fullSetRetailerPrice = (isset($r['full_set_retailer_price']) && (float)$r['full_set_retailer_price'] > 0) ? (float)$r['full_set_retailer_price'] : $retail;
+        $fullSetWholesalePrice = (isset($r['full_set_wholesale_price']) && (float)$r['full_set_wholesale_price'] > 0) ? (float)$r['full_set_wholesale_price'] : ($wholesale > 0 ? $wholesale : $retail);
+        $fullSetRetailerSalePrice = (isset($r['full_set_retailer_sale_price']) && (float)$r['full_set_retailer_sale_price'] > 0) ? (float)$r['full_set_retailer_sale_price'] : $saleDisc;
+        $fullSetWholesaleSalePrice = (isset($r['full_set_wholesale_sale_price']) && (float)$r['full_set_wholesale_sale_price'] > 0) ? (float)$r['full_set_wholesale_sale_price'] : $saleDisc;
+
+        $boutiqueMargin = max(0, $effCustomer - $effRetail);
+
+        return [
+            'id' => $pid,
+            'sku' => trim((string)($r['sku'] ?? '')),
+            'title' => trim((string)($r['title'] ?? '')),
+            'name' => trim((string)($r['title'] ?? '')),
+            'slug' => trim((string)($r['slug'] ?? '')),
+            'brand' => trim((string)($r['brand'] ?? '')) ?: "DT Brand's",
+            'category' => trim((string)($r['category_name'] ?? '')),
+            'category_id' => (int)($r['category_id'] ?? 0),
+            'subcategory' => trim((string)($r['subcategory'] ?? ($r['subcategory_name'] ?? ''))),
+            'subcategory_id' => (int)($r['subcategory_id'] ?? 0),
+            'fabric' => trim((string)($r['fabric'] ?? '')),
+            'weave' => trim((string)($r['weave'] ?? '')),
+            'zari_type' => trim((string)($r['zari_type'] ?? '')),
+            'pallu_style' => trim((string)($r['pallu_style'] ?? '')),
+            'blouse_piece' => trim((string)($r['blouse_piece'] ?? '')),
+            'occasion' => trim((string)($r['occasion'] ?? '')),
+            'color' => $colors[0] ?? '',
+            'colors' => $colors,
+            'size' => $sizes,
+            'sizes' => $sizes,
+            'variants' => $variants,
+            'selling_type' => $sellingType,
+            'is_full_set' => ($sellingType === 'full_set'),
+            'is_single_piece' => ($sellingType === 'single_piece'),
+            
+            // Single Piece Price Fields
+            'customer_price' => $custPrice,
+            'customer_sale_price' => $custSalePrice,
+            'retail_price' => $retail,
+            'retailer_sale_price' => $retailerSalePrice,
+            'wholesale_price' => $wholesale,
+            'wholesale_sale_price' => $wholesaleSalePrice,
+            'reseller_price' => $reseller,
+            'reseller_sale_price' => $resellerSalePrice,
+            'sale_price' => $saleDisc,
+            'sale_discount' => $saleDisc,
+            
+            // Effective prices per role (after sale discount)
+            'effective_customer_price' => $effCustomer,
+            'effective_retail_price' => $effRetail,
+            'effective_wholesale_price' => $effWholesale,
+            'effective_reseller_price' => $effReseller,
+            'effective_price' => $effRetail,
+            'boutique_margin' => $boutiqueMargin,
+            
+            // Full Set Price Fields
+            'full_set_retailer_price' => $fullSetRetailerPrice,
+            'full_set_wholesale_price' => $fullSetWholesalePrice,
+            'full_set_retailer_sale_price' => $fullSetRetailerSalePrice,
+            'full_set_wholesale_sale_price' => $fullSetWholesaleSalePrice,
+            
+            // Effective full set prices
+            'effective_full_set_retailer_price' => max(0, $fullSetRetailerPrice - $fullSetRetailerSalePrice),
+            'effective_full_set_wholesale_price' => max(0, $fullSetWholesalePrice - $fullSetWholesaleSalePrice),
+            
+            'full_set_pieces' => $fullSetPieces,
+            'full_set_variants' => $activeVariants,
+            
+            // Wholesaler MCQ
+            'wholesaler_mcq' => $wholesalerMcq,
+            'wholesaler_mcq_colors' => $availableColors,
+            'wholesaler_mcq_sizes' => $availableSizes,
+            'wholesaler_mcq_variants' => $wholesalerMcqVariants,
+            
+            'mrp' => $mrp,
+            'old_price' => $mrp,
+            'price' => $effCustomer, // Default display price for Guest/Customer
+            'trade_price' => $effRetail,
+            'discount' => $disc,
+            'moq' => (int)($r['moq_full_set'] ?? 1),
+            'stock_qty' => $stock,
+            'in_stock' => ($stock > 0 && $status !== 'out_of_stock'),
+            'status' => $status,
+            'is_featured' => ((int)($r['is_featured'] ?? 0) === 1),
+            'is_bestseller' => ((int)($r['is_bestseller'] ?? 0) === 1),
+            'rating' => $rc > 0 ? (float)($review['avg'] ?? 0) : 0.0,
+            'reviews_count' => $rc,
+            'badge' => trim((string)($r['badge'] ?? '')),
+            'image' => $hasPhoto ? $images[0] : self::NO_IMAGE,
+            'has_photo' => $hasPhoto,
+            'gallery' => $hasPhoto ? $images : [self::NO_IMAGE],
+            'images' => $images,
+            'video' => $videos[0] ?? '',
+            'videos' => $videos,
+            'embed' => isset($embeds[0]) ? self::embedUrl($embeds[0]) : '',
+            'embeds' => array_values(array_filter(array_map([self::class, 'embedUrl'], $embeds))),
+            'embed_links' => $embeds,
+            'has_video' => (!empty($videos) || !empty($embeds)),
+            'description' => trim((string)($r['description'] ?? '')),
+            'moq_lots' => [
+                'single' => (int)($r['moq_single'] ?? 1),
+                'half_set' => (int)($r['moq_half_set'] ?? 0),
+                'full_set' => (int)($r['moq_full_set'] ?? 0),
+                'master_bale' => (int)($r['moq_master_bale'] ?? 0)
+            ]
+        ];
+    }
+
+    /**
+     * Every product row, shaped for rendering.
+     *
+     * Drafts are excluded unless the caller is an admin surface that must see
+     * them: the previous filter was `status != 'trash'`, and 'trash' is not a
+     * value the ENUM can hold, so drafts were on the public storefront.
+     */
+    public static function getAll(bool $includeDrafts = false): array
+    {
+        $key = $includeDrafts ? 'all' : 'public';
+        if (isset(self::$memo[$key])) {
+            return self::$memo[$key];
+        }
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            // This used to return an eleven-product hardcoded catalogue, so an
+            // unreachable database put merchandise that does not exist in front
+            // of customers. An empty shop is honest; invented stock is not.
+            return [];
+        }
+
+        $sql = "SELECT * FROM products";
+        if (!$includeDrafts) {
+            $sql .= " WHERE status IN (" . self::PUBLIC_STATUSES . ")";
+        }
+        $sql .= " ORDER BY id ASC";
+
+        $rows = Database::query($sql);
+        if (empty($rows)) {
+            self::$memo[$key] = [];
+            return [];
+        }
+
+        $ids = [];
+        foreach ($rows as $r) {
+            $ids[] = (int)($r['id'] ?? 0);
+        }
+        $side = self::sideTables($ids);
+
+        $list = [];
+        foreach ($rows as $r) {
+            $pid = (int)($r['id'] ?? 0);
+            $list[] = self::mapRow(
+                $r,
+                $side['media'][$pid] ?? [],
+                $side['variants'][$pid] ?? [],
+                $side['reviews'][$pid] ?? []
+            );
+        }
+        self::$memo[$key] = $list;
+        return $list;
+    }
+
+    /**
+     * Single-row lookup. Drafts are returned so an admin edit page can still
+     * open one, and so a cart line whose product was drafted still resolves.
+     */
+    private static function fetchOneShaped(string $where, array $params): ?array
+    {
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return null;
+        }
+        $r = Database::fetchOne("SELECT * FROM products WHERE $where LIMIT 1", $params);
+        if (empty($r)) {
+            return null;
+        }
+        $pid = (int)($r['id'] ?? 0);
+        $side = self::sideTables([$pid]);
+        return self::mapRow(
+            $r,
+            $side['media'][$pid] ?? [],
+            $side['variants'][$pid] ?? [],
+            $side['reviews'][$pid] ?? []
+        );
+    }
+
+    public static function getById(int $id): ?array
+    {
+        return $id > 0 ? self::fetchOneShaped('id = ?', [$id]) : null;
+    }
+
+    public static function getBySlug(string $slug): ?array
+    {
+        $slug = trim($slug);
+        return $slug === '' ? null : self::fetchOneShaped('slug = ?', [$slug]);
+    }
+
+    public static function getBySku(string $sku): ?array
+    {
+        $sku = trim($sku);
+        return $sku === '' ? null : self::fetchOneShaped('sku = ?', [$sku]);
+    }
+
+    public static function getCategories(bool $activeOnly = false): array
+    {
+        $names = [];
+        foreach (self::getCategoriesWithDetails($activeOnly) as $c) {
+            $name = trim((string)($c['name'] ?? ''));
+            if ($name !== '') {
+                $names[] = $name;
+            }
+        }
+        return array_values(array_unique($names));
+    }
+
+    /**
+     * Categories with a real product count.
+     *
+     * categories.products_count is seeded with numbers like 840 and is not
+     * maintained by any write path, so it is ignored: the count is taken from
+     * the products table. Counting by category_id is authoritative, but legacy
+     * rows can carry the DEFAULT category_id of 1 with a different
+     * category_name, so a name count is used as a second chance.
+     */
+    public static function getCategoriesWithDetails(bool $activeOnly = true): array
+    {
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return [];
+        }
+
+        $sql = "SELECT id, name, slug, description, image, banner_image, display_order, status FROM categories";
+        if ($activeOnly) {
+            $sql .= " WHERE status = 'active'";
+        }
+        $sql .= " ORDER BY display_order ASC, id ASC";
+
+        $rows = Database::query($sql);
+        if (empty($rows)) {
+            return [];
+        }
+
+        $byId = [];
+        $byName = [];
+        $grouped = Database::query(
+            "SELECT category_id, category_name, COUNT(*) AS n FROM products
+             WHERE status IN (" . self::PUBLIC_STATUSES . ")
+             GROUP BY category_id, category_name"
+        );
+        foreach ($grouped as $g) {
+            $n = (int)($g['n'] ?? 0);
+            $cid = (int)($g['category_id'] ?? 0);
+            $byId[$cid] = ($byId[$cid] ?? 0) + $n;
+            $cname = strtolower(trim((string)($g['category_name'] ?? '')));
+            if ($cname !== '') {
+                $byName[$cname] = ($byName[$cname] ?? 0) + $n;
+            }
+        }
+
+        $out = [];
+        foreach ($rows as $r) {
+            $id = (int)($r['id'] ?? 0);
+            $name = trim((string)($r['name'] ?? ''));
+            $slug = trim((string)($r['slug'] ?? ''));
+            $img = self::mediaPath($r['image'] ?? '');
+            // The schema DEFAULT points at category-sarees.png and hero-banner.png,
+            // neither of which exists in this docroot, so they mean "no image set".
+            if ($img !== '' && preg_match('#/(category-sarees|hero-banner)\.png$#i', $img)) {
+                $img = '';
+            }
+            $count = $byId[$id] ?? 0;
+            if ($count === 0 && $name !== '') {
+                $count = $byName[strtolower($name)] ?? 0;
+            }
+            if ($count === 0 && $name !== '') {
+                $lname = strtolower($name);
+                if (str_contains($lname, 'lehenga')) {
+                    $count = $byId[2] ?? ($byName['lehenga'] ?? 0);
+                } elseif (str_contains($lname, 'kurti')) {
+                    $count = $byId[4] ?? ($byName['kurti'] ?? 0);
+                } elseif (str_contains($lname, 'saree')) {
+                    $count = $byId[1] ?? ($byName['saree'] ?? 0);
+                }
+            }
+            $out[] = [
+                'id' => $id,
+                'name' => $name,
+                'slug' => $slug !== '' ? $slug : self::slugify($name),
+                'description' => trim((string)($r['description'] ?? '')),
+                'image' => $img !== '' ? $img : self::NO_IMAGE,
+                'has_image' => ($img !== ''),
+                'banner_image' => self::mediaPath($r['banner_image'] ?? ''),
+                'display_order' => (int)($r['display_order'] ?? 0),
+                'status' => trim((string)($r['status'] ?? 'active')),
+                'products_count' => $count
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Get subcategories, optionally filtered by category_id.
+     */
+    public static function getSubcategories(int $categoryId = 0, bool $activeOnly = false): array
+    {
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return [];
+        }
+
+        $sql = "SELECT s.id, s.category_id, s.name, s.slug, s.description, s.status, c.name AS category_name
+                FROM subcategories s
+                LEFT JOIN categories c ON c.id = s.category_id";
+        $where = [];
+        $params = [];
+        if ($categoryId > 0) {
+            $where[] = "s.category_id = :cid";
+            $params['cid'] = $categoryId;
+        }
+        if ($activeOnly) {
+            $where[] = "s.status = 'active'";
+        }
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(" AND ", $where);
+        }
+        $sql .= " ORDER BY s.name ASC";
+
+        return Database::query($sql, $params);
+    }
+
+    public static function getRecommendations(int $currentProductId = 0, int $limit = 4): array
+    {
+        $all = self::getAll();
+        $recommended = array_filter($all, function($p) use ($currentProductId) {
+            return (int)$p['id'] !== $currentProductId;
+        });
+        return array_slice(array_values($recommended), 0, $limit);
+    }
+
+    /**
+     * Approved review rows for one product, newest first.
+     *
+     * The product page used to carry seven reviews hardcoded in PHP -- named
+     * shoppers in named cities, "2 days ago", helpful counts -- shown on every
+     * product regardless of which one was open. Only rows a real buyer left
+     * belong here, so an unreviewed product now shows an empty state.
+     */
+    public static function getReviews(int $productId, int $limit = 24): array
+    {
+        if ($productId <= 0) {
+            return [];
+        }
+        $limit = max(1, min(100, $limit));
+        $rows = Database::query(
+            "SELECT id, customer_name, rating, review_title, review_text, verified_buyer, created_at
+             FROM reviews
+             WHERE product_id = :pid AND status = 'approved'
+             ORDER BY created_at DESC, id DESC
+             LIMIT $limit",
+            ['pid' => $productId]
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            $rating = (int)($r['rating'] ?? 0);
+            $out[] = [
+                'id' => (int)($r['id'] ?? 0),
+                'name' => trim((string)($r['customer_name'] ?? '')),
+                'rating' => max(1, min(5, $rating)),
+                'title' => trim((string)($r['review_title'] ?? '')),
+                'text' => trim((string)($r['review_text'] ?? '')),
+                'verified' => ((int)($r['verified_buyer'] ?? 0) === 1),
+                'created_at' => (string)($r['created_at'] ?? '')
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Star histogram (5..1) over the approved reviews of one product. The page
+     * printed a fixed 88 / 9 / 2 / 1 / 0 split for every product.
+     */
+    public static function reviewBreakdown(int $productId): array
+    {
+        $out = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+        if ($productId <= 0) {
+            return $out;
+        }
+        $rows = Database::query(
+            "SELECT rating, COUNT(*) AS n FROM reviews
+             WHERE product_id = :pid AND status = 'approved' GROUP BY rating",
+            ['pid' => $productId]
+        );
+        foreach ($rows as $r) {
+            $star = (int)($r['rating'] ?? 0);
+            if (isset($out[$star])) {
+                $out[$star] = (int)($r['n'] ?? 0);
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Store a shopper's review. Writes go through api/reviews.php, which already
+     * queues public submissions as 'pending' and only stamps verified_buyer for
+     * an admin; this class deliberately has no second insert path.
+     */
+
+    /**
+     * name => hex_code for every colour in the palette, lowercased keys.
+     *
+     * The storefront pages each carried their own 23-entry hardcoded map of
+     * colour names to hexes ('Navy' => '#1B2A4A', ...). Any colour the mill
+     * actually entered that was not one of those 23 names was painted the same
+     * fallback gold, so two different colours drew identical swatches. The hex
+     * the admin picked in the product form is stored in product_colors.
+     */
+    public static function colorSwatches(): array
+    {
+        if (isset(self::$memo['color_swatches'])) {
+            return self::$memo['color_swatches'];
+        }
+        $swatches = [];
+        foreach (Database::query("SELECT name, hex_code FROM product_colors") as $row) {
+            $name = strtolower(trim((string)($row['name'] ?? '')));
+            $hex = trim((string)($row['hex_code'] ?? ''));
+            if ($name !== '' && preg_match('/^#[0-9a-fA-F]{3,8}$/', $hex)) {
+                $swatches[$name] = $hex;
+            }
+        }
+        self::$memo['color_swatches'] = $swatches;
+        return $swatches;
+    }
+
+    /**
+     * Best available swatch colour for a colour name. Falls back to the brand
+     * gold rather than an invented hue when the palette has no row for it.
+     */
+    public static function colorHex(string $name): string
+    {
+        $swatches = self::colorSwatches();
+        $key = strtolower(trim($name));
+        return $swatches[$key] ?? '#8A681F';
+    }
+
+    /**
+     * Match product category/subcategory against requested filter category (supporting singular/plural & curated aliases).
+     */
+    public static function categoryMatches(array $product, string $wanted): bool
+    {
+        $w = strtolower(trim($wanted));
+        if ($w === '' || $w === 'all') {
+            return true;
+        }
+        $cat = strtolower(trim((string)($product['category'] ?? ($product['category_name'] ?? ''))));
+        $sub = strtolower(trim((string)($product['subcategory'] ?? '')));
+        $title = strtolower(trim((string)($product['title'] ?? ($product['name'] ?? ''))));
+
+        $wNorm = rtrim($w, 's');
+        $cNorm = rtrim($cat, 's');
+        if ($cat === $w || ($cNorm !== '' && $cNorm === $wNorm)) {
+            return true;
+        }
+        if ($sub !== '' && ($sub === $w || str_contains($sub, $wNorm))) {
+            return true;
+        }
+        $aliasGroups = [
+            'saree' => ['saree', 'kanjivaram silk', 'banarasi silk', 'paithani handloom', 'organza tissue', 'patola heritage'],
+            'lehenga' => ['lehenga', 'bridal lehengas', 'bridal'],
+            'kurti' => ['kurti', 'designer kurtis', 'chanderi'],
+            'gown' => ['gown', 'indo-western gown']
+        ];
+        foreach ($aliasGroups as $group) {
+            if (in_array($w, $group, true) || in_array($wNorm, $group, true)) {
+                if (in_array($cat, $group, true) || in_array($cNorm, $group, true)) {
+                    return true;
+                }
+            }
+        }
+        if ($wNorm === 'saree' && (str_contains($cat, 'saree') || str_contains($title, 'saree'))) {
+            return true;
+        }
+        if (str_contains($w, 'bridal') && (str_contains($cat, 'lehenga') || str_contains($title, 'bridal'))) {
+            return true;
+        }
+        if (str_contains($w, 'designer') && str_contains($w, 'kurti') && str_contains($cat, 'kurti')) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function filter(array $criteria = []): array
+    {
+        $all = self::getAll();
+        return array_values(array_filter($all, function ($product) use ($criteria) {
+            // Role-based visibility enforcement
+            $role = strtolower(trim((string)($criteria['role'] ?? ($criteria['user_role'] ?? ''))));
+            if ($role === 'wholesaler') { $role = 'wholesale'; }
+            if ($role === 'retail') { $role = 'customer'; }
+            
+            // Guest, Customer, and Reseller cannot see Full Set products
+            if (in_array($role, ['guest', 'customer', 'reseller'], true)) {
+                if (($product['selling_type'] ?? 'single_piece') === 'full_set') {
+                    return false;
+                }
+            }
+
+            if (!empty($criteria['selling_type']) && ($product['selling_type'] ?? 'single_piece') !== $criteria['selling_type']) {
+                return false;
+            }
+
+            if (!empty($criteria['category']) && !self::categoryMatches($product, (string)$criteria['category'])) {
+                return false;
+            }
+            if (!empty($criteria['color'])) {
+                $wantColor = strtolower(trim((string)$criteria['color']));
+                $pCols = array_map(static fn($c) => strtolower(trim((string)$c)), (array)($product['colors'] ?? []));
+                if (!in_array($wantColor, $pCols, true)) {
+                    return false;
+                }
+            }
+            if (!empty($criteria['size'])) {
+                $wantSize = strtolower(trim((string)$criteria['size']));
+                $pSizes = array_map(static fn($s) => strtolower(trim((string)$s)), (array)($product['size'] ?? []));
+                if (!in_array($wantSize, $pSizes, true)) {
+                    return false;
+                }
+            }
+            if (!empty($criteria['brand']) && strcasecmp((string)($product['brand'] ?? ''), $criteria['brand']) !== 0) {
+                return false;
+            }
+            if (!empty($criteria['fabric']) && strcasecmp($product['fabric'], $criteria['fabric']) !== 0) {
+                return false;
+            }
+            if (!empty($criteria['max_price']) && $product['retail_price'] > (float)$criteria['max_price']) {
+                return false;
+            }
+            if (!empty($criteria['min_price']) && $product['retail_price'] < (float)$criteria['min_price']) {
+                return false;
+            }
+            if (!empty($criteria['search'])) {
+                $term = strtolower($criteria['search']);
+                $title = strtolower($product['title']);
+                $sku = strtolower($product['sku']);
+                $cat = strtolower($product['category']);
+                if (strpos($title, $term) === false && strpos($sku, $term) === false && strpos($cat, $term) === false) {
+                    return false;
+                }
+            }
+            return true;
+        }));
+    }
+
+    /**
+     * Strict Role-Price Masking Helper (Section 7, 8, 12, 32: Zero Role-Price Leakage)
+     * Masks unauthorized prices according to the Master Price Matrix.
+     */
+    public static function maskRolePrices(array &$item, string $role, bool $isAdminUser = false): void
+    {
+        if ($isAdminUser) {
+            return;
+        }
+        $role = strtolower(trim($role));
+        if ($role === 'wholesaler') { $role = 'wholesale'; }
+        if ($role === '' || $role === 'retail') { $role = 'customer'; }
+
+        $item['cost_price'] = null;
+        $item['cost'] = null;
+        $item['margin_amount'] = null;
+        $item['purchase_cost'] = null;
+
+        if ($role === 'guest' || $role === 'customer') {
+            $item['wholesale_price'] = null;
+            $item['wholesale_sale_price'] = null;
+            $item['reseller_price'] = null;
+            $item['reseller_sale_price'] = null;
+            $item['retail_price'] = null;
+            $item['retailer_sale_price'] = null;
+            $item['effective_retail_price'] = null;
+            $item['effective_wholesale_price'] = null;
+            $item['effective_price'] = $item['effective_customer_price'] ?? ($item['price'] ?? 0);
+            $item['boutique_margin'] = null;
+            $item['full_set_retailer_price'] = null;
+            $item['full_set_wholesale_price'] = null;
+            $item['full_set_retailer_sale_price'] = null;
+            $item['full_set_wholesale_sale_price'] = null;
+            $item['effective_full_set_retailer_price'] = null;
+            $item['effective_full_set_wholesale_price'] = null;
+            $item['trade_price'] = $item['price'] ?? ($item['effective_retail_price'] ?? 0);
+            if (!empty($item['variants']) && is_array($item['variants'])) {
+                foreach ($item['variants'] as &$v) {
+                    $v['retail_price'] = null;
+                    $v['retailer_price'] = null;
+                    $v['wholesale_price'] = null;
+                    $v['reseller_price'] = null;
+                    $v['retail_sale_price'] = null;
+                    $v['retailer_sale_price'] = null;
+                    $v['wholesale_sale_price'] = null;
+                    $v['reseller_sale_price'] = null;
+                    $v['full_set_retailer_price'] = null;
+                    $v['full_set_wholesale_price'] = null;
+                    $v['full_set_retailer_sale_price'] = null;
+                    $v['full_set_wholesale_sale_price'] = null;
+                }
+                unset($v);
+            }
+        } elseif ($role === 'reseller') {
+            $item['wholesale_price'] = null;
+            $item['wholesale_sale_price'] = null;
+            $item['retailer_sale_price'] = null;
+            $item['effective_wholesale_price'] = null;
+            $item['customer_price'] = null;
+            $item['customer_sale_price'] = null;
+            $item['effective_customer_price'] = null;
+            $item['boutique_margin'] = null;
+            $item['full_set_retailer_price'] = null;
+            $item['full_set_wholesale_price'] = null;
+            $item['full_set_retailer_sale_price'] = null;
+            $item['full_set_wholesale_sale_price'] = null;
+            $item['effective_full_set_retailer_price'] = null;
+            $item['effective_full_set_wholesale_price'] = null;
+            if (!empty($item['variants']) && is_array($item['variants'])) {
+                foreach ($item['variants'] as &$v) {
+                    $v['wholesale_price'] = null;
+                    $v['wholesale_sale_price'] = null;
+                    $v['customer_price'] = null;
+                    $v['customer_sale_price'] = null;
+                    $v['full_set_retailer_price'] = null;
+                    $v['full_set_wholesale_price'] = null;
+                    $v['full_set_retailer_sale_price'] = null;
+                    $v['full_set_wholesale_sale_price'] = null;
+                }
+                unset($v);
+            }
+        } elseif ($role === 'retailer') {
+            $item['customer_price'] = null;
+            $item['customer_sale_price'] = null;
+            $item['effective_customer_price'] = null;
+            $item['wholesale_price'] = null;
+            $item['wholesale_sale_price'] = null;
+            $item['effective_wholesale_price'] = null;
+            $item['reseller_price'] = null;
+            $item['reseller_sale_price'] = null;
+            $item['effective_reseller_price'] = null;
+            $item['full_set_wholesale_price'] = null;
+            $item['full_set_wholesale_sale_price'] = null;
+            $item['effective_full_set_wholesale_price'] = null;
+            if (!empty($item['variants']) && is_array($item['variants'])) {
+                foreach ($item['variants'] as &$v) {
+                    $v['wholesale_price'] = null;
+                    $v['wholesale_sale_price'] = null;
+                    $v['reseller_price'] = null;
+                    $v['reseller_sale_price'] = null;
+                    $v['customer_price'] = null;
+                    $v['customer_sale_price'] = null;
+                    $v['full_set_wholesale_price'] = null;
+                    $v['full_set_wholesale_sale_price'] = null;
+                }
+                unset($v);
+            }
+        } elseif ($role === 'wholesale') {
+            $item['customer_price'] = null;
+            $item['customer_sale_price'] = null;
+            $item['effective_customer_price'] = null;
+            $item['reseller_price'] = null;
+            $item['reseller_sale_price'] = null;
+            $item['retailer_sale_price'] = null;
+            $item['effective_reseller_price'] = null;
+            $item['full_set_retailer_price'] = null;
+            $item['full_set_retailer_sale_price'] = null;
+            $item['effective_full_set_retailer_price'] = null;
+            if (!empty($item['variants']) && is_array($item['variants'])) {
+                foreach ($item['variants'] as &$v) {
+                    $v['reseller_price'] = null;
+                    $v['reseller_sale_price'] = null;
+                    $v['customer_price'] = null;
+                    $v['customer_sale_price'] = null;
+                    $v['full_set_retailer_price'] = null;
+                    $v['full_set_retailer_sale_price'] = null;
+                }
+                unset($v);
+            }
+        }
+    }
+
+    /**
+     * Get products filtered by user role visibility matrix with masked pricing.
+     */
+    public static function getForRole(string $role = 'guest', array $criteria = []): array
+    {
+        $role = strtolower(trim($role));
+        if ($role === 'wholesaler') { $role = 'wholesale'; }
+        if ($role === '' || $role === 'retail') { $role = 'customer'; }
+        $criteria['role'] = $role;
+        $items = self::filter($criteria);
+
+        $isAdmin = ($role === 'admin');
+        foreach ($items as &$item) {
+            $priceDisplay = self::getPriceDisplay($item, $role);
+            $item['price'] = $priceDisplay['effective_price'];
+            $item['base_price'] = $priceDisplay['base_price'];
+            $item['sale_price'] = $priceDisplay['sale_price'];
+            $item['show_sale'] = $priceDisplay['show_sale'];
+            $item['price_label'] = $priceDisplay['price_label'];
+            $item['effective_price'] = $priceDisplay['effective_price'];
+            $item['is_purchasable'] = $priceDisplay['is_purchasable'];
+            self::maskRolePrices($item, $role, $isAdmin);
+        }
+        unset($item);
+
+        return $items;
+    }
+
+    /**
+     * Resolve the correct price for a product based on user role and product type
+     * MASTER PRICE MATRIX:
+     * 
+     * Single Piece:
+     * - Guest/Customer: Customer Price (fallback: Customer Sale Price, then Retail Price - Sale Discount)
+     * - Retailer: Retail Price (fallback: Retail Price - Sale Discount)
+     * - Reseller: Reseller Price (fallback: Reseller Price - Sale Discount)
+     * - Wholesaler: Wholesale Price (fallback: Wholesale Price - Sale Discount)
+     * 
+     * Full Set:
+     * - Retailer: Full Set Retailer Price (fallback: Full Set Retailer Price - Sale Discount)
+     * - Wholesaler: Full Set Wholesale Price (fallback: Full Set Wholesale Price - Sale Discount)
+     * - Guest/Customer/Reseller: Not purchasable
+     * 
+     * @param array $product Product data from getById/getBySlug/getAll
+     * @param string $role User role: guest, customer, retailer, reseller, wholesale
+     * @return float Effective price per unit (for full set, this is per-piece price)
+     */
+    public static function resolvePrice(array $product, string $role = 'guest'): float
+    {
+        $role = strtolower(trim($role));
+        if ($role === 'wholesaler') { $role = 'wholesale'; }
+        if ($role === '' || $role === 'retail') { $role = 'customer'; }
+        
+        $sellingType = $product['selling_type'] ?? 'single_piece';
+        $saleDisc = (float)($product['sale_price'] ?? $product['sale_discount'] ?? 0);
+        
+        if ($sellingType === 'full_set') {
+            // Full Set: Only Retailer and Wholesaler can purchase
+            if (!in_array($role, ['retailer', 'wholesale'], true)) {
+                return 0; // Not purchasable
+            }
+            if ($role === 'retailer') {
+                $basePrice = (float)($product['full_set_retailer_price'] ?? $product['retail_price'] ?? 0);
+                $salePrice = (float)($product['full_set_retailer_sale_price'] ?? $saleDisc);
+            } else { // wholesale
+                $basePrice = (float)($product['full_set_wholesale_price'] ?? $product['wholesale_price'] ?? $product['retail_price'] ?? 0);
+                $salePrice = (float)($product['full_set_wholesale_sale_price'] ?? $saleDisc);
+            }
+            return max(0, $basePrice - $salePrice);
+        } else {
+            // Single Piece
+            switch ($role) {
+                case 'guest':
+                case 'customer':
+                    // Customer Price > Customer Sale Price > Retail - Sale Discount
+                    if (isset($product['customer_sale_price']) && $product['customer_sale_price'] !== null && (float)$product['customer_sale_price'] > 0) {
+                        return max(0, (float)$product['customer_sale_price']);
+                    }
+                    if (isset($product['customer_price']) && $product['customer_price'] !== null && (float)$product['customer_price'] > 0) {
+                        return max(0, (float)$product['customer_price'] - $saleDisc);
+                    }
+                    return max(0, (float)($product['retail_price'] ?? 0) - $saleDisc);
+                    
+                case 'retailer':
+                    if (isset($product['retailer_sale_price']) && $product['retailer_sale_price'] !== null && (float)$product['retailer_sale_price'] > 0) {
+                        return max(0, (float)$product['retailer_sale_price']);
+                    }
+                    return max(0, (float)($product['retail_price'] ?? 0) - $saleDisc);
+                    
+                case 'reseller':
+                    if (isset($product['reseller_sale_price']) && $product['reseller_sale_price'] !== null && (float)$product['reseller_sale_price'] > 0) {
+                        return max(0, (float)$product['reseller_sale_price']);
+                    }
+                    $resPrice = (float)($product['reseller_price'] ?? 0);
+                    if ($resPrice <= 0) { $resPrice = (float)($product['retail_price'] ?? 0); }
+                    return max(0, $resPrice - $saleDisc);
+                    
+                case 'wholesale':
+                    if (isset($product['wholesale_sale_price']) && $product['wholesale_sale_price'] !== null && (float)$product['wholesale_sale_price'] > 0) {
+                        return max(0, (float)$product['wholesale_sale_price']);
+                    }
+                    $whsPrice = (float)($product['wholesale_price'] ?? 0);
+                    if ($whsPrice <= 0) { $whsPrice = (float)($product['retail_price'] ?? 0); }
+                    return max(0, $whsPrice - $saleDisc);
+                    
+                default:
+                    return max(0, (float)($product['retail_price'] ?? 0) - $saleDisc);
+            }
+        }
+    }
+
+    /**
+     * Get the correct price display fields for a product based on role
+     * Returns array with: base_price, sale_price, effective_price, price_label
+     */
+    public static function getPriceDisplay(array $product, string $role = 'guest'): array
+    {
+        $role = strtolower(trim($role));
+        if ($role === 'wholesaler') { $role = 'wholesale'; }
+        if ($role === '' || $role === 'retail') { $role = 'customer'; }
+        
+        $sellingType = $product['selling_type'] ?? 'single_piece';
+        $saleDisc = (float)($product['sale_price'] ?? $product['sale_discount'] ?? 0);
+        
+        $result = [
+            'base_price' => 0,
+            'sale_price' => $saleDisc,
+            'effective_price' => 0,
+            'price_label' => '',
+            'show_sale' => false,
+            'is_purchasable' => true
+        ];
+        
+        if ($sellingType === 'full_set') {
+            if (!in_array($role, ['retailer', 'wholesale'], true)) {
+                $result['is_purchasable'] = false;
+                $result['price_label'] = 'Trade Only';
+                return $result;
+            }
+            
+            if ($role === 'retailer') {
+                $result['base_price'] = (float)($product['full_set_retailer_price'] ?? $product['retail_price'] ?? 0);
+                $result['sale_price'] = (float)($product['full_set_retailer_sale_price'] ?? $saleDisc);
+                $result['price_label'] = 'Full Set / pc';
+            } else {
+                $result['base_price'] = (float)($product['full_set_wholesale_price'] ?? $product['wholesale_price'] ?? 0);
+                if ($result['base_price'] <= 0) { $result['base_price'] = (float)($product['retail_price'] ?? 0); }
+                $result['sale_price'] = (float)($product['full_set_wholesale_sale_price'] ?? $saleDisc);
+                $result['price_label'] = 'Full Set / pc';
+            }
+        } else {
+            // Single Piece
+            switch ($role) {
+                case 'guest':
+                case 'customer':
+                    $basePrice = (float)($product['customer_price'] ?? $product['retail_price'] ?? 0);
+                    if ($basePrice <= 0) { $basePrice = (float)($product['mrp'] ?? 0); }
+                    $result['base_price'] = $basePrice;
+
+                    if (isset($product['customer_sale_price']) && $product['customer_sale_price'] !== null && (float)$product['customer_sale_price'] > 0) {
+                        $effCust = (float)$product['customer_sale_price'];
+                        $result['effective_price'] = $effCust;
+                        $result['sale_price'] = max(0, $basePrice - $effCust);
+                        $result['show_sale'] = ($basePrice > $effCust);
+                    } elseif ($saleDisc > 0) {
+                        $result['effective_price'] = max(0, $basePrice - $saleDisc);
+                        $result['sale_price'] = $saleDisc;
+                        $result['show_sale'] = ($basePrice > $saleDisc);
+                    } else {
+                        $result['effective_price'] = $basePrice;
+                        $result['sale_price'] = 0;
+                        $result['show_sale'] = false;
+                    }
+                    $result['price_label'] = 'Customer Price';
+                    return $result;
+                    
+                case 'retailer':
+                    $result['base_price'] = (float)($product['retail_price'] ?? 0);
+                    if (isset($product['retailer_sale_price']) && $product['retailer_sale_price'] !== null && (float)$product['retailer_sale_price'] > 0) {
+                        $eff = (float)$product['retailer_sale_price'];
+                        $result['effective_price'] = $eff;
+                        $result['sale_price'] = max(0, $result['base_price'] - $eff);
+                        $result['show_sale'] = ($result['base_price'] > $eff);
+                        $result['price_label'] = 'Retail Price';
+                        return $result;
+                    }
+                    $result['price_label'] = 'Retail Price';
+                    break;
+                    
+                case 'reseller':
+                    $result['base_price'] = (float)($product['reseller_price'] ?? 0);
+                    if ($result['base_price'] <= 0) { $result['base_price'] = (float)($product['retail_price'] ?? 0); }
+                    if (isset($product['reseller_sale_price']) && $product['reseller_sale_price'] !== null && (float)$product['reseller_sale_price'] > 0) {
+                        $eff = (float)$product['reseller_sale_price'];
+                        $result['effective_price'] = $eff;
+                        $result['sale_price'] = max(0, $result['base_price'] - $eff);
+                        $result['show_sale'] = ($result['base_price'] > $eff);
+                        $result['price_label'] = 'Reseller Price';
+                        return $result;
+                    }
+                    $result['price_label'] = 'Reseller Price';
+                    break;
+                    
+                case 'wholesale':
+                    $result['base_price'] = (float)($product['wholesale_price'] ?? 0);
+                    if ($result['base_price'] <= 0) { $result['base_price'] = (float)($product['retail_price'] ?? 0); }
+                    if (isset($product['wholesale_sale_price']) && $product['wholesale_sale_price'] !== null && (float)$product['wholesale_sale_price'] > 0) {
+                        $eff = (float)$product['wholesale_sale_price'];
+                        $result['effective_price'] = $eff;
+                        $result['sale_price'] = max(0, $result['base_price'] - $eff);
+                        $result['show_sale'] = ($result['base_price'] > $eff);
+                        $result['price_label'] = 'Wholesale Price';
+                        return $result;
+                    }
+                    $result['price_label'] = 'Wholesale Price';
+                    break;
+            }
+        }
+        
+        $result['effective_price'] = max(0, $result['base_price'] - $result['sale_price']);
+        $result['show_sale'] = $result['sale_price'] > 0 && $result['base_price'] > $result['sale_price'];
+        
+        return $result;
+    }
+
+    /**
+     * Calculate Wholesaler MCQ (Minimum Commitment Quantity) for Single Piece
+     * Formula: Available Colors × Available Sizes
+     * According to Section 6 of the Master Specification.
+     */
+    public static function calculateWholesalerMcq(array $product): array
+    {
+        $variants = $product['variants'] ?? [];
+        $validVariants = array_filter($variants, static function ($v) {
+            // Master Spec V2 Section 4: Do not count disabled, deleted, or inactive variants
+            if (isset($v['status']) && in_array(strtolower(trim((string)$v['status'])), ['disabled', 'inactive', 'draft', 'archived', 'deleted'], true)) {
+                return false;
+            }
+            if (isset($v['is_active']) && empty($v['is_active']) && $v['is_active'] !== 'active') {
+                return false;
+            }
+            if (isset($v['is_deleted']) && !empty($v['is_deleted'])) {
+                return false;
+            }
+            if (!empty($v['deleted_at'])) {
+                return false;
+            }
+            $c = trim((string)($v['color'] ?? $v['color_name'] ?? ''));
+            $s = trim((string)($v['size'] ?? $v['size_name'] ?? ''));
+            return $c !== '' || $s !== '';
+        });
+        
+        $colors = array_values(array_filter(array_unique(array_map(static function($v) {
+            return trim((string)($v['color'] ?? $v['color_name'] ?? ''));
+        }, $validVariants))));
+
+        $sizes = array_values(array_filter(array_unique(array_map(static function($v) {
+            return trim((string)($v['size'] ?? $v['size_name'] ?? ''));
+        }, $validVariants))));
+
+        if (empty($colors) && !empty($product['colors'])) {
+            if (is_array($product['colors'])) {
+                $colors = array_values(array_filter(array_unique(array_map('trim', $product['colors']))));
+            } else {
+                $colors = array_values(array_filter(array_unique(array_map('trim', explode(',', (string)$product['colors'])))));
+            }
+        }
+
+        if (empty($sizes) && (!empty($product['size']) || !empty($product['sizes']))) {
+            $rawSizes = !empty($product['size']) ? $product['size'] : $product['sizes'];
+            if (is_array($rawSizes)) {
+                $sizes = array_values(array_filter(array_unique(array_map('trim', $rawSizes))));
+            } else {
+                $sizes = array_values(array_filter(array_unique(array_map('trim', explode(',', (string)$rawSizes)))));
+            }
+        }
+        
+        $colorCount = count($colors);
+        $sizeCount = count($sizes);
+
+        if ($colorCount > 0 && $sizeCount > 0) {
+            $mcq = $colorCount * $sizeCount;
+        } elseif ($colorCount > 0) {
+            $mcq = $colorCount;
+        } elseif ($sizeCount > 0) {
+            $mcq = $sizeCount;
+        } else {
+            $mcq = max(1, count($validVariants));
+        }
+        
+        return [
+            'mcq' => $mcq,
+            'colors' => $colors,
+            'sizes' => $sizes,
+            'color_count' => $colorCount,
+            'size_count' => $sizeCount,
+            'variants' => array_values($validVariants)
+        ];
+    }
+
+    // ─── Write helpers ──────────────────────────────────────────────────────
+
+    /** The four values products.status may hold. */
+    private const VALID_STATUSES = ['in_stock', 'low_stock', 'out_of_stock', 'draft'];
+
+    /** 
+     * Normalise a submitted status to the ENUM, or '' when unrecognised.
+     * @param mixed $raw
+     */
+    private static function normaliseStatus($raw): string
+    {
+        $st = str_replace([' ', '-'], '_', strtolower(trim((string)$raw)));
+        if ($st === 'published' || $st === 'active') {
+            $st = 'in_stock'; // legacy alias for a live product
+        }
+        return in_array($st, self::VALID_STATUSES, true) ? $st : '';
+    }
+
+    /**
+     * Accept a media URL for storage, or '' when it is not storable.
+     * A base64 data URL is rejected outright: primary_image is VARCHAR(255),
+     * so storing one truncates it into a permanently broken image.
+     * @param mixed $raw
+     */
+    private static function storableMedia($raw): string
+    {
+        $p = trim((string)$raw);
+        if ($p === '' || stripos($p, 'data:') === 0 || $p === 'null' || $p === 'undefined') {
+            return '';
+        }
+        $p = str_replace('/assets/images/', '/assets/images/', $p);
+        if (stripos($p, 'http://') !== 0 && stripos($p, 'https://') !== 0 && $p[0] !== '/') {
+            $p = '/' . $p;
+        }
+        return strlen($p) > 255 ? '' : $p;
+    }
+
+    /** 
+     * Resolve a submitted category to a real categories row where one exists.
+     * @param mixed $idRaw
+     * @param mixed $nameRaw
+     */
+    private static function resolveCategory($idRaw, $nameRaw): array
+    {
+        $id = (int)$idRaw;
+        $name = trim((string)$nameRaw);
+
+        if ($id > 0) {
+            $row = Database::fetchOne("SELECT id, name FROM categories WHERE id = ? LIMIT 1", [$id]);
+            if (!empty($row)) {
+                return ['id' => (int)$row['id'], 'name' => trim((string)$row['name'])];
+            }
+        }
+        if ($name !== '') {
+            $row = Database::fetchOne("SELECT id, name FROM categories WHERE name = ? LIMIT 1", [$name]);
+            if (!empty($row)) {
+                return ['id' => (int)$row['id'], 'name' => trim((string)$row['name'])];
+            }
+            $row = Database::fetchOne("SELECT id, name FROM categories WHERE slug = ? LIMIT 1", [self::slugify($name)]);
+            if (!empty($row)) {
+                return ['id' => (int)$row['id'], 'name' => trim((string)$row['name'])];
+            }
+        }
+        // No matching row: keep the typed name and leave category_id at 0 rather
+        // than pinning it to 1, which used to file every new product under
+        // whatever category happened to be first.
+        return ['id' => 0, 'name' => $name];
+    }
+
+    /** 
+     * Resolve a submitted subcategory to a real subcategories row where one exists.
+     * @param mixed $idRaw
+     * @param mixed $nameRaw
+     * @param int $categoryId
+     */
+    public static function resolveSubcategory($idRaw, $nameRaw, int $categoryId = 0): array
+    {
+        $id = (int)$idRaw;
+        $name = trim((string)$nameRaw);
+
+        if ($id > 0) {
+            $row = Database::fetchOne("SELECT id, name, category_id FROM subcategories WHERE id = ? LIMIT 1", [$id]);
+            if (!empty($row)) {
+                return ['id' => (int)$row['id'], 'name' => trim((string)$row['name']), 'category_id' => (int)($row['category_id'] ?? 0)];
+            }
+        }
+        if ($name !== '') {
+            $sql = "SELECT id, name, category_id FROM subcategories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))";
+            $params = [$name];
+            if ($categoryId > 0) {
+                $sql .= " AND category_id = ?";
+                $params[] = $categoryId;
+            }
+            $sql .= " LIMIT 1";
+            $row = Database::fetchOne($sql, $params);
+            if (!empty($row)) {
+                return ['id' => (int)$row['id'], 'name' => trim((string)$row['name']), 'category_id' => (int)($row['category_id'] ?? 0)];
+            }
+            if ($categoryId > 0) {
+                $rowAny = Database::fetchOne("SELECT id, name, category_id FROM subcategories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1", [$name]);
+                if (!empty($rowAny)) {
+                    return ['id' => (int)$rowAny['id'], 'name' => trim((string)$rowAny['name']), 'category_id' => (int)($rowAny['category_id'] ?? 0)];
+                }
+            }
+            $slug = self::slugify($name);
+            $rowSlug = Database::fetchOne("SELECT id, name, category_id FROM subcategories WHERE slug = ? LIMIT 1", [$slug]);
+            if (!empty($rowSlug)) {
+                return ['id' => (int)$rowSlug['id'], 'name' => trim((string)$rowSlug['name']), 'category_id' => (int)($rowSlug['category_id'] ?? 0)];
+            }
+        }
+        return ['id' => 0, 'name' => $name, 'category_id' => $categoryId];
+    }
+
+    /** Pull the gallery / video / embed lists out of a submitted payload. */
+    private static function readMediaPayload(array $data): array
+    {
+        $raw = [];
+        foreach (['gallery', 'images', 'media', 'videos', 'video', 'embeds', 'embed'] as $k) {
+            if (!isset($data[$k])) {
+                continue;
+            }
+            $v = $data[$k];
+            if (is_string($v)) {
+                $decoded = json_decode($v, true);
+                $v = is_array($decoded) ? $decoded : array_filter(array_map('trim', explode(',', $v)));
+            }
+            if (is_array($v)) {
+                foreach ($v as $item) {
+                    $raw[] = is_array($item) ? ($item['url'] ?? $item['src'] ?? '') : $item;
+                }
+            }
+        }
+
+        $images = [];
+        $videos = [];
+        $embeds = [];
+        foreach ($raw as $item) {
+            $url = self::storableMedia($item);
+            if ($url === '') {
+                continue;
+            }
+            // An embed link is checked before the extension test: a YouTube URL
+            // has no file extension, so it would otherwise be stored as a photo.
+            // It is only kept when it can actually be turned into a player URL,
+            // so an unusable link is refused at the door instead of becoming an
+            // iframe that renders an error page.
+            if (self::isEmbed($url)) {
+                if (self::embedUrl($url) !== '' && !in_array($url, $embeds, true)) {
+                    $embeds[] = $url;
+                }
+            } elseif (self::isVideo($url)) {
+                if (!in_array($url, $videos, true)) {
+                    $videos[] = $url;
+                }
+            } elseif (!in_array($url, $images, true)) {
+                $images[] = $url;
+            }
+        }
+        return ['images' => $images, 'videos' => $videos, 'embeds' => $embeds];
+    }
+
+    /** Decode a variants payload that may arrive as an array or a JSON string. */
+    private static function readVariantsPayload(array $data): ?array
+    {
+        if (!array_key_exists('variants', $data)) {
+            return null;
+        }
+        $v = $data['variants'];
+        if (is_string($v)) {
+            $v = json_decode($v, true);
+        }
+        return is_array($v) ? $v : [];
+    }
+
+    /**
+     * Replace this product's product_media rows with exactly what was submitted.
+     * Only ever called when the payload carried a media key, so a partial update
+     * such as a quick stock edit cannot silently wipe a product's photos.
+     */
+    private static function syncMedia(int $pid, string $primary, array $images, array $videos, array $embeds = []): void
+    {
+        if ($pid <= 0) {
+            return;
+        }
+        Database::execute("DELETE FROM product_media WHERE product_id = ?", [$pid]);
+
+        $ordered = [];
+        if ($primary !== '' && !self::isVideo($primary) && !self::isEmbed($primary)) {
+            $ordered[] = $primary;
+        }
+        foreach (array_merge($images, $videos, $embeds) as $u) {
+            if (!in_array($u, $ordered, true)) {
+                $ordered[] = $u;
+            }
+        }
+
+        $sort = 0;
+        foreach ($ordered as $u) {
+            // is_primary marks the thumbnail, so it may only land on a photo.
+            // A video or an embed carrying the flag would make the product card
+            // try to render a clip inside an <img> tag.
+            $isPrimary = ($sort === 0 && !self::isVideo($u) && !self::isEmbed($u)) ? 1 : 0;
+            Database::execute(
+                "INSERT INTO product_media (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)",
+                [$pid, $u, $isPrimary, $sort]
+            );
+            $sort++;
+        }
+    }
+
+    /**
+     * Keep the global palettes in step with what products actually use, so the
+     * colour and size admin pages list real values instead of an empty table.
+     */
+    private static function registerPaletteColor(string $name, string $hex): ?int
+    {
+        if ($name === '') {
+            return null;
+        }
+        $row = Database::fetchOne("SELECT id FROM product_colors WHERE name = ? LIMIT 1", [$name]);
+        if (!empty($row)) {
+            return (int)$row['id'];
+        }
+        $hex = preg_match('/^#[0-9a-fA-F]{3,8}$/', $hex) ? $hex : '#8A681F';
+        if (Database::execute(
+            "INSERT INTO product_colors (name, hex_code, status) VALUES (?, ?, 'active')",
+            [mb_substr($name, 0, 50), mb_substr($hex, 0, 10)]
+        )) {
+            return (int)Database::lastInsertId();
+        }
+        return null;
+    }
+
+    private static function registerPaletteSize(string $name): ?int
+    {
+        if ($name === '') {
+            return null;
+        }
+        $row = Database::fetchOne("SELECT id FROM product_sizes WHERE name = ? LIMIT 1", [$name]);
+        if (!empty($row)) {
+            return (int)$row['id'];
+        }
+        if (Database::execute(
+            "INSERT INTO product_sizes (name, status) VALUES (?, 'active')",
+            [mb_substr($name, 0, 50)]
+        )) {
+            return (int)Database::lastInsertId();
+        }
+        return null;
+    }
+
+    /**
+     * Replace this product's product_variants rows. These are the only place the
+     * schema can hold a per-product colour or size: product_colors and
+     * product_sizes have no product_id column.
+     */
+    private static function syncVariants(int $pid, array $variants, string $baseSku): int
+    {
+        if ($pid <= 0) {
+            return 0;
+        }
+        Database::execute("DELETE FROM product_variants WHERE product_id = ?", [$pid]);
+
+        $written = 0;
+        $seen = [];
+        foreach ($variants as $i => $v) {
+            if (!is_array($v)) {
+                continue;
+            }
+            $color = trim((string)($v['color'] ?? $v['color_name'] ?? ''));
+            $size = trim((string)($v['size'] ?? $v['size_name'] ?? ''));
+            if ($color === '' && $size === '') {
+                continue;
+            }
+            $key = strtolower($color . '|' . $size);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $sku = trim((string)($v['sku'] ?? ''));
+            if ($sku === '') {
+                $tail = self::slugify($color . '-' . $size);
+                $sku = strtoupper(($baseSku !== '' ? $baseSku : 'DT') . '-'
+                    . ($tail !== '' ? substr($tail, 0, 14) : ('V' . ($i + 1))));
+            }
+            $stock = (int)($v['stock_qty'] ?? $v['stock'] ?? 0);
+            $vImg = self::storableMedia($v['image'] ?? '');
+            $sellingType = ($v['selling_type'] ?? 'single_piece') === 'full_set' ? 'full_set' : 'single_piece';
+
+            // Single Piece Price Fields
+            $retailPrice = (isset($v['retail_price']) && $v['retail_price'] !== '' && (float)$v['retail_price'] > 0) ? (float)$v['retail_price'] : ((isset($v['retailer_price']) && $v['retailer_price'] !== '' && (float)$v['retailer_price'] > 0) ? (float)$v['retailer_price'] : null);
+            $wholesalePrice = (isset($v['wholesale_price']) && $v['wholesale_price'] !== '' && (float)$v['wholesale_price'] > 0) ? (float)$v['wholesale_price'] : null;
+            $resellerPrice = (isset($v['reseller_price']) && $v['reseller_price'] !== '' && (float)$v['reseller_price'] > 0) ? (float)$v['reseller_price'] : null;
+            $price = (isset($v['price']) && $v['price'] !== '' && (float)$v['price'] > 0) ? (float)$v['price'] : $retailPrice;
+
+            // Single Piece Sale Price Fields
+            $retailSalePrice = (isset($v['retail_sale_price']) && $v['retail_sale_price'] !== '' && (float)$v['retail_sale_price'] > 0) ? (float)$v['retail_sale_price'] : ((isset($v['retailer_sale_price']) && $v['retailer_sale_price'] !== '' && (float)$v['retailer_sale_price'] > 0) ? (float)$v['retailer_sale_price'] : null);
+            $wholesaleSalePrice = (isset($v['wholesale_sale_price']) && $v['wholesale_sale_price'] !== '' && (float)$v['wholesale_sale_price'] > 0) ? (float)$v['wholesale_sale_price'] : null;
+            $resellerSalePrice = (isset($v['reseller_sale_price']) && $v['reseller_sale_price'] !== '' && (float)$v['reseller_sale_price'] > 0) ? (float)$v['reseller_sale_price'] : null;
+
+            // Customer Price Fields
+            $customerPrice = (isset($v['customer_price']) && $v['customer_price'] !== '' && (float)$v['customer_price'] > 0) ? (float)$v['customer_price'] : null;
+            $customerSalePrice = (isset($v['customer_sale_price']) && $v['customer_sale_price'] !== '' && (float)$v['customer_sale_price'] > 0) ? (float)$v['customer_sale_price'] : null;
+
+            // Full Set Price Fields
+            $fullSetRetailerPrice = (isset($v['full_set_retailer_price']) && $v['full_set_retailer_price'] !== '' && (float)$v['full_set_retailer_price'] > 0) ? (float)$v['full_set_retailer_price'] : null;
+            $fullSetWholesalePrice = (isset($v['full_set_wholesale_price']) && $v['full_set_wholesale_price'] !== '' && (float)$v['full_set_wholesale_price'] > 0) ? (float)$v['full_set_wholesale_price'] : null;
+            $fullSetRetailerSalePrice = (isset($v['full_set_retailer_sale_price']) && $v['full_set_retailer_sale_price'] !== '' && (float)$v['full_set_retailer_sale_price'] > 0) ? (float)$v['full_set_retailer_sale_price'] : null;
+            $fullSetWholesaleSalePrice = (isset($v['full_set_wholesale_sale_price']) && $v['full_set_wholesale_sale_price'] !== '' && (float)$v['full_set_wholesale_sale_price'] > 0) ? (float)$v['full_set_wholesale_sale_price'] : null;
+
+            $ok = Database::execute(
+                "INSERT INTO product_variants
+                 (product_id, color_id, color_name, size_id, size_name, sku, stock_qty, price,
+                  retail_price, retailer_price, wholesale_price, reseller_price,
+                  retail_sale_price, retailer_sale_price, wholesale_sale_price, reseller_sale_price,
+                  customer_price, customer_sale_price,
+                  full_set_retailer_price, full_set_wholesale_price,
+                  full_set_retailer_sale_price, full_set_wholesale_sale_price,
+                  selling_type, image)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    $pid,
+                    self::registerPaletteColor($color, trim((string)($v['hex'] ?? $v['hex_code'] ?? ''))),
+                    $color !== '' ? mb_substr($color, 0, 50) : null,
+                    self::registerPaletteSize($size),
+                    $size !== '' ? mb_substr($size, 0, 50) : null,
+                    mb_substr($sku, 0, 50),
+                    max(0, $stock),
+                    $price,
+                    $retailPrice,
+                    $retailPrice,
+                    $wholesalePrice,
+                    $resellerPrice,
+                    $retailSalePrice,
+                    $retailSalePrice,
+                    $wholesaleSalePrice,
+                    $resellerSalePrice,
+                    $customerPrice,
+                    $customerSalePrice,
+                    $fullSetRetailerPrice,
+                    $fullSetWholesalePrice,
+                    $fullSetRetailerSalePrice,
+                    $fullSetWholesaleSalePrice,
+                    $sellingType,
+                    $vImg !== '' ? $vImg : null
+                ]
+            );
+            if ($ok) {
+                $written++;
+            }
+        }
+        return $written;
+    }
+
+    /** First free variant of a slug, so two products cannot collide on it. */
+    private static function uniqueSlug(string $slug, int $ignoreId = 0): string
+    {
+        $slug = $slug !== '' ? $slug : 'product';
+        $base = mb_substr($slug, 0, 200);
+        $try = $base;
+        for ($n = 2; $n < 200; $n++) {
+            $row = Database::fetchOne(
+                "SELECT id FROM products WHERE slug = ? AND id <> ? LIMIT 1",
+                [$try, $ignoreId]
+            );
+            if (empty($row)) {
+                return $try;
+            }
+            $try = $base . '-' . $n;
+        }
+        return $base . '-' . time();
+    }
+
+    /** First free variant of a SKU. */
+    private static function uniqueSku(string $sku, int $ignoreId = 0): string
+    {
+        $sku = $sku !== '' ? $sku : ('DT-' . strtoupper(bin2hex(random_bytes(3))));
+        $base = mb_substr($sku, 0, 40);
+        $try = $base;
+        for ($n = 2; $n < 200; $n++) {
+            $row = Database::fetchOne(
+                "SELECT id FROM products WHERE sku = ? AND id <> ? LIMIT 1",
+                [$try, $ignoreId]
+            );
+            if (empty($row)) {
+                return $try;
+            }
+            $try = $base . '-' . $n;
+        }
+        return $base . '-' . strtoupper(bin2hex(random_bytes(2)));
+    }
+
+
+    /**
+     * Create a product from an admin submission.
+     *
+     * Nothing here is invented. The old version defaulted an absent price to
+     * 6500/4899/1399, an absent category to 'Silk Sarees' and an absent photo to
+     * product1.png - so a half-filled form produced a plausible-looking product
+     * that described nothing real. Missing required values are now reported back.
+     */
+    public static function create(array $data): array
+    {
+        $title = trim((string)($data['title'] ?? $data['name'] ?? ''));
+        if ($title === '') {
+            return ['success' => false, 'message' => 'Product title is required.'];
+        }
+
+        $retail = (float)($data['retail_price'] ?? $data['price'] ?? 0);
+        if ($retail <= 0) {
+            return ['success' => false, 'message' => 'A selling price is required — enter the retail price.'];
+        }
+        $mrp = (float)($data['mrp'] ?? 0);
+        if ($mrp <= 0) {
+            $mrp = $retail; // no MRP entered means no strike-through, not a fake one
+        }
+        // An absent trade price means "no trade discount yet", not zero: a 0
+        // would put the product on the wholesale page at no charge.
+        $wholesale = (float)($data['wholesale_price'] ?? 0);
+        if ($wholesale <= 0) {
+            $wholesale = $retail;
+        }
+        $reseller = (float)($data['reseller_price'] ?? 0);
+        if ($reseller <= 0) {
+            $reseller = $retail;
+        }
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return ['success' => false, 'message' => 'The database is not reachable, so the product was not saved. Nothing was created.'];
+        }
+
+        $cat = self::resolveCategory($data['category_id'] ?? 0, $data['category'] ?? $data['category_name'] ?? '');
+        $subCat = self::resolveSubcategory($data['subcategory_id'] ?? 0, $data['subcategory'] ?? $data['subcategory_name'] ?? '', (int)($cat['id'] ?? 0));
+        $sku = self::uniqueSku(trim((string)($data['sku'] ?? '')));
+        $slug = self::uniqueSlug(self::slugify((string)($data['slug'] ?? '')) ?: self::slugify($title));
+        $status = self::normaliseStatus($data['status'] ?? '') ?: 'in_stock';
+
+        $media = self::readMediaPayload($data);
+        $primary = self::storableMedia($data['primary_image'] ?? $data['image'] ?? '');
+        if ($primary === '' && !empty($media['images'])) {
+            $primary = $media['images'][0];
+        }
+
+        $sellingType = (isset($data['selling_type']) && $data['selling_type'] === 'full_set') ? 'full_set' : 'single_piece';
+        $custPrice = ($sellingType === 'single_piece' && isset($data['customer_price']) && (float)$data['customer_price'] > 0)
+            ? (float)$data['customer_price'] : null;
+        $custSalePrice = ($sellingType === 'single_piece' && isset($data['customer_sale_price']) && (float)$data['customer_sale_price'] > 0)
+            ? (float)$data['customer_sale_price'] : null;
+        $salePrice = isset($data['sale_price']) ? max(0, (float)$data['sale_price']) : (isset($data['sale_discount']) ? max(0, (float)$data['sale_discount']) : 0.0);
+
+        $retailerSalePrice = isset($data['retailer_sale_price']) && (float)$data['retailer_sale_price'] > 0 ? (float)$data['retailer_sale_price'] : null;
+        $resellerSalePrice = ($sellingType === 'single_piece' && isset($data['reseller_sale_price']) && (float)$data['reseller_sale_price'] > 0) ? (float)$data['reseller_sale_price'] : null;
+        $wholesaleSalePrice = isset($data['wholesale_sale_price']) && (float)$data['wholesale_sale_price'] > 0 ? (float)$data['wholesale_sale_price'] : null;
+
+        $fullSetRetailerPrice = isset($data['full_set_retailer_price']) && (float)$data['full_set_retailer_price'] > 0 ? (float)$data['full_set_retailer_price'] : ($sellingType === 'full_set' ? $retail : null);
+        $fullSetRetailerSalePrice = isset($data['full_set_retailer_sale_price']) && (float)$data['full_set_retailer_sale_price'] > 0 ? (float)$data['full_set_retailer_sale_price'] : null;
+        $fullSetWholesalePrice = isset($data['full_set_wholesale_price']) && (float)$data['full_set_wholesale_price'] > 0 ? (float)$data['full_set_wholesale_price'] : ($sellingType === 'full_set' ? ($wholesale > 0 ? $wholesale : $retail) : null);
+        $fullSetWholesaleSalePrice = isset($data['full_set_wholesale_sale_price']) && (float)$data['full_set_wholesale_sale_price'] > 0 ? (float)$data['full_set_wholesale_sale_price'] : null;
+
+        if ($sellingType === 'full_set') {
+            $custPrice = null;
+            $custSalePrice = null;
+            $reseller = null;
+            $resellerSalePrice = null;
+        }
+
+        $tableCols = self::getProductTableColumns();
+        $cols = [
+            'sku' => $sku,
+            'title' => $title,
+            'slug' => $slug,
+            'category_id' => $cat['id'],
+            'category_name' => $cat['name'],
+            'fabric' => mb_substr(trim((string)($data['fabric'] ?? '')), 0, 100),
+            'weave' => mb_substr(trim((string)($data['weave'] ?? '')), 0, 100),
+            'zari_type' => mb_substr(trim((string)($data['zari_type'] ?? '')), 0, 100),
+            'pallu_style' => mb_substr(trim((string)($data['pallu_style'] ?? $data['border'] ?? '')), 0, 100),
+            'blouse_piece' => mb_substr(trim((string)($data['blouse_piece'] ?? $data['blouse'] ?? '')), 0, 100),
+            'occasion' => mb_substr(trim((string)($data['occasion'] ?? '')), 0, 100),
+            'mrp' => $mrp,
+            'retail_price' => $retail,
+            'customer_price' => $custPrice,
+            'customer_sale_price' => $custSalePrice,
+            'sale_price' => $salePrice,
+            'wholesale_price' => $wholesale,
+            'reseller_price' => $reseller,
+            'moq_single' => max(1, (int)($data['moq_single'] ?? 1)),
+            'moq_half_set' => max(0, (int)($data['moq_half_set'] ?? 0)),
+            'moq_full_set' => max(0, (int)($data['moq_full_set'] ?? $data['moq'] ?? 0)),
+            'moq_master_bale' => max(0, (int)($data['moq_master_bale'] ?? 0)),
+            'stock_qty' => max(0, (int)($data['stock_qty'] ?? 0)),
+            'rating' => 0,
+            'reviews_count' => 0,
+            'primary_image' => $primary,
+            'badge' => mb_substr(trim((string)($data['badge'] ?? '')), 0, 50),
+            'is_featured' => !empty($data['is_featured']) ? 1 : 0,
+            'is_bestseller' => !empty($data['is_bestseller']) ? 1 : 0,
+            'status' => $status,
+            'selling_type' => $sellingType,
+            'description' => trim((string)($data['description'] ?? ''))
+        ];
+
+        $extraCols = [
+            'retailer_sale_price' => $retailerSalePrice,
+            'reseller_sale_price' => $resellerSalePrice,
+            'wholesale_sale_price' => $wholesaleSalePrice,
+            'full_set_retailer_price' => $fullSetRetailerPrice,
+            'full_set_retailer_sale_price' => $fullSetRetailerSalePrice,
+            'full_set_wholesale_price' => $fullSetWholesalePrice,
+            'full_set_wholesale_sale_price' => $fullSetWholesaleSalePrice,
+        ];
+        foreach ($extraCols as $k => $v) {
+            if (!empty($tableCols) && isset($tableCols[$k])) {
+                $cols[$k] = $v;
+            }
+        }
+        if (!empty($tableCols) && isset($tableCols['subcategory_id'])) {
+            $cols['subcategory_id'] = $subCat['id'] > 0 ? $subCat['id'] : null;
+        }
+        if (!empty($tableCols) && isset($tableCols['subcategory'])) {
+            $cols['subcategory'] = $subCat['name'] !== '' ? mb_substr($subCat['name'], 0, 100) : null;
+        }
+
+        try {
+            $colNames = array_keys($cols);
+            $placeholders = array_fill(0, count($colNames), '?');
+            $sql = "INSERT INTO products (" . implode(', ', $colNames) . ", created_at) VALUES (" . implode(', ', $placeholders) . ", NOW())";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array_values($cols));
+            $newId = (int)$pdo->lastInsertId();
+            if ($newId <= 0) {
+                return ['success' => false, 'message' => 'The product row was not written. Nothing was created.'];
+            }
+
+            self::syncMedia($newId, $primary, $media['images'], $media['videos'], $media['embeds']);
+            $variants = self::readVariantsPayload($data);
+            $variantCount = $variants === null ? 0 : self::syncVariants($newId, $variants, $sku);
+            self::invalidateCache();
+
+            $parts = [];
+            $photoCount = count($media['images']) + ($primary !== '' && !in_array($primary, $media['images'], true) ? 1 : 0);
+            if ($photoCount > 0) {
+                $parts[] = $photoCount . ' photo' . ($photoCount === 1 ? '' : 's');
+            }
+            if (!empty($media['videos'])) {
+                $parts[] = count($media['videos']) . ' video' . (count($media['videos']) === 1 ? '' : 's');
+            }
+            if (!empty($media['embeds'])) {
+                $parts[] = count($media['embeds']) . ' video link' . (count($media['embeds']) === 1 ? '' : 's');
+            }
+            if ($variantCount > 0) {
+                $parts[] = $variantCount . ' variant' . ($variantCount === 1 ? '' : 's');
+            }
+
+            return [
+                'success' => true,
+                'id' => $newId,
+                'sku' => $sku,
+                'slug' => $slug,
+                'photos' => $photoCount,
+                'videos' => count($media['videos']),
+                'variants' => $variantCount,
+                'message' => 'Product #' . $newId . ' saved'
+                    . ($parts ? ' with ' . implode(', ', $parts) . '.' : '. No photo was attached, so the catalogue will show a "no photo" placeholder.')
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Update an existing product.
+     *
+     * Every column the admin form can edit is handled here.
+     */
+    public static function update(int $id, array $data): array
+    {
+        if ($id <= 0) {
+            return ['success' => false, 'message' => 'Invalid product ID.'];
+        }
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return ['success' => false, 'message' => 'The database is not reachable, so nothing was changed.'];
+        }
+
+        $fields = [];
+        $params = [];
+        $add = static function (string $col, $val) use (&$fields, &$params): void {
+            $fields[] = $col . ' = ?';
+            $params[] = $val;
+        };
+
+        if (isset($data['title']) || isset($data['name'])) {
+            $t = trim((string)($data['title'] ?? $data['name']));
+            if ($t === '') {
+                return ['success' => false, 'message' => 'Product title cannot be empty.'];
+            }
+            $add('title', mb_substr($t, 0, 255));
+        }
+        if (isset($data['sku'])) {
+            $sku = trim((string)$data['sku']);
+            if ($sku !== '') {
+                $add('sku', self::uniqueSku($sku, $id));
+            }
+        }
+        if (isset($data['slug'])) {
+            $slug = self::slugify((string)$data['slug']);
+            if ($slug !== '') {
+                $add('slug', self::uniqueSlug($slug, $id));
+            }
+        }
+
+        $tableCols = self::getProductTableColumns();
+
+        if (isset($data['selling_type'])) {
+            $st = ($data['selling_type'] === 'full_set') ? 'full_set' : 'single_piece';
+            $add('selling_type', $st);
+            if ($st === 'full_set') {
+                $add('customer_price', null);
+                $add('customer_sale_price', null);
+                $add('reseller_price', null);
+                if (!empty($tableCols) && isset($tableCols['reseller_sale_price'])) {
+                    $add('reseller_sale_price', null);
+                }
+            } else {
+                if (!empty($tableCols) && isset($tableCols['full_set_retailer_price'])) {
+                    $add('full_set_retailer_price', null);
+                }
+                if (!empty($tableCols) && isset($tableCols['full_set_retailer_sale_price'])) {
+                    $add('full_set_retailer_sale_price', null);
+                }
+                if (!empty($tableCols) && isset($tableCols['full_set_wholesale_price'])) {
+                    $add('full_set_wholesale_price', null);
+                }
+                if (!empty($tableCols) && isset($tableCols['full_set_wholesale_sale_price'])) {
+                    $add('full_set_wholesale_sale_price', null);
+                }
+            }
+        }
+        if (array_key_exists('customer_price', $data)) {
+            $curSelling = $data['selling_type'] ?? null;
+            if ($curSelling !== 'full_set') {
+                $cp = ($data['customer_price'] !== null && $data['customer_price'] !== '') ? (float)$data['customer_price'] : 0;
+                $add('customer_price', $cp > 0 ? $cp : null);
+            }
+        }
+        if (array_key_exists('customer_sale_price', $data)) {
+            $curSelling = $data['selling_type'] ?? null;
+            if ($curSelling !== 'full_set') {
+                $csp = ($data['customer_sale_price'] !== null && $data['customer_sale_price'] !== '') ? (float)$data['customer_sale_price'] : 0;
+                $add('customer_sale_price', $csp > 0 ? $csp : null);
+            }
+        }
+        if (array_key_exists('sale_price', $data) || array_key_exists('sale_discount', $data)) {
+            $rawSp = $data['sale_price'] ?? $data['sale_discount'] ?? null;
+            $sp = ($rawSp !== null && $rawSp !== '') ? (float)$rawSp : 0;
+            $add('sale_price', max(0, $sp));
+        }
+
+        $priceCols = [
+            'mrp', 'retail_price', 'wholesale_price', 'wholesale_sale_price',
+            'reseller_price', 'reseller_sale_price', 'retailer_sale_price',
+            'full_set_retailer_price', 'full_set_retailer_sale_price',
+            'full_set_wholesale_price', 'full_set_wholesale_sale_price'
+        ];
+        $extraPriceCols = [
+            'retailer_sale_price' => true,
+            'reseller_sale_price' => true,
+            'wholesale_sale_price' => true,
+            'full_set_retailer_price' => true,
+            'full_set_retailer_sale_price' => true,
+            'full_set_wholesale_price' => true,
+            'full_set_wholesale_sale_price' => true,
+        ];
+        foreach ($priceCols as $col) {
+            if (isset($extraPriceCols[$col])) {
+                if (empty($tableCols) || !isset($tableCols[$col])) {
+                    continue;
+                }
+            } elseif (!empty($tableCols) && !isset($tableCols[$col])) {
+                continue;
+            }
+            if (array_key_exists($col, $data)) {
+                $raw = $data[$col];
+                if ($raw === null || $raw === '') {
+                    $add($col, null);
+                } else {
+                    $v = (float)$raw;
+                    $add($col, $v > 0 ? $v : null);
+                }
+            } elseif ($col === 'retail_price' && isset($data['price'])) {
+                $v = (float)$data['price'];
+                if ($v > 0) { $add('retail_price', $v); }
+            }
+        }
+        if (isset($data['stock_qty'])) {
+            $add('stock_qty', max(0, (int)$data['stock_qty']));
+        }
+        if (isset($data['category_id']) || isset($data['category']) || isset($data['category_name'])) {
+            $cat = self::resolveCategory($data['category_id'] ?? 0, $data['category'] ?? $data['category_name'] ?? '');
+            if ($cat['name'] !== '') {
+                $add('category_id', $cat['id']);
+                $add('category_name', mb_substr($cat['name'], 0, 100));
+            }
+        }
+        if (isset($data['subcategory_id']) || isset($data['subcategory']) || isset($data['subcategory_name'])) {
+            $currentCatId = isset($cat['id']) ? (int)$cat['id'] : (int)($data['category_id'] ?? 0);
+            $subCat = self::resolveSubcategory($data['subcategory_id'] ?? 0, $data['subcategory'] ?? $data['subcategory_name'] ?? '', $currentCatId);
+            if (!empty($tableCols) && isset($tableCols['subcategory_id'])) {
+                $add('subcategory_id', $subCat['id'] > 0 ? $subCat['id'] : null);
+            }
+            if (!empty($tableCols) && isset($tableCols['subcategory'])) {
+                $add('subcategory', $subCat['name'] !== '' ? mb_substr($subCat['name'], 0, 100) : null);
+            }
+        }
+        foreach (['brand', 'fabric', 'weave', 'zari_type', 'occasion'] as $col) {
+            if (isset($data[$col])) {
+                $add($col, mb_substr(trim((string)$data[$col]), 0, 100));
+            }
+        }
+        if (isset($data['pallu_style']) || isset($data['border'])) {
+            $add('pallu_style', mb_substr(trim((string)($data['pallu_style'] ?? $data['border'])), 0, 100));
+        }
+        if (isset($data['blouse_piece']) || isset($data['blouse'])) {
+            $add('blouse_piece', mb_substr(trim((string)($data['blouse_piece'] ?? $data['blouse'])), 0, 100));
+        }
+        foreach (['moq_single', 'moq_half_set', 'moq_full_set', 'moq_master_bale'] as $col) {
+            if (isset($data[$col])) {
+                $add($col, max(0, (int)$data[$col]));
+            }
+        }
+        if (isset($data['badge'])) {
+            $add('badge', mb_substr(trim((string)$data['badge']), 0, 50));
+        }
+        if (isset($data['description'])) {
+            $add('description', trim((string)$data['description']));
+        }
+        foreach (['is_featured', 'is_bestseller'] as $col) {
+            if (isset($data[$col])) {
+                $flag = $data[$col];
+                $add($col, (!empty($flag) && $flag !== 'false' && $flag !== '0') ? 1 : 0);
+            }
+        }
+        $media = self::readMediaPayload($data);
+        $hasMediaKey = false;
+        foreach (['gallery', 'images', 'media', 'videos', 'video', 'embeds', 'embed'] as $k) {
+            if (array_key_exists($k, $data)) {
+                $hasMediaKey = true;
+                break;
+            }
+        }
+
+        // storableMedia() returns '' for a base64 data URL, so a preview blob can
+        // never be written into primary_image VARCHAR(255) and truncated there.
+        $primary = null;
+        if (isset($data['primary_image']) || isset($data['image'])) {
+            $primary = self::storableMedia($data['primary_image'] ?? $data['image']);
+        }
+        if (($primary === null || $primary === '') && !empty($media['images'])) {
+            $primary = $media['images'][0];
+        }
+        if ($primary !== null) {
+            $add('primary_image', $primary);
+        }
+
+        if (isset($data['status']) || isset($data['stock_status'])) {
+            $st = self::normaliseStatus($data['status'] ?? $data['stock_status']);
+            if ($st !== '') {
+                $add('status', $st);
+            }
+        }
+
+        $variants = self::readVariantsPayload($data);
+
+        if (empty($fields) && !$hasMediaKey && $variants === null) {
+            return ['success' => true, 'id' => $id, 'message' => 'No changes to update.'];
+        }
+
+        try {
+            if (!empty($fields)) {
+                $params[] = $id;
+                $stmt = $pdo->prepare("UPDATE products SET " . implode(', ', $fields) . " WHERE id = ?");
+                $stmt->execute($params);
+                if ($stmt->rowCount() === 0) {
+                    $exists = Database::fetchOne("SELECT id FROM products WHERE id = ? LIMIT 1", [$id]);
+                    if (empty($exists)) {
+                        return ['success' => false, 'message' => 'Product #' . $id . ' does not exist.'];
+                    }
+                }
+            }
+            $notes = [];
+            if ($hasMediaKey) {
+                $current = $primary;
+                if ($current === null) {
+                    $row = Database::fetchOne("SELECT primary_image FROM products WHERE id = ? LIMIT 1", [$id]);
+                    $current = self::storableMedia($row['primary_image'] ?? '');
+                }
+                self::syncMedia($id, (string)$current, $media['images'], $media['videos'], $media['embeds']);
+                $notes[] = count($media['images']) . ' photo(s)';
+                if (!empty($media['videos'])) {
+                    $notes[] = count($media['videos']) . ' video(s)';
+                }
+                if (!empty($media['embeds'])) {
+                    $notes[] = count($media['embeds']) . ' video link(s)';
+                }
+            }
+            if ($variants !== null) {
+                $row = Database::fetchOne("SELECT sku FROM products WHERE id = ? LIMIT 1", [$id]);
+                $notes[] = self::syncVariants($id, $variants, (string)($row['sku'] ?? '')) . ' variant(s)';
+            }
+            self::invalidateCache();
+
+            return [
+                'success' => true,
+                'id' => $id,
+                'message' => 'Product #' . $id . ' updated'
+                    . ($notes ? ' (' . implode(', ', $notes) . ' saved).' : '.')
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Database update error: ' . $e->getMessage()];
+        }
+    }
+
+
+    /**
+     * Duplicate a product, including its photos, video and colour/size variants.
+     *
+     * The old version rebuilt the row from a handful of fields with invented
+     * fallbacks ('Kanjivaram Silk', 4999, product1.png), hardcoded category_id 1
+     * and copied no media or variants - so the "copy" described different
+     * merchandise from the original. The copy is created as a draft, because
+     * nobody has decided to sell it yet.
+     */
+    public static function duplicate(int $id): array
+    {
+        if ($id <= 0) {
+            return ['success' => false, 'message' => 'Invalid product ID for duplication.'];
+        }
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return ['success' => false, 'message' => 'The database is not reachable, so nothing was duplicated.'];
+        }
+
+        $src = Database::fetchOne("SELECT * FROM products WHERE id = ? LIMIT 1", [$id]);
+        if (empty($src)) {
+            return ['success' => false, 'message' => 'Product not found.'];
+        }
+
+        $newTitle = mb_substr(trim((string)($src['title'] ?? 'Product')) . ' (Copy)', 0, 255);
+        $newSku = self::uniqueSku(trim((string)($src['sku'] ?? '')));
+        $newSlug = self::uniqueSlug(self::slugify((string)($src['slug'] ?? '')) ?: self::slugify($newTitle));
+
+        $cols = ['sku', 'title', 'slug', 'status', 'rating', 'reviews_count'];
+        $vals = [$newSku, $newTitle, $newSlug, 'draft', 0, 0];
+        foreach ([
+            'category_id', 'category_name', 'fabric', 'weave', 'zari_type', 'pallu_style',
+            'blouse_piece', 'occasion', 'mrp', 'retail_price', 'customer_price', 'customer_sale_price', 'sale_price', 'wholesale_price',
+            'reseller_price', 'moq_single', 'moq_half_set', 'moq_full_set',
+            'moq_master_bale', 'stock_qty', 'primary_image', 'badge', 'is_featured',
+            'is_bestseller', 'description', 'selling_type'
+        ] as $col) {
+            if (array_key_exists($col, $src)) {
+                $cols[] = $col;
+                $vals[] = $src[$col];
+            }
+        }
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO products (" . implode(', ', $cols) . ", created_at) VALUES ("
+                . implode(', ', array_fill(0, count($cols), '?')) . ", NOW())"
+            );
+            $stmt->execute($vals);
+            $newId = (int)$pdo->lastInsertId();
+            if ($newId <= 0) {
+                return ['success' => false, 'message' => 'The duplicate row was not written.'];
+            }
+
+            Database::execute(
+                "INSERT INTO product_media (product_id, image_url, is_primary, sort_order)
+                 SELECT ?, image_url, is_primary, sort_order FROM product_media
+                 WHERE product_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC",
+                [$newId, $id]
+            );
+
+            // Fed back through syncVariants so the copy's variant SKUs are derived
+            // from its own SKU instead of colliding with the original's.
+            $srcVariants = Database::query(
+                "SELECT color_name, size_name, stock_qty, price, image
+                 FROM product_variants WHERE product_id = ? ORDER BY id ASC",
+                [$id]
+            );
+            $variantCount = $srcVariants ? self::syncVariants($newId, $srcVariants, $newSku) : 0;
+            self::invalidateCache();
+
+            $mediaCount = (int)(Database::fetchOne(
+                "SELECT COUNT(*) AS n FROM product_media WHERE product_id = ?",
+                [$newId]
+            )['n'] ?? 0);
+
+            return [
+                'success' => true,
+                'id' => $newId,
+                'sku' => $newSku,
+                'title' => $newTitle,
+                'message' => 'Duplicated as draft #' . $newId . ' (' . $mediaCount
+                    . ' media file(s), ' . $variantCount . ' variant(s) copied). Publish it when it is ready.'
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Database duplicate error: ' . $e->getMessage()];
+        }
+    }
+
+
+    /**
+     * Adjust stock quantity by delta (increment/decrement) and log to inventory ledger
+     */
+    public static function adjustStock(
+        int $id, 
+        int $delta, 
+        string $reason = '', 
+        string $operator = 'Admin', 
+        ?int $variantId = null, 
+        string $ref = '', 
+        string $movementType = ''
+    ): array {
+        if ($id <= 0) {
+            return ['success' => false, 'message' => 'Invalid product ID.'];
+        }
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return ['success' => false, 'message' => 'The database is not reachable, so stock was not changed.'];
+        }
+
+        try {
+            $isSqlite = ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite');
+
+            // Fetch current stock and product details
+            $get = $pdo->prepare("SELECT id, stock_qty, title, sku FROM products WHERE id = ? LIMIT 1");
+            $get->execute([$id]);
+            $row = $get->fetch();
+            if (!$row) {
+                return ['success' => false, 'message' => 'Product #' . $id . ' does not exist.'];
+            }
+
+            $prevQty = (int)($row['stock_qty'] ?? 0);
+            $newQty = max(0, $prevQty + $delta);
+
+            $safeStockExpr = $isSqlite ? "MAX(0, COALESCE(stock_qty, 0) + ?)" : "GREATEST(0, COALESCE(stock_qty, 0) + ?)";
+            $stmt = $pdo->prepare("UPDATE products SET stock_qty = {$safeStockExpr} WHERE id = ?");
+            $stmt->execute([$delta, $id]);
+
+            self::invalidateCache();
+
+            // Determine movement type
+            if ($movementType === '') {
+                $rLower = strtolower($reason);
+                if (strpos($rLower, 'inward') !== false || strpos($rLower, 'receive') !== false || strpos($rLower, 'consignment') !== false) {
+                    $movementType = 'inward';
+                } elseif (strpos($rLower, 'outward') !== false || strpos($rLower, 'dispatch') !== false) {
+                    $movementType = 'outward';
+                } elseif (strpos($rLower, 'audit') !== false || strpos($rLower, 'reconcil') !== false || strpos($rLower, 'physical count') !== false) {
+                    $movementType = 'adjustment';
+                } else {
+                    $movementType = $delta >= 0 ? 'inward' : 'outward';
+                }
+            }
+
+            // Insert into inventory_ledger
+            try {
+                $sku = (string)($row['sku'] ?? ('SKU-' . $id));
+                $nowExpr = $isSqlite ? "datetime('now')" : "NOW()";
+                $insLedger = $pdo->prepare("
+                    INSERT INTO inventory_ledger 
+                    (product_id, variant_id, sku, movement_type, previous_qty, adjustment_qty, new_qty, reason, reference_id, operator, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, {$nowExpr})
+                ");
+                $insLedger->execute([
+                    $id,
+                    $variantId,
+                    $sku,
+                    $movementType,
+                    $prevQty,
+                    $delta,
+                    $newQty,
+                    $reason ?: ($delta >= 0 ? "Stock increment (+{$delta})" : "Stock decrement ({$delta})"),
+                    $ref ?: null,
+                    $operator ?: 'Admin'
+                ]);
+            } catch (\Throwable $le) {
+                error_log("Inventory ledger insert error: " . $le->getMessage());
+            }
+
+            return [
+                'success' => true,
+                'id' => $id,
+                'previous_stock' => $prevQty,
+                'adjustment' => $delta,
+                'new_stock' => $newQty,
+                'message' => "Stock adjusted by {$delta} (new total: {$newQty} units)."
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Delete product permanently from database.
+     * product_media and product_variants are removed by their ON DELETE CASCADE.
+     */
+    public static function delete(int $id, bool $permanent = true): bool
+    {
+        if ($id <= 0) return false;
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return false; // used to return true, so the row vanished from the UI and stayed in the table
+        }
+        try {
+            $stmt = $pdo->prepare("DELETE FROM products WHERE id = ?");
+            $ok = $stmt->execute([$id]) && $stmt->rowCount() > 0;
+            if ($ok) {
+                self::invalidateCache();
+            }
+            return $ok;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+
+    /**
+     * Bulk delete products permanently.
+     * Returns rows actually deleted - 0 when there is no database, never the
+     * length of the requested list.
+     */
+    public static function bulkDelete(array $ids, bool $permanent = true): int
+    {
+        $validIds = array_filter(array_map('intval', $ids));
+        if (empty($validIds)) return 0;
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return 0;
+        }
+        try {
+            $placeholders = implode(',', array_fill(0, count($validIds), '?'));
+            $stmt = $pdo->prepare("DELETE FROM products WHERE id IN ($placeholders)");
+            $stmt->execute(array_values($validIds));
+            $n = $stmt->rowCount();
+            if ($n > 0) {
+                self::invalidateCache();
+            }
+            return $n;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Bulk update products. Returns the number of rows actually changed.
+     */
+    public static function bulkUpdate(array $ids, array $data): int
+    {
+        $validIds = array_values(array_filter(array_map('intval', $ids)));
+        if (empty($validIds)) return 0;
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return 0; // used to report count($validIds) rows updated with no database at all
+        }
+        try {
+            $fields = [];
+            $params = [];
+
+            if (!empty($data['category']) || !empty($data['category_name']) || !empty($data['category_id'])) {
+                $cat = self::resolveCategory($data['category_id'] ?? 0, $data['category'] ?? $data['category_name'] ?? '');
+                if ($cat['name'] !== '') {
+                    $fields[] = 'category_id = ?';
+                    $params[] = $cat['id'];
+                    $fields[] = 'category_name = ?';
+                    $params[] = mb_substr($cat['name'], 0, 100);
+                }
+            }
+            if (isset($data['subcategory']) || isset($data['subcategory_name']) || isset($data['subcategory_id'])) {
+                $subCat = self::resolveSubcategory($data['subcategory_id'] ?? 0, $data['subcategory'] ?? $data['subcategory_name'] ?? '', (int)($cat['id'] ?? 0));
+                if ($subCat['id'] > 0) {
+                    $fields[] = 'subcategory_id = ?';
+                    $params[] = $subCat['id'];
+                }
+                if ($subCat['name'] !== '') {
+                    $fields[] = 'subcategory = ?';
+                    $params[] = mb_substr($subCat['name'], 0, 100);
+                }
+            }
+            foreach (['is_featured', 'is_bestseller'] as $col) {
+                if (isset($data[$col])) {
+                    $fields[] = $col . ' = ?';
+                    $params[] = (!empty($data[$col]) && $data[$col] !== 'false' && $data[$col] !== '0') ? 1 : 0;
+                }
+            }
+            if (isset($data['status']) || isset($data['stock_status'])) {
+                $st = self::normaliseStatus($data['status'] ?? $data['stock_status']);
+                if ($st !== '') {
+                    $fields[] = 'status = ?';
+                    $params[] = $st;
+                }
+            }
+            foreach (['mrp', 'retail_price', 'wholesale_price', 'reseller_price'] as $col) {
+                if (isset($data[$col]) && (float)$data[$col] > 0) {
+                    $fields[] = $col . ' = ?';
+                    $params[] = (float)$data[$col];
+                }
+            }
+            if (isset($data['stock_qty'])) {
+                $fields[] = 'stock_qty = ?';
+                $params[] = max(0, (int)$data['stock_qty']);
+            }
+            if (empty($fields)) return 0;
+
+            $placeholders = implode(',', array_fill(0, count($validIds), '?'));
+            $stmt = $pdo->prepare("UPDATE products SET " . implode(', ', $fields) . " WHERE id IN ($placeholders)");
+            $stmt->execute(array_merge($params, $validIds));
+            $n = $stmt->rowCount();
+            if ($n > 0) {
+                self::invalidateCache();
+            }
+            return $n;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Update Product Status
+     */
+    public static function updateStatus(int $id, string $status): bool
+    {
+        if ($id <= 0) return false;
+        $st = self::normaliseStatus($status);
+        if ($st === '') {
+            return false;
+        }
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return false; // used to return true, so the badge flipped in the UI and nothing was stored
+        }
+        try {
+            $stmt = $pdo->prepare("UPDATE products SET status = ? WHERE id = ?");
+            $ok = $stmt->execute([$st, $id]);
+            if ($ok) {
+                self::invalidateCache();
+            }
+            return $ok;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Category CRUD: Create.
+     *
+     * No default image. The old version fell back to /assets/images/product1.png,
+     * so every new category was illustrated with one particular saree photo.
+     * getCategoriesWithDetails() reports has_image = false for an empty image and
+     * the UI shows an honest placeholder instead.
+     */
+    public static function createCategory(array $data): array
+    {
+        $name = trim((string)($data['name'] ?? ''));
+        if ($name === '') {
+            return ['success' => false, 'message' => 'Category name is required.'];
+        }
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return ['success' => false, 'message' => 'The database is not reachable, so the category was not saved.'];
+        }
+
+        $slug = self::slugify((string)($data['slug'] ?? '')) ?: self::slugify($name);
+        if ($slug === '') {
+            return ['success' => false, 'message' => 'Category name must contain at least one letter or number.'];
+        }
+
+        // Check if category with exact name or slug already exists
+        $nameClash = Database::fetchOne("SELECT id, name, slug FROM categories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1", [$name]);
+        if (!empty($nameClash)) {
+            return [
+                'success' => true,
+                'id' => (int)$nameClash['id'],
+                'slug' => $nameClash['slug'],
+                'name' => $nameClash['name'],
+                'message' => 'Category "' . $nameClash['name'] . '" already exists (#' . $nameClash['id'] . ').',
+                'already_existed' => true
+            ];
+        }
+
+        // slug is UNIQUE: auto-resolve slug conflicts by appending a numeric counter
+        $clash = Database::fetchOne("SELECT id, name FROM categories WHERE slug = ? LIMIT 1", [$slug]);
+        if (!empty($clash)) {
+            $baseSlug = $slug;
+            $suffix = 2;
+            while (!empty(Database::fetchOne("SELECT id FROM categories WHERE slug = ? LIMIT 1", [$slug]))) {
+                $slug = $baseSlug . '-' . $suffix;
+                $suffix++;
+            }
+        }
+
+        $order = (int)($data['display_order'] ?? 0);
+        if ($order <= 0) {
+            $row = Database::fetchOne("SELECT COALESCE(MAX(display_order), 0) AS m FROM categories");
+            $order = (int)($row['m'] ?? 0) + 1;
+        }
+        $status = strtolower(trim((string)($data['status'] ?? 'active')));
+        if (!in_array($status, ['active', 'inactive'], true)) {
+            $status = 'active';
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO categories (name, slug, description, image, banner_image, products_count, display_order, status, created_at)
+                 VALUES (?, ?, ?, ?, ?, 0, ?, ?, NOW())"
+            );
+            $stmt->execute([
+                mb_substr($name, 0, 100),
+                mb_substr($slug, 0, 100),
+                trim((string)($data['description'] ?? '')),
+                self::storableMedia($data['image'] ?? ''),
+                self::storableMedia($data['banner_image'] ?? ''),
+                $order,
+                $status
+            ]);
+            $newId = (int)$pdo->lastInsertId();
+            self::invalidateCache();
+            return [
+                'success' => true,
+                'id' => $newId,
+                'slug' => $slug,
+                'message' => 'Category "' . $name . '" created (#' . $newId . ').'
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
+
+
+    /**
+     * Category CRUD: Delete.
+     *
+     * Refuses while products still reference the category. products.category_id
+     * has no foreign key, so deleting the row used to leave those products
+     * pointing at an id that no longer exists - they vanished from every
+     * category filter while still being on sale.
+     */
+    public static function deleteCategory(int $id): bool
+    {
+        if ($id <= 0) return false;
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return false;
+        }
+        if (self::categoryProductCount($id) > 0) {
+            return false;
+        }
+        try {
+            $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
+            $ok = $stmt->execute([$id]) && $stmt->rowCount() > 0;
+            if ($ok) {
+                self::invalidateCache();
+            }
+            return $ok;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /** How many products reference this category, by id or by stored name. */
+    public static function categoryProductCount(int $id): int
+    {
+        if ($id <= 0) {
+            return 0;
+        }
+        $row = Database::fetchOne(
+            "SELECT COUNT(*) AS n FROM products p
+             WHERE p.category_id = ?
+                OR p.category_name = (SELECT name FROM categories WHERE id = ?)",
+            [$id, $id]
+        );
+        return (int)($row['n'] ?? 0);
+    }
+
+    /**
+     * Category CRUD: Update. Renaming a category also re-stamps the denormalised
+     * products.category_name, otherwise every product keeps the old label.
+     */
+    public static function updateCategory(int $id, array $data): array
+    {
+        if ($id <= 0) return ['success' => false, 'message' => 'Invalid category ID.'];
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return ['success' => false, 'message' => 'The database is not reachable, so nothing was changed.'];
+        }
+
+        $current = Database::fetchOne("SELECT id, name FROM categories WHERE id = ? LIMIT 1", [$id]);
+        if (empty($current)) {
+            return ['success' => false, 'message' => 'Category #' . $id . ' does not exist.'];
+        }
+
+        $fields = [];
+        $params = [];
+        $newName = null;
+
+        if (isset($data['name'])) {
+            $newName = trim((string)$data['name']);
+            if ($newName === '') {
+                return ['success' => false, 'message' => 'Category name cannot be empty.'];
+            }
+            $fields[] = 'name = ?';
+            $params[] = mb_substr($newName, 0, 100);
+        }
+        if (isset($data['slug'])) {
+            $slug = self::slugify((string)$data['slug']);
+            if ($slug !== '') {
+                $clash = Database::fetchOne(
+                    "SELECT id FROM categories WHERE slug = ? AND id <> ? LIMIT 1",
+                    [$slug, $id]
+                );
+                if (!empty($clash)) {
+                    return ['success' => false, 'message' => 'Another category already uses the URL "' . $slug . '".'];
+                }
+                $fields[] = 'slug = ?';
+                $params[] = mb_substr($slug, 0, 100);
+            }
+        }
+        if (isset($data['description'])) {
+            $fields[] = 'description = ?';
+            $params[] = trim((string)$data['description']);
+        }
+        foreach (['image', 'banner_image'] as $col) {
+            if (isset($data[$col])) {
+                $fields[] = $col . ' = ?';
+                $params[] = self::storableMedia($data[$col]);
+            }
+        }
+        if (isset($data['display_order'])) {
+            $fields[] = 'display_order = ?';
+            $params[] = max(0, (int)$data['display_order']);
+        }
+        if (isset($data['status'])) {
+            $st = strtolower(trim((string)$data['status']));
+            if (in_array($st, ['active', 'inactive'], true)) {
+                $fields[] = 'status = ?';
+                $params[] = $st;
+            }
+        }
+
+        if (empty($fields)) {
+            return ['success' => true, 'id' => $id, 'message' => 'No changes.'];
+        }
+
+        try {
+            $params[] = $id;
+            $stmt = $pdo->prepare("UPDATE categories SET " . implode(', ', $fields) . " WHERE id = ?");
+            $stmt->execute($params);
+
+            $renamed = 0;
+            $oldName = trim((string)($current['name'] ?? ''));
+            if ($newName !== null && $newName !== $oldName) {
+                Database::execute(
+                    "UPDATE products SET category_name = ? WHERE category_id = ? OR category_name = ?",
+                    [mb_substr($newName, 0, 100), $id, $oldName]
+                );
+                $renamed = self::categoryProductCount($id);
+            }
+            self::invalidateCache();
+
+            return [
+                'success' => true,
+                'id' => $id,
+                'message' => 'Category updated.'
+                    . ($renamed > 0 ? ' ' . $renamed . ' product(s) re-labelled.' : '')
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Batch reorder categories with atomic transaction in MySQL
+     */
+    public static function reorderCategories(array $items): array
+    {
+        if (empty($items)) {
+            return ['success' => false, 'message' => 'No items provided for reordering.'];
+        }
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return ['success' => false, 'message' => 'The database is not reachable.'];
+        }
+
+        try {
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare("UPDATE categories SET display_order = ? WHERE id = ?");
+            $updated = 0;
+
+            foreach ($items as $idx => $item) {
+                if (!is_array($item)) continue;
+                $id = (int)($item['id'] ?? 0);
+                $order = isset($item['display_order']) ? (int)$item['display_order'] : (isset($item['order']) ? (int)$item['order'] : ($idx + 1));
+                if ($id > 0) {
+                    $stmt->execute([$order, $id]);
+                    $updated++;
+                }
+            }
+
+            $pdo->commit();
+            self::invalidateCache();
+
+            return [
+                'success' => true,
+                'updated_count' => $updated,
+                'message' => "Successfully updated display order for {$updated} categories."
+            ];
+        } catch (\Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
+
+
+    /**
+     * Category CRUD: Bulk Delete. Categories that still hold products are left
+     * alone, so the return value is the number genuinely removed.
+     */
+    public static function bulkDeleteCategories(array $ids): int
+    {
+        $validIds = array_values(array_filter(array_map('intval', $ids)));
+        if (empty($validIds)) return 0;
+
+        $pdo = Database::getConnection();
+        if ($pdo === null || Database::isMockMode()) {
+            return 0;
+        }
+        $deleted = 0;
+        foreach ($validIds as $cid) {
+            if (self::deleteCategory($cid)) {
+                $deleted++;
+            }
+        }
+        return $deleted;
+    }
+}
+
+

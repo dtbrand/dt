@@ -1,0 +1,123 @@
+<?php
+/**
+ * checkout.php — Standalone Master Checkout Page & Component
+ * DT Brand's & Jai Hanuman Tex
+ * Luxury Ethnic WhatsApp CRM Checkout Flow
+ */
+$page_title = "Secure Luxury Checkout";
+require_once __DIR__ . '/src/ProductCatalog.php';
+require_once __DIR__ . '/src/Database.php';
+require_once __DIR__ . '/src/Auth.php';
+
+use DTBrand\ProductCatalog;
+use DTBrand\Auth;
+
+Auth::initSession();
+$currentUser = Auth::getCurrentUser();
+$csrfToken = Auth::generateCsrfToken();
+$userRole = 'guest';
+if (Auth::isAdminLoggedIn()) {
+    $userRole = 'admin';
+} elseif ($currentUser) {
+    $userRole = strtolower(trim((string)($currentUser['type'] ?? ($currentUser['role'] ?? 'customer'))));
+}
+if ($userRole === 'wholesaler') { $userRole = 'wholesale'; }
+if ($userRole === '' || $userRole === 'retail') { $userRole = 'customer'; }
+
+$dbProductsForCheckout = ProductCatalog::getForRole($userRole);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+    <title><?= $page_title ?> — DT Brand's Luxury Couture</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#8A681F">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="/assets/css/shop.css?v=<?= @filemtime(__DIR__ . '/assets/css/shop.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/assets/css/header.css?v=<?= @filemtime(__DIR__ . '/assets/css/header.css') ?: '3.2.1' ?>">
+    <script>
+    window.DT_CSRF_TOKEN = <?php echo json_encode($csrfToken, JSON_UNESCAPED_SLASHES); ?>;
+    window.DT_CURRENT_USER = <?php echo json_encode($currentUser ? ['id' => (int)$currentUser['id'], 'name' => (string)($currentUser['name'] ?? ''), 'type' => $userRole] : null, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+    window.allProducts = <?php echo json_encode($dbProductsForCheckout); ?>;
+    <?php $GLOBALS['dt_all_products_bootstrapped'] = true; ?>
+    </script>
+</head>
+<body style="background: #14100C; margin: 0; padding: 0; color: #24211C; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+
+<?php
+// Include the luxury master checkout markup and controller
+include __DIR__ . '/Shared/checkout.php';
+?>
+
+<script>
+// On standalone checkout page, automatically initialize and present the luxury checkout interface
+document.addEventListener('DOMContentLoaded', function() {
+    // If cart is empty in localStorage, populate with selected demo or initial item for seamless experience if needed
+    var cart = [];
+    try {
+        cart = JSON.parse(localStorage.getItem('dtbrands_cart') || '[]');
+    } catch(e) {
+        cart = [];
+    }
+
+    // If query string has direct product buy param (e.g. ?buy_id=1&qty=1)
+    var urlParams = new URLSearchParams(window.location.search);
+    var buyId = urlParams.get('buy_id') || urlParams.get('id');
+    if (buyId && window.allProducts && window.allProducts.length) {
+        var pMatch = window.allProducts.find(function(p) { return String(p.id) === String(buyId); });
+        if (pMatch) {
+            var exists = cart.find(function(c) { return String(c.id) === String(buyId); });
+            if (!exists) {
+                cart.push({
+                    id: pMatch.id,
+                    product_id: pMatch.id,
+                    name: pMatch.name || pMatch.title,
+                    price: parseFloat(pMatch.price || pMatch.retail_price || 0) || 0,
+                    qty: Math.max(1, parseInt(urlParams.get('qty') || '1', 10) || 1),
+                    image: pMatch.image || (pMatch.images && pMatch.images[0]) || '/assets/images/no-image.svg',
+                    color: urlParams.get('color') || pMatch.color || (Array.isArray(pMatch.colors) && pMatch.colors[0]) || '',
+                    size: urlParams.get('size') || (Array.isArray(pMatch.size) && pMatch.size[0]) || (Array.isArray(pMatch.sizes) && pMatch.sizes[0]) || ''
+                });
+                localStorage.setItem('dtbrands_cart', JSON.stringify(cart));
+                window.cartState = cart;
+            }
+        }
+    }
+
+    var backdrop = document.getElementById('checkoutBackdrop');
+    if (backdrop) {
+        backdrop.removeAttribute('inert');
+        backdrop.setAttribute('aria-hidden', 'false');
+        backdrop.classList.add('active');
+        backdrop.style.position = 'relative';
+        backdrop.style.minHeight = '100vh';
+        backdrop.style.zIndex = '10';
+        backdrop.style.opacity = '1';
+        backdrop.style.visibility = 'visible';
+        backdrop.style.pointerEvents = 'auto';
+
+        var closeBtn = document.getElementById('closeCheckoutBtn');
+        if (closeBtn) {
+            closeBtn.onclick = function() {
+                window.location.href = '/shop';
+            };
+        }
+    }
+
+    if (typeof window.renderCheckoutItems === 'function') {
+        window.renderCheckoutItems();
+    }
+});
+</script>
+
+<?php include_once __DIR__ . '/Shared/cart.php'; ?>
+<?php include_once __DIR__ . '/Shared/wishlist.php'; ?>
+<script src="/assets/js/dt-cart-sync.js?v=<?= @filemtime(__DIR__ . '/assets/js/dt-cart-sync.js') ?: '1' ?>"></script>
+
+</body>
+</html>

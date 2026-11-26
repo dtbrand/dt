@@ -1,0 +1,85 @@
+<?php
+/* DT admin access guard */ $__dtg = $_SERVER['DOCUMENT_ROOT'] . '/admin/includes/adminguard.php'; if (is_file($__dtg)) { require_once $__dtg; } elseif (is_file(__DIR__ . '/../includes/adminguard.php')) { require_once __DIR__ . '/../includes/adminguard.php'; }
+
+/**
+ * shipped.php — Shipped Orders Filtered View
+ * DT Brand's & Jai Hanuman Tex
+ */
+$page_title = "Shipped Orders";
+$active_nav = "orders";
+$active_subnav = "shipped";
+$active_status_key = "shipped";
+$filter_status = "shipped";
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $page_title; ?> — DT Brand's Admin</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#8A681F">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/assets/css/admin.css?v=<?= @filemtime(__DIR__ . '/../assets/css/admin.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/orders/assets/css/orders.css?v=<?= @filemtime(__DIR__ . '/assets/css/orders.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/orders/assets/css/order-list.css?v=<?= @filemtime(__DIR__ . '/assets/css/order-list.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/orders/assets/css/order-status.css?v=<?= @filemtime(__DIR__ . '/assets/css/order-status.css') ?: '3.2.1' ?>">
+</head>
+<body>
+<div class="adm-layout">
+    <?php include_once __DIR__ . '/../includes/adminsidebar.php'; ?>
+    <div class="adm-main">
+        <?php include_once __DIR__ . '/../includes/adminheader.php'; ?>
+        <main class="adm-content" style="padding: 14px 18px; width: 100%; max-width: 100%; box-sizing: border-box;">
+            
+            <div class="dt-orders-container">
+                <div class="dt-orders-head">
+                    <div class="dt-orders-title-group">
+                        <h1 class="dt-orders-title">
+                            <span>Dispatched &amp; In-Transit Consignments</span>
+                            <span class="dt-title-counter-badge">
+                                <span class="dt-counter-dot" style="background:#1D4ED8; box-shadow:0 0 0 2px rgba(29,78,216,0.2);"></span>
+<?php
+require_once __DIR__ . '/../../src/OrderManager.php';
+$orders_all = \DTBrand\OrderManager::getAll();
+$matching_count = count(array_filter($orders_all, function($o) use ($active_status_key) {
+    return ($o['status'] ?? '') === $active_status_key;
+}));
+?>
+                                <strong><?php echo number_format($matching_count); ?></strong> Shipped
+                            </span>
+                        </h1>
+                        <p class="dt-orders-subtitle">Active carrier consignments en route via VRL Logistics, BlueDart, Delhivery, and DTDC.</p>
+                    </div>
+                    <div class="dt-orders-actions">
+                        <a href="/admin/orders/index.php" class="dt-btn dt-btn-pale">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            <span>View All Orders</span>
+                        </a>
+                    </div>
+                </div>
+
+                <?php include __DIR__ . '/components/order-stats.php'; ?>
+                <?php include __DIR__ . '/components/order-search.php'; ?>
+                <?php include __DIR__ . '/components/order-table.php'; ?>
+            </div>
+
+            <?php include __DIR__ . '/components/order-drawer.php'; ?>
+            <?php include __DIR__ . '/components/order-filters.php'; ?>
+            <?php include __DIR__ . '/components/order-actions.php'; ?>
+
+        </main>
+        <?php include_once __DIR__ . '/../includes/adminfooter.php'; ?>
+    </div>
+</div>
+
+<script src="/admin/orders/assets/js/orders.js?v=<?= @filemtime(__DIR__ . '/assets/js/orders.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/order-view.js?v=<?= @filemtime(__DIR__ . '/assets/js/order-view.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/order-list.js?v=<?= @filemtime(__DIR__ . '/assets/js/order-list.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/order-filters.js?v=<?= @filemtime(__DIR__ . '/assets/js/order-filters.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/order-status.js?v=<?= @filemtime(__DIR__ . '/assets/js/order-status.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/bulk-actions.js?v=<?= @filemtime(__DIR__ . '/assets/js/bulk-actions.js') ?: '3.2.1' ?>"></script>
+</body>
+</html>

@@ -1,0 +1,1449 @@
+<?php
+
+namespace DTBrand;
+
+require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/PricingCalculator.php';
+
+/**
+ * OrderManager — Multi-Channel Order Processing, Stock Management & Fulfillment Engine
+ * DT Brand's & Jai Hanuman Tex — Live Production Standard
+ */
+class OrderManager
+{
+    /**
+     * In-memory cache for idempotency keys when in mock/offline mode or testing
+     */
+    private static array $mockIdempotencyCache = [];
+
+    /**
+     * Resolve the real discount a coupon grants for a given subtotal, read
+     * straight from the live `coupons` table. This is the authoritative
+     * server-side computation — it mirrors dt_coupon_apply() in
+     * /api/coupons.php so the storefront preview and the stored order always
+     * agree, and a tampered client "discount" value can never be honoured.
+     */
+    private static function resolveCouponDiscount(string $code, float $subtotal, string $channel = 'all', ?string $customerPhone = null, ?int $customerId = null): float
+    {
+        $code = strtoupper(trim($code));
+        if ($code === '') {
+            return 0.0;
+        }
+        require_once __DIR__ . '/DiscountEngine.php';
+        $res = DiscountEngine::applyCoupon($code, $subtotal, null, $channel, $customerPhone, $customerId);
+        return $res['valid'] ? (float)$res['discount'] : 0.0;
+    }
+
+    /**
+     * Decide which channel an order is really placed on.
+     *
+     * The channel selects the price tier, so it can never come from the
+     * request: otherwise a retail visitor could post channel=wholesale and buy
+     * at bulk rates. Back-office staff genuinely do raise orders on any
+     * channel, so an authenticated admin session is still trusted.
+     */
+    private static function resolveChannel(array $orderData): string
+    {
+        $requested = strtolower(trim((string)($orderData['channel'] ?? '')));
+        $allowed = ['retail', 'wholesale', 'reseller', 'retailer', 'whatsapp'];
+
+        if (session_status() === PHP_SESSION_NONE) {
+            $sessionConfig = dirname(__DIR__) . '/config/session.php';
+            if (is_file($sessionConfig)) {
+                require_once $sessionConfig;
+            }
+            if (function_exists('dt_session_start')) {
+                dt_session_start();
+            } else {
+                @session_start();
+            }
+        }
+
+        if (!empty($_SESSION['admin_logged_in'])) {
+            return in_array($requested, $allowed, true) ? $requested : 'retail';
+        }
+
+        $customerId = (int)($_SESSION['user']['id'] ?? ($orderData['customer_id'] ?? 0));
+        if ($customerId > 0) {
+            $db = Database::getConnection();
+            if ($db !== null && !Database::isMockMode()) {
+                try {
+                    $stmt = $db->prepare("SELECT type, status FROM customers WHERE id = ? LIMIT 1");
+                    $stmt->execute([$customerId]);
+                    $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                    if ($row && ($row['status'] ?? '') === 'active') {
+                        $verified = strtolower((string)($row['type'] ?? ''));
+                        if (in_array($verified, ['wholesale', 'reseller', 'retailer'], true)) {
+                            return $verified;
+                        }
+                    }
+                    return ($requested === 'whatsapp') ? 'whatsapp' : 'retail';
+                } catch (\Throwable $e) {
+                    return ($requested === 'whatsapp') ? 'whatsapp' : 'retail';
+                }
+            }
+        }
+
+        // Only verified admin sessions may place direct B2B/trade orders on behalf of a customer
+        if (in_array($requested, ['wholesale', 'retailer', 'reseller'], true)
+            && !empty($orderData['is_trade_order'])
+            && !empty($_SESSION['admin_logged_in'])
+        ) {
+            return $requested;
+        }
+
+        return ($requested === 'whatsapp') ? 'whatsapp' : 'retail';
+    }
+
+    /**
+     * Map a channel to the products column holding that tier's unit price.
+     * Values are a fixed whitelist, never interpolated from user input.
+     */
+    private static function priceColumnFor(string $channel): string
+    {
+        if ($channel === 'wholesale') {
+            return 'wholesale_price';
+        }
+        if ($channel === 'reseller') {
+            return 'reseller_price';
+        }
+        return 'retail_price';
+    }
+
+    /**
+     * Look up the authoritative unit price, SKU and title for every product in
+     * the bag, straight from the products table at the order's tier.
+     *
+     * Returns [productId => ['price' => float, 'sku' => string, 'title' => string]].
+     * Products missing from the result do not exist and must not be sold.
+     */
+    private static function resolveItemPrices(\PDO $pdo, array $items, string $channel): array
+    {
+        $ids = [];
+        foreach ($items as $it) {
+            $id = (int)($it['id'] ?? $it['product_id'] ?? 0);
+            if ($id > 0) {
+                $ids[$id] = true;
+            }
+        }
+        if (empty($ids)) {
+            return [];
+        }
+
+        $ids = array_keys($ids);
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT * FROM products WHERE id IN ({$placeholders})"
+            );
+            $stmt->execute($ids);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($rows as $row) {
+            $sellingType = trim((string)($row['selling_type'] ?? 'single_piece')) ?: 'single_piece';
+            $saleDisc = (float)($row['sale_price'] ?? 0);
+
+            if ($sellingType === 'full_set') {
+                if ($channel === 'retailer') {
+                    $fsRetSale = (isset($row['full_set_retailer_sale_price']) && (float)$row['full_set_retailer_sale_price'] > 0) ? (float)$row['full_set_retailer_sale_price'] : null;
+                    if ($fsRetSale !== null) {
+                        $price = max(0, $fsRetSale);
+                    } else {
+                        $basePrice = (isset($row['full_set_retailer_price']) && (float)$row['full_set_retailer_price'] > 0) ? (float)$row['full_set_retailer_price'] : (float)($row['retail_price'] ?? 0);
+                        if ($basePrice <= 0) { $basePrice = (float)($row['wholesale_price'] ?? 0); }
+                        if ($basePrice <= 0) { $basePrice = (float)($row['mrp'] ?? 0); }
+                        $price = max(0, $basePrice - $saleDisc);
+                    }
+                } else { // wholesale
+                    $fsWsSale = (isset($row['full_set_wholesale_sale_price']) && (float)$row['full_set_wholesale_sale_price'] > 0) ? (float)$row['full_set_wholesale_sale_price'] : null;
+                    if ($fsWsSale !== null) {
+                        $price = max(0, $fsWsSale);
+                    } else {
+                        $basePrice = (isset($row['full_set_wholesale_price']) && (float)$row['full_set_wholesale_price'] > 0) ? (float)$row['full_set_wholesale_price'] : (float)($row['wholesale_price'] ?? 0);
+                        if ($basePrice <= 0) { $basePrice = (float)($row['retail_price'] ?? 0); }
+                        if ($basePrice <= 0) { $basePrice = (float)($row['mrp'] ?? 0); }
+                        $price = max(0, $basePrice - $saleDisc);
+                    }
+                }
+            } else {
+                if ($channel === 'wholesale') {
+                    $wsSale = (isset($row['wholesale_sale_price']) && (float)$row['wholesale_sale_price'] > 0) ? (float)$row['wholesale_sale_price'] : null;
+                    if ($wsSale !== null) {
+                        $price = max(0, $wsSale);
+                    } else {
+                        $basePrice = (float)($row['wholesale_price'] ?? 0);
+                        if ($basePrice <= 0) { $basePrice = (float)($row['retail_price'] ?? 0); }
+                        if ($basePrice <= 0) { $basePrice = (float)($row['mrp'] ?? 0); }
+                        $price = max(0, $basePrice - $saleDisc);
+                    }
+                } elseif ($channel === 'reseller') {
+                    $resSale = (isset($row['reseller_sale_price']) && (float)$row['reseller_sale_price'] > 0) ? (float)$row['reseller_sale_price'] : null;
+                    if ($resSale !== null) {
+                        $price = max(0, $resSale);
+                    } else {
+                        $basePrice = (float)($row['reseller_price'] ?? 0);
+                        if ($basePrice <= 0) { $basePrice = (float)($row['retail_price'] ?? 0); }
+                        if ($basePrice <= 0) { $basePrice = (float)($row['mrp'] ?? 0); }
+                        $price = max(0, $basePrice - $saleDisc);
+                    }
+                } elseif ($channel === 'retailer') {
+                    $retSale = (isset($row['retailer_sale_price']) && (float)$row['retailer_sale_price'] > 0) ? (float)$row['retailer_sale_price'] : null;
+                    if ($retSale !== null) {
+                        $price = max(0, $retSale);
+                    } else {
+                        $basePrice = (float)($row['retail_price'] ?? 0);
+                        if ($basePrice <= 0) { $basePrice = (float)($row['wholesale_price'] ?? 0); }
+                        if ($basePrice <= 0) { $basePrice = (float)($row['mrp'] ?? 0); }
+                        $price = max(0, $basePrice - $saleDisc);
+                    }
+                } else { // guest / customer
+                    $custSalePrice = (float)($row['customer_sale_price'] ?? 0);
+                    $custPrice = (float)($row['customer_price'] ?? 0);
+                    if ($custSalePrice > 0) {
+                        $price = $custSalePrice;
+                    } elseif ($custPrice > 0) {
+                        $price = max(0, $custPrice - $saleDisc);
+                    } else {
+                        $basePrice = (float)($row['retail_price'] ?? 0);
+                        if ($basePrice <= 0) { $basePrice = (float)($row['mrp'] ?? 0); }
+                        $price = max(0, $basePrice - $saleDisc);
+                    }
+                }
+            }
+
+            // Fetch active variants for this product
+            $vRows = [];
+            try {
+                $vStmt = $pdo->prepare("SELECT * FROM product_variants WHERE product_id = ? ORDER BY id ASC");
+                $vStmt->execute([(int)$row['id']]);
+                $vRows = $vStmt->fetchAll(\PDO::FETCH_ASSOC);
+            } catch (\Throwable $ve) {
+                $vRows = [];
+            }
+
+            $out[(int)$row['id']] = [
+                'price'           => round($price, 2),
+                'sku'             => (string)$row['sku'],
+                'title'           => (string)$row['title'],
+                'stock'           => (int)$row['stock_qty'],
+                'status'          => strtolower((string)$row['status']),
+                'selling_type'    => $sellingType,
+                'variants'        => $vRows,
+                'full_set_pieces' => max(1, count($vRows))
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Create order record with real MySQL transaction & stock decrement
+     */
+    public static function createOrder(array $orderData): array
+    {
+        $orderNumber = !empty($orderData['order_number']) ? trim((string)$orderData['order_number']) : ('DT-ORD-' . strtoupper(substr(uniqid(), -6)));
+        $items = $orderData['items'] ?? [];
+        $idempotencyKey = trim((string)($orderData['idempotency_key'] ?? ''));
+
+        // Fast-path idempotency check from in-memory cache
+        if ($idempotencyKey !== '' && isset(self::$mockIdempotencyCache[$idempotencyKey])) {
+            return self::$mockIdempotencyCache[$idempotencyKey];
+        }
+
+        $pdo = Database::getConnection();
+        $liveDb = ($pdo !== null && !Database::isMockMode());
+
+        // Channel first: it decides the price tier, so it must be settled before
+        // anything is priced.
+        $channel = self::resolveChannel($orderData);
+        $isTradeChannel = in_array($channel, ['wholesale', 'retailer'], true);
+
+        // Unit prices are read from the products table, never from the request.
+        // A tampered "price" (or "mrp"/"total") in the payload is now ignored.
+        $catalog = $liveDb ? self::resolveItemPrices($pdo, $items, $channel) : [];
+
+        $subtotal = 0.0;
+        $pricedItems = [];
+        $missing = [];
+        $unavailable = [];
+
+        foreach ($items as $item) {
+            $prodId = (int)($item['id'] ?? $item['product_id'] ?? 0);
+            $qty = max(1, (int)($item['quantity'] ?? $item['qty'] ?? 1));
+
+            if ($liveDb) {
+                if (!isset($catalog[$prodId])) {
+                    // Refuse to invent a price for something not in the catalogue.
+                    $missing[] = ($prodId > 0 ? ('#' . $prodId) : 'item with no product id');
+                    continue;
+                }
+                $row = $catalog[$prodId];
+                $sellingType = $row['selling_type'];
+
+                // Full Set Role Security Check
+                if ($sellingType === 'full_set' && !$isTradeChannel) {
+                    $unavailable[] = $row['title'] . ' (Full Set products are exclusively available to verified Retailers & Wholesalers)';
+                    continue;
+                }
+
+                // Wholesaler MCQ Validation for Single Piece
+                // Wholesaler must purchase the full MCQ (Available Colors × Available Sizes) or valid multiples
+                if ($sellingType === 'single_piece' && $channel === 'wholesale') {
+                    $mcqCalc = ProductCatalog::calculateWholesalerMcq(['variants' => $row['variants'] ?? []]);
+                    $requiredMcq = (int)($mcqCalc['mcq'] ?? 0);
+                    $colorsCount = (int)($mcqCalc['color_count'] ?? 0);
+                    $sizesCount = (int)($mcqCalc['size_count'] ?? 0);
+
+                    if ($requiredMcq > 0) {
+                        if ($qty < $requiredMcq || ($qty % $requiredMcq !== 0)) {
+                            $unavailable[] = $row['title'] . " (Wholesale MCQ requires full lot multiples of {$requiredMcq} pieces [{$colorsCount} Colours × {$sizesCount} Sizes], but {$qty} requested)";
+                            continue;
+                        }
+                    }
+                }
+
+                // Don't sell drafts, discontinued lines, or more than is on hand
+                if ($row['status'] === 'draft' || $row['status'] === 'out_of_stock') {
+                    $unavailable[] = $row['title'] . ' (not available)';
+                    continue;
+                }
+
+                $price = $row['price'];
+                $item['price'] = $price;
+                $item['sku'] = !empty($item['sku']) ? $item['sku'] : $row['sku'];
+                $item['title'] = $row['title'];
+                $item['selling_type'] = $sellingType;
+                $item['variants'] = $row['variants'];
+                $item['full_set_pieces'] = $row['full_set_pieces'];
+
+                if ($sellingType === 'full_set') {
+                    $fullSetPieces = $row['full_set_pieces'];
+                    $lineTotal = round($price * $fullSetPieces * $qty, 2);
+                } else {
+                    $lineTotal = round($price * $qty, 2);
+                }
+            } else {
+                // Offline/demo mode cannot verify anything against the DB.
+                $price = (float)($item['price'] ?? 0);
+                $sellingType = $item['selling_type'] ?? 'single_piece';
+                $lineTotal = round($price * $qty, 2);
+            }
+
+            $item['product_id'] = $prodId;
+            $item['quantity'] = $qty;
+            $item['line_total'] = $lineTotal;
+            $pricedItems[] = $item;
+            $subtotal += $lineTotal;
+        }
+
+        if (!empty($missing)) {
+            return [
+                'success' => false,
+                'order_number' => $orderNumber,
+                'message' => 'These products are no longer available: ' . implode(', ', $missing) . '. Please refresh your bag and try again.',
+                'items' => $items,
+                'items_count' => count($items),
+                'total_amount' => 0.0
+            ];
+        }
+
+        if (!empty($unavailable)) {
+            return [
+                'success' => false,
+                'order_number' => $orderNumber,
+                'message' => 'Sorry, we cannot fulfil this order: ' . implode('; ', $unavailable) . '.',
+                'items' => $items,
+                'items_count' => count($items),
+                'total_amount' => 0.0
+            ];
+        }
+
+        if (empty($pricedItems)) {
+            return [
+                'success' => false,
+                'order_number' => $orderNumber,
+                'message' => 'This order has no valid items.',
+                'items' => [],
+                'items_count' => 0,
+                'total_amount' => 0.0
+            ];
+        }
+
+        $items = $pricedItems;
+        $subtotal = round($subtotal, 2);
+
+        // Discount is server-authoritative: never trust a client-supplied
+        // amount. It is honoured only when a live, active coupon justifies it
+        // for this subtotal. Offline/mock mode cannot verify against the DB, so
+        $couponCode = (string)($orderData['coupon_code'] ?? '');
+        $customerId = (int)($orderData['customer_id'] ?? 0);
+        $customerName = trim($orderData['customer_name'] ?? 'Direct Customer');
+        $customerPhone = trim($orderData['customer_phone'] ?? '');
+
+        if (Database::isMockMode()) {
+            $discount = max(0.0, min((float)($orderData['discount'] ?? 0.0), $subtotal));
+        } else {
+            $discount = self::resolveCouponDiscount($couponCode, $subtotal, $channel, $customerPhone, $customerId);
+        }
+        $shipping = (float)($orderData['shipping'] ?? 0.0);
+        $gstRate = (float)($orderData['gst_rate'] ?? 5.0);
+
+        $calc = PricingCalculator::calculateOrderTotal($subtotal, $discount, $shipping, $gstRate);
+        $grandTotal = (float)($calc['grand_total'] ?? $subtotal);
+        $gstAmount = (float)($calc['gst_amount'] ?? $calc['gst'] ?? 0.0);
+        $shippingAddress = trim((string)($orderData['shipping_address'] ?? ''));
+        // $channel was already resolved from the session above — do not re-read
+        // it from the request here.
+        $paymentMethod = $orderData['payment_method'] ?? 'direct_upi';
+        $paymentStatus = $orderData['payment_status'] ?? 'pending';
+        $fulfillmentStatus = $orderData['fulfillment_status'] ?? 'processing';
+
+        // A signed-in customer's order always belongs to them, so a posted
+        // customer_id cannot be used to attribute spend to somebody else.
+        if (empty($_SESSION['admin_logged_in']) && !empty($_SESSION['user']['id'])) {
+            $customerId = (int)$_SESSION['user']['id'];
+        }
+
+        // ── ENTERPRISE IDEMPOTENCY & ACTIVE ORDER REUSE GUARD ──
+        // Eliminates duplicate order creation when users change payment methods,
+        // retry failed payments, or double-click submit during checkout.
+        if ($liveDb) {
+            $passedOrderNum = trim((string)($orderData['order_number'] ?? ''));
+            $cleanDigits = preg_replace('/[^\d]/', '', $customerPhone);
+            $last10Phone = strlen($cleanDigits) >= 10 ? substr($cleanDigits, -10) : $cleanDigits;
+
+            $existing = null;
+
+            // Step 0: Check by idempotency_key if provided
+            if ($idempotencyKey !== '') {
+                try {
+                    if (self::ordersHasColumn($pdo, 'idempotency_key')) {
+                        $idemStmt = $pdo->prepare("SELECT * FROM orders WHERE idempotency_key = ? LIMIT 1");
+                        $idemStmt->execute([$idempotencyKey]);
+                        $foundIdem = $idemStmt->fetch(\PDO::FETCH_ASSOC);
+                        if ($foundIdem) {
+                            $existing = $foundIdem;
+                        }
+                    }
+                } catch (\Throwable $ie) {}
+            }
+
+            // Step 1: Check by explicit order_number if provided
+            if (!$existing && !empty($passedOrderNum)) {
+                $checkStmt = $pdo->prepare("SELECT * FROM orders WHERE order_number = ? LIMIT 1");
+                $checkStmt->execute([$passedOrderNum]);
+                $existing = $checkStmt->fetch(\PDO::FETCH_ASSOC);
+            }
+
+            // Step 2: Check for rapid double-click duplicate (exact same total & phone within 15 seconds)
+            if (!$existing && empty($passedOrderNum) && !empty($last10Phone)) {
+                $isSqlite = ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite');
+                $timeClause = $isSqlite
+                    ? "created_at >= datetime('now', '-15 seconds')"
+                    : "created_at >= (NOW() - INTERVAL 15 SECOND)";
+                $dedupStmt = $pdo->prepare("
+                    SELECT * FROM orders 
+                    WHERE (customer_phone LIKE ? OR customer_phone = ?)
+                      AND channel = ?
+                      AND ABS(total_amount - ?) < 0.01
+                      AND payment_status IN ('pending', 'unpaid')
+                      AND {$timeClause}
+                    ORDER BY id DESC LIMIT 1
+                ");
+                $dedupStmt->execute(['%' . $last10Phone, $cleanDigits, $channel, $grandTotal]);
+                $found = $dedupStmt->fetch(\PDO::FETCH_ASSOC);
+                if ($found) {
+                    $existing = $found;
+                }
+            }
+
+            // Step 3: If an active pending order exists, update payment details and return existing order
+            if ($existing && in_array(strtolower((string)($existing['payment_status'] ?? '')), ['pending', 'unpaid', 'credit'], true)) {
+                $dbOrderId = (int)$existing['id'];
+                $orderNumber = (string)$existing['order_number'];
+                $orderTotal = (float)$existing['total_amount'];
+
+                try {
+                    $updCols = "payment_method = ?, customer_name = ?";
+                    $updParams = [$paymentMethod, $customerName];
+                    if ($shippingAddress !== '' && self::ordersHasColumn($pdo, 'shipping_address')) {
+                        $updCols .= ", shipping_address = ?";
+                        $updParams[] = $shippingAddress;
+                    }
+                    $updParams[] = $dbOrderId;
+                    $pdo->prepare("UPDATE orders SET {$updCols} WHERE id = ?")->execute($updParams);
+                } catch (\Throwable $uex) {
+                    error_log('DT Order deduplication update failed: ' . $uex->getMessage());
+                }
+
+                $reusedPayload = [
+                    'success' => true,
+                    'id' => $dbOrderId,
+                    'order_number' => $orderNumber,
+                    'customer_name' => $customerName,
+                    'customer_phone' => $customerPhone,
+                    'shipping_address' => $shippingAddress,
+                    'customer_email' => $orderData['customer_email'] ?? ($existing['customer_email'] ?? ''),
+                    'channel' => $existing['channel'] ?? $channel,
+                    'items' => $items,
+                    'items_count' => count($items),
+                    'pricing' => $calc,
+                    'total_amount' => $orderTotal,
+                    'payment_status' => $existing['payment_status'] ?? 'pending',
+                    'fulfillment_status' => $existing['fulfillment_status'] ?? 'processing',
+                    'created_at' => $existing['created_at'] ?? date('Y-m-d H:i:s'),
+                    'whatsapp_notice' => self::generateWhatsAppNotice($orderNumber, $orderTotal, $customerName),
+                    'reused' => true,
+                    'message' => 'Active order session reused and updated.'
+                ];
+                if ($idempotencyKey !== '') {
+                    self::$mockIdempotencyCache[$idempotencyKey] = $reusedPayload;
+                }
+                return $reusedPayload;
+            }
+        }
+
+        $dbOrderId = 0;
+
+        if ($liveDb) {
+            try {
+                $pdo->beginTransaction();
+
+                // If customerId is 0, lookup by phone or insert guest customer
+                if ($customerId <= 0 && !empty($customerPhone)) {
+                    $cStmt = $pdo->prepare("SELECT id FROM customers WHERE phone = ? LIMIT 1");
+                    $cStmt->execute([$customerPhone]);
+                    $existing = $cStmt->fetch(\PDO::FETCH_ASSOC);
+                    if ($existing) {
+                        $customerId = (int)$existing['id'];
+                    } else {
+                        $custType = in_array($channel, ['retail', 'wholesale', 'reseller'], true) ? $channel : 'retail';
+
+                        // A guest has no password, so this INSERT never named
+                        // password_hash. On the current schema the column is
+                        // nullable and that is fine, but a database created from
+                        // the older schema.sql declares it VARCHAR(255) NOT NULL
+                        // with no default - and MySQL in strict mode then rejects
+                        // the row with "Field 'password_hash' doesn't have a
+                        // default value". That happens inside this transaction, so
+                        // the whole order was rolled back and guest checkout failed
+                        // outright. Ask the live table what it needs and satisfy it:
+                        // '' is written only when the column refuses NULL, and an
+                        // empty hash is exactly what "no password set" means
+                        // everywhere else (Auth::login refuses it and
+                        // Auth::register lets the owner claim the row later).
+                        $custCols = "name, phone, email, type, status, created_at";
+                        $custVals = "?, ?, ?, ?, 'active', NOW()";
+                        $custParams = [$customerName, $customerPhone, $orderData['customer_email'] ?? '', $custType];
+                        try {
+                            if ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) !== 'sqlite') {
+                                $pwStmt = $pdo->query("SHOW COLUMNS FROM `customers` LIKE 'password_hash'");
+                                $pwCol = $pwStmt ? $pwStmt->fetch(\PDO::FETCH_ASSOC) : null;
+                                if ($pwCol && ($pwCol['Null'] ?? 'YES') === 'NO' && ($pwCol['Default'] ?? null) === null) {
+                                    $custCols = "name, phone, email, password_hash, type, status, created_at";
+                                    $custVals = "?, ?, ?, ?, ?, 'active', NOW()";
+                                    $custParams = [$customerName, $customerPhone, $orderData['customer_email'] ?? '', '', $custType];
+                                }
+                            }
+                        } catch (\Exception $pwEx) {
+                            // Column introspection is a convenience, not a
+                            // requirement; fall through to the standard insert.
+                            error_log('DT guest customer column check failed: ' . $pwEx->getMessage());
+                        }
+
+                        $insCust = $pdo->prepare("INSERT INTO customers ({$custCols}) VALUES ({$custVals})");
+                        $insCust->execute($custParams);
+                        $customerId = (int)$pdo->lastInsertId();
+                    }
+                }
+
+                // Map and validate status enums
+                $validFulfillment = in_array($fulfillmentStatus, ['unfulfilled','processing','dispatched','delivered','cancelled']) ? $fulfillmentStatus : 'processing';
+                $validPayment = in_array($paymentStatus, ['pending','paid','credit','refunded']) ? $paymentStatus : 'pending';
+
+                // Insert into orders table. shipping_address is included only when the
+                // live table actually has the column, so order creation never fails on a
+                // database that predates the column (it self-heals once migrate.php re-runs).
+                $trackingNum = 'TRK-' . strtoupper(substr(uniqid(), -8));
+
+                $cols = "order_number, customer_id, customer_name, customer_phone, channel, subtotal, discount, gst_rate, gst_amount, shipping_fee, total_amount, payment_method, payment_status, fulfillment_status, tracking_number, courier_name";
+                $vals = "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Delhivery Express'";
+                $orderParams = [
+                    $orderNumber,
+                    $customerId,
+                    $customerName,
+                    $customerPhone,
+                    $channel,
+                    $subtotal,
+                    $discount,
+                    $gstRate,
+                    $gstAmount,
+                    $shipping,
+                    $grandTotal,
+                    $paymentMethod,
+                    $validPayment,
+                    $validFulfillment,
+                    $trackingNum
+                ];
+
+                if ($shippingAddress !== '' && self::ordersHasColumn($pdo, 'shipping_address')) {
+                    $cols .= ", shipping_address";
+                    $vals .= ", ?";
+                    $orderParams[] = $shippingAddress;
+                }
+
+                if (self::ordersHasColumn($pdo, 'notes')) {
+                    $cols .= ", notes";
+                    $vals .= ", ?";
+                    $orderParams[] = '[stock_reserved]';
+                }
+
+                if ($idempotencyKey !== '' && self::ordersHasColumn($pdo, 'idempotency_key')) {
+                    $cols .= ", idempotency_key";
+                    $vals .= ", ?";
+                    $orderParams[] = $idempotencyKey;
+                }
+
+                if (self::ordersHasColumn($pdo, 'stock_decremented')) {
+                    $cols .= ", stock_decremented";
+                    $vals .= ", 1";
+                }
+
+                $stmt = $pdo->prepare("INSERT INTO orders ({$cols}, created_at) VALUES ({$vals}, NOW())");
+                $stmt->execute($orderParams);
+                $dbOrderId = (int)$pdo->lastInsertId();
+
+                // Insert order items & update product stock. The chosen colour and
+                // size are stored when the live table has the columns (added by
+                // database/migrate.php); on an older database the order still
+                // saves, just without the variant, instead of failing outright.
+                $hasVariantCols = self::tableHasColumn($pdo, 'order_items', 'variant_color')
+                    && self::tableHasColumn($pdo, 'order_items', 'variant_size');
+                $hasSellingTypeCol = self::tableHasColumn($pdo, 'order_items', 'selling_type');
+                $hasVariantIdCol = self::tableHasColumn($pdo, 'order_items', 'variant_id');
+
+                if ($hasVariantCols && $hasSellingTypeCol && $hasVariantIdCol) {
+                    $itemStmt = $pdo->prepare("
+                        INSERT INTO order_items (order_id, product_id, variant_id, product_title, sku, selling_type, variant_color, variant_size, unit_price, quantity, total_price)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+                } elseif ($hasVariantCols && $hasSellingTypeCol) {
+                    $itemStmt = $pdo->prepare("
+                        INSERT INTO order_items (order_id, product_id, product_title, sku, selling_type, variant_color, variant_size, unit_price, quantity, total_price)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+                } elseif ($hasVariantCols) {
+                    $itemStmt = $pdo->prepare("
+                        INSERT INTO order_items (order_id, product_id, product_title, sku, variant_color, variant_size, unit_price, quantity, total_price)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ");
+                } else {
+                    $itemStmt = $pdo->prepare("
+                        INSERT INTO order_items (order_id, product_id, product_title, sku, unit_price, quantity, total_price)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ");
+                }
+
+                $isSqlite = ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite');
+                $safeStockExpr = $isSqlite ? "MAX(0, stock_qty - ?)" : "GREATEST(0, stock_qty - ?)";
+
+                $stockStmt = $pdo->prepare("
+                    UPDATE products
+                    SET stock_qty = {$safeStockExpr}
+                    WHERE id = ? AND stock_qty >= ?
+                ");
+
+                $variantByIdStockStmt = $pdo->prepare("
+                    UPDATE product_variants
+                    SET stock_qty = {$safeStockExpr}
+                    WHERE id = ? AND stock_qty >= ?
+                ");
+
+                $variantStockStmt = $pdo->prepare("
+                    UPDATE product_variants
+                    SET stock_qty = {$safeStockExpr}
+                    WHERE product_id = ? AND LOWER(color_name) = LOWER(?) AND LOWER(size_name) = LOWER(?) AND stock_qty >= ?
+                ");
+
+                $variantAllStockStmt = $pdo->prepare("
+                    UPDATE product_variants
+                    SET stock_qty = {$safeStockExpr}
+                    WHERE product_id = ? AND stock_qty >= ?
+                ");
+
+                foreach ($items as $it) {
+                    // $items has already been rewritten with catalogue prices,
+                    // titles and SKUs, so nothing here comes from the request.
+                    $prodId = (int)($it['product_id'] ?? $it['id'] ?? 0);
+                    $prodTitle = $it['title'] ?? $it['name'] ?? 'Silk Saree';
+                    $prodSku = $it['sku'] ?? 'DT-SKU';
+                    $unitPrice = (float)($it['price'] ?? 0);
+                    $qty = max(1, (int)($it['quantity'] ?? $it['qty'] ?? 1));
+                    $sellingType = $it['selling_type'] ?? 'single_piece';
+
+                    if ($sellingType === 'full_set') {
+                        $fullSetPieces = max(1, (int)($it['full_set_pieces'] ?? 1));
+                        $totalPhysicalQty = $qty * $fullSetPieces;
+                        $totalItemPrice = round($unitPrice * $fullSetPieces * $qty, 2);
+                        $vColor = 'All Configured Colors';
+                        $vSize  = 'All Configured Sizes';
+
+                        if ($hasVariantCols && $hasSellingTypeCol && $hasVariantIdCol) {
+                            $itemStmt->execute([$dbOrderId, $prodId, null, $prodTitle, $prodSku, 'full_set', $vColor, $vSize, $unitPrice, $qty, $totalItemPrice]);
+                        } elseif ($hasVariantCols && $hasSellingTypeCol) {
+                            $itemStmt->execute([$dbOrderId, $prodId, $prodTitle, $prodSku, 'full_set', $vColor, $vSize, $unitPrice, $qty, $totalItemPrice]);
+                        } elseif ($hasVariantCols) {
+                            $itemStmt->execute([$dbOrderId, $prodId, $prodTitle, $prodSku, $vColor, $vSize, $unitPrice, $qty, $totalItemPrice]);
+                        } else {
+                            $itemStmt->execute([$dbOrderId, $prodId, $prodTitle, $prodSku, $unitPrice, $qty, $totalItemPrice]);
+                        }
+
+                        // Decrement products table stock
+                        $stockStmt->execute([$totalPhysicalQty, $prodId, $totalPhysicalQty]);
+                        // Decrement each variant in product_variants
+                        $variantAllStockStmt->execute([$qty, $prodId, $qty]);
+                    } else {
+                        $totalItemPrice = round($unitPrice * $qty, 2);
+                        $vColor = self::variantValue($it['color'] ?? $it['variant_color'] ?? '', ['standard']);
+                        $vSize  = self::variantValue($it['size'] ?? $it['variant_size'] ?? '', ['standard']);
+                        $varId  = !empty($it['variant_id']) ? (int)$it['variant_id'] : null;
+
+                        // If variant_id is provided, populate variant color, size, and SKU from product variants if empty
+                        if ($varId > 0 && !empty($it['variants']) && is_array($it['variants'])) {
+                            foreach ($it['variants'] as $vCandidate) {
+                                if ((int)$vCandidate['id'] === $varId) {
+                                    if (empty($vColor) && !empty($vCandidate['color_name'])) {
+                                        $vColor = $vCandidate['color_name'];
+                                    }
+                                    if (empty($vSize) && !empty($vCandidate['size_name'])) {
+                                        $vSize = $vCandidate['size_name'];
+                                    }
+                                    if (!empty($vCandidate['sku'])) {
+                                        $prodSku = $vCandidate['sku'];
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        // If varId is not provided, try to match by color & size
+                        if (!$varId && !empty($it['variants']) && is_array($it['variants'])) {
+                            foreach ($it['variants'] as $vCandidate) {
+                                if (strcasecmp((string)($vCandidate['color_name'] ?? ''), (string)$vColor) === 0 && strcasecmp((string)($vCandidate['size_name'] ?? ''), (string)$vSize) === 0) {
+                                    $varId = (int)$vCandidate['id'];
+                                    if (!empty($vCandidate['sku'])) {
+                                        $prodSku = $vCandidate['sku'];
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        if ($hasVariantCols && $hasSellingTypeCol && $hasVariantIdCol) {
+                            $itemStmt->execute([$dbOrderId, $prodId, $varId, $prodTitle, $prodSku, 'single_piece', $vColor, $vSize, $unitPrice, $qty, $totalItemPrice]);
+                        } elseif ($hasVariantCols && $hasSellingTypeCol) {
+                            $itemStmt->execute([$dbOrderId, $prodId, $prodTitle, $prodSku, 'single_piece', $vColor, $vSize, $unitPrice, $qty, $totalItemPrice]);
+                        } elseif ($hasVariantCols) {
+                            $itemStmt->execute([$dbOrderId, $prodId, $prodTitle, $prodSku, $vColor, $vSize, $unitPrice, $qty, $totalItemPrice]);
+                        } else {
+                            $itemStmt->execute([$dbOrderId, $prodId, $prodTitle, $prodSku, $unitPrice, $qty, $totalItemPrice]);
+                        }
+
+                        // Decrement products table stock
+                        $stockStmt->execute([$qty, $prodId, $qty]);
+
+                        // Decrement specific variant stock by ID if present, otherwise by color & size
+                        if ($varId && $varId > 0) {
+                            $variantByIdStockStmt->execute([$qty, $varId, $qty]);
+                        } elseif ($vColor !== '' && $vSize !== '') {
+                            $variantStockStmt->execute([$qty, $prodId, $vColor, $vSize, $qty]);
+                        }
+                    }
+                }
+
+                // Update customer total_orders and lifetime_spend
+                if ($customerId > 0) {
+                    try {
+                        $pdo->prepare("
+                            UPDATE customers 
+                            SET total_orders = COALESCE(total_orders, 0) + 1, 
+                                lifetime_spend = COALESCE(lifetime_spend, 0) + ? 
+                            WHERE id = ?
+                        ")->execute([$grandTotal, $customerId]);
+                    } catch (\Exception $ce) {}
+                }
+
+                // Record verified coupon redemption in coupon_usages ledger
+                if ($discount > 0 && !empty($couponCode)) {
+                    try {
+                        require_once __DIR__ . '/DiscountEngine.php';
+                        DiscountEngine::recordRedemption(
+                            $couponCode,
+                            $dbOrderId,
+                            $orderNumber,
+                            $customerId,
+                            $customerPhone,
+                            $customerName,
+                            $discount,
+                            $subtotal,
+                            $channel
+                        );
+                    } catch (\Throwable $cpe) {
+                        error_log('[OrderManager] Coupon redemption record skipped: ' . $cpe->getMessage());
+                    }
+                }
+
+                $pdo->commit();
+            } catch (\Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $dbError = $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine();
+                error_log("[ORDER CREATION ERROR] " . $dbError);
+            }
+        }
+
+        $isSuccess = $liveDb ? ($dbOrderId > 0) : true;
+        $orderResultPayload = [
+            'success' => $isSuccess,
+            'id' => $dbOrderId,
+            'db_error' => $dbError ?? null,
+            'order_number' => $orderNumber,
+            'customer_name' => $customerName,
+            'customer_phone' => $customerPhone,
+            'shipping_address' => $shippingAddress,
+            'customer_email' => $orderData['customer_email'] ?? '',
+            'channel' => $channel,
+            'items' => $items,
+            'items_count' => count($items),
+            'pricing' => $calc,
+            'total_amount' => $grandTotal,
+            'payment_status' => $paymentStatus,
+            'fulfillment_status' => $fulfillmentStatus,
+            'created_at' => date('Y-m-d H:i:s'),
+            'whatsapp_notice' => self::generateWhatsAppNotice($orderNumber, $grandTotal, $customerName)
+        ];
+
+        if ($idempotencyKey !== '') {
+            self::$mockIdempotencyCache[$idempotencyKey] = $orderResultPayload;
+        }
+
+        return $orderResultPayload;
+    }
+
+    /**
+     * Probe (once, cached) whether the live `orders` table has a given column.
+     * Lets writes stay compatible with databases created before a column existed.
+     */
+    private static function ordersHasColumn(\PDO $pdo, string $column): bool
+    {
+        return self::tableHasColumn($pdo, 'orders', $column);
+    }
+
+    /**
+     * Same probe for any table, so item writes can adapt to a database that
+     * predates the order_items variant columns.
+     */
+    private static function tableHasColumn(\PDO $pdo, string $table, string $column): bool
+    {
+        static $cache = [];
+        $key = $table . '.' . $column;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $table)) {
+            return $cache[$key] = false;
+        }
+        try {
+            if ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $stmt = $pdo->query("PRAGMA table_info(`{$table}`)");
+                $cols = $stmt ? $stmt->fetchAll(\PDO::FETCH_ASSOC) : [];
+                $found = false;
+                foreach ($cols as $c) {
+                    if (strcasecmp((string)($c['name'] ?? ''), $column) === 0) {
+                        $found = true;
+                        break;
+                    }
+                }
+                return $cache[$key] = $found;
+            }
+
+            // Standard ANSI / MariaDB / MySQL information_schema check
+            $stmt = $pdo->prepare("SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1");
+            $stmt->execute([$table, $column]);
+            $found = (bool)$stmt->fetchColumn();
+            if (!$found) {
+                // Direct SHOW COLUMNS query inspection fallback
+                $colRows = $pdo->query("SHOW COLUMNS FROM `{$table}`")->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+                foreach ($colRows as $cr) {
+                    if (strcasecmp((string)($cr['Field'] ?? ''), $column) === 0) {
+                        $found = true;
+                        break;
+                    }
+                }
+            }
+            return $cache[$key] = $found;
+        } catch (\Throwable $e) {
+            $cache[$key] = false;
+        }
+        return $cache[$key];
+    }
+
+    /**
+     * Normalise a chosen variant. Returns null for an empty value or for one of
+     * the placeholder labels the storefront used when nothing was selected, so a
+     * blank column means "shopper did not choose" rather than "chose Standard".
+     */
+    private static function variantValue($raw, array $placeholders = []): ?string
+    {
+        $val = trim((string)$raw);
+        if ($val === '' || in_array(strtolower($val), $placeholders, true)) {
+            return null;
+        }
+        return mb_substr($val, 0, 60);
+    }
+
+    /**
+     * Get single order by order number
+     */
+    public static function getByOrderNumber(string $orderNumber): ?array
+    {
+        return self::getOrderDetails($orderNumber);
+    }
+
+    /**
+     * Get orders by customer ID or customer phone number
+     */
+    public static function getByCustomerOrPhone(int $customerId, string $phone): array
+    {
+        $db = Database::getConnection();
+        if ($db !== null && !Database::isMockMode()) {
+            try {
+                $digits = preg_replace('/\D+/', '', $phone);
+                if (strlen($digits) > 10) {
+                    $digits = substr($digits, -10);
+                }
+                $phoneParam = !empty($digits) ? ('%' . $digits) : '---NO-PHONE---';
+
+                $stmt = $db->prepare("
+                    SELECT o.*,
+                           COALESCE(o.fulfillment_status, o.order_status, 'processing') as status,
+                           COALESCE(o.courier_name, 'Delhivery Logistics') as courier,
+                           COALESCE(o.tracking_number, '') as awb,
+                           CASE 
+                               WHEN o.customer_name IS NOT NULL AND o.customer_name != '' THEN o.customer_name 
+                               WHEN c.name IS NOT NULL AND c.name != '' THEN c.name 
+                               ELSE 'Valued Customer' 
+                           END as display_customer_name,
+                           CASE 
+                               WHEN o.customer_phone IS NOT NULL AND o.customer_phone != '' THEN o.customer_phone 
+                               WHEN c.phone IS NOT NULL AND c.phone != '' THEN c.phone 
+                               ELSE '' 
+                           END as display_customer_phone,
+                           (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as items_count
+                    FROM orders o
+                    LEFT JOIN customers c ON o.customer_id = c.id
+                    WHERE (? > 0 AND o.customer_id = ?)
+                       OR REPLACE(REPLACE(REPLACE(REPLACE(o.customer_phone, ' ', ''), '-', ''), '+91', ''), '+', '') LIKE ?
+                       OR o.customer_phone LIKE ?
+                    ORDER BY o.id DESC LIMIT 100
+                ");
+                $stmt->execute([$customerId, $customerId, $phoneParam, $phoneParam]);
+                $orders = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+                // Fetch line items for each order
+                foreach ($orders as &$ord) {
+                    $orderId = (int)$ord['id'];
+                    $iStmt = $db->prepare("SELECT oi.*, p.primary_image FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ? ORDER BY oi.id ASC");
+                    $iStmt->execute([$orderId]);
+                    $items = $iStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+                    foreach ($items as &$it) {
+                        $it['img'] = !empty($it['primary_image']) ? $it['primary_image'] : '/assets/images/placeholder-product.svg';
+                    }
+                    unset($it);
+
+                    $ord['items'] = $items;
+                    $firstItem = $items[0] ?? [];
+                    $itemCount = count($items) > 0 ? count($items) : (int)($ord['items_count'] ?? 1);
+                    $ord['productName'] = !empty($firstItem['product_title'])
+                        ? ($firstItem['product_title'] . ($itemCount > 1 ? " (+".($itemCount-1)." more)" : ""))
+                        : ('Order #' . ($ord['order_number'] ?? $orderId));
+                    $ord['sku'] = (string)($firstItem['sku'] ?? ('SKU-' . $orderId));
+                    $ord['image'] = (string)($firstItem['img'] ?? '/assets/images/placeholder-product.svg');
+                    $ord['color'] = (string)($firstItem['variant_color'] ?? 'Standard');
+                    $ord['qty'] = $itemCount;
+                    $ord['total'] = (float)($ord['total_amount'] ?? 0);
+                    $ord['payment'] = (string)($ord['payment_method'] ?? 'Bank Transfer');
+                    $ord['date'] = date('d M Y, h:i A', strtotime($ord['created_at'] ?? 'now'));
+                }
+                unset($ord);
+
+                return $orders;
+            } catch (\Exception $e) {
+                error_log("OrderManager::getByCustomerOrPhone error: " . $e->getMessage());
+                return [];
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Get orders by customer phone number
+     */
+    public static function getByPhone(string $phone): array
+    {
+        return self::getByCustomerOrPhone(0, $phone);
+    }
+
+    /**
+     * Generate official WhatsApp dispatch message
+     */
+    public static function generateWhatsAppNotice(string $orderNumber, float $grandTotal, string $customerName): string
+    {
+        $formattedTotal = '₹' . number_format($grandTotal, 2);
+        return "Namaste {$customerName} ji! 🙏\n" .
+               "Your DT Brand's & Jai Hanuman Tex order *{$orderNumber}* has been confirmed.\n" .
+               "Order Total: *{$formattedTotal}* (GST 5% included).\n" .
+               "Tracking link will be shared once dispatched.\n" .
+               "Thank you for choosing luxury authentic handlooms! 🌸";
+    }
+
+    /**
+     * Get all orders dynamically from database
+     */
+    public static function getAll(): array
+    {
+        $db = Database::getConnection();
+        if ($db !== null && !Database::isMockMode()) {
+            try {
+                $rows = Database::query("
+                    SELECT o.*, 
+                           CASE 
+                               WHEN o.customer_name IS NOT NULL AND o.customer_name != '' THEN o.customer_name 
+                               WHEN c.name IS NOT NULL AND c.name != '' THEN c.name 
+                               ELSE 'Direct Customer' 
+                           END as display_name,
+                           CASE 
+                               WHEN o.customer_phone IS NOT NULL AND o.customer_phone != '' THEN o.customer_phone 
+                               WHEN c.phone IS NOT NULL AND c.phone != '' THEN c.phone 
+                               ELSE '+91 70463 63528' 
+                           END as display_phone,
+                           COALESCE(c.type, o.channel, 'Retail') as display_type,
+                           (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as real_items_count,
+                           (SELECT product_title FROM order_items WHERE order_id = o.id ORDER BY id ASC LIMIT 1) as first_item_name
+                    FROM orders o
+                    LEFT JOIN customers c ON o.customer_id = c.id
+                    ORDER BY o.id DESC
+                ");
+                if (!empty($rows)) {
+                    $result = [];
+                    foreach ($rows as $r) {
+                        $itemCount = (int)($r['real_items_count'] ?? 1);
+                        $summary = $r['first_item_name'] ? ($r['first_item_name'] . ($itemCount > 1 ? " (+".($itemCount-1)." more)" : "")) : 'Ethnic Silk Sarees';
+
+                        $result[] = [
+                            'id' => $r['order_number'] ?? ('DTB-' . str_pad($r['id'], 6, '0', STR_PAD_LEFT)),
+                            'db_id' => (int)$r['id'],
+                            'customer' => $r['display_name'],
+                            'customer_type' => ucfirst($r['display_type']),
+                            'phone' => $r['display_phone'],
+                            'date' => date('d M Y, h:i A', strtotime($r['created_at'] ?? 'now')),
+                            'items_count' => $itemCount . ($itemCount > 1 ? ' items' : ' item'),
+                            'items_summary' => $summary,
+                            'amount' => (float)($r['total_amount'] ?? 0),
+                            'payment' => $r['payment_method'] ?? 'Bank Wire / RTGS',
+                            'payment_status' => $r['payment_status'] ?? 'paid',
+                            'shipping' => !empty($r['courier_name']) ? $r['courier_name'] : 'Standard Logistics',
+                            'tracking' => !empty($r['tracking_number']) ? $r['tracking_number'] : '-',
+                            'status' => $r['fulfillment_status'] ?? 'processing',
+                            'source' => ucfirst($r['channel'] ?? 'Online Shop'),
+                            'updated' => 'Just now'
+                        ];
+                    }
+                    return $result;
+                }
+            } catch (\Exception $e) {
+                error_log("OrderManager::getAll error: " . $e->getMessage());
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Get Orders by Customer ID
+     */
+    public static function getByCustomerId(int $customerId): array
+    {
+        $db = Database::getConnection();
+        if ($db !== null && !Database::isMockMode()) {
+            try {
+                return Database::query("
+                    SELECT * FROM orders 
+                    WHERE customer_id = ? 
+                    ORDER BY id DESC
+                ", [$customerId]);
+            } catch (\Exception $e) {
+                return [];
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Update Order Fulfillment Status by ID or Order Number with Audit Trail Logging
+     */
+    public static function updateStatus($orderIdentifier, string $status, ?string $trackingNumber = null, ?string $courier = null, string $updatedBy = 'Admin'): bool
+    {
+        $db = Database::getConnection();
+        if ($db !== null && !Database::isMockMode()) {
+            try {
+                // 1. Get current order state
+                $currentOrder = null;
+                $whereClauses = ["id = ?", "order_number = ?"];
+                $whereParams = [is_numeric($orderIdentifier) ? (int)$orderIdentifier : 0, (string)$orderIdentifier];
+                if (self::ordersHasColumn($db, 'tracking_number')) {
+                    $whereClauses[] = "tracking_number = ?";
+                    $whereParams[] = (string)$orderIdentifier;
+                }
+                if (self::ordersHasColumn($db, 'awb_number')) {
+                    $whereClauses[] = "awb_number = ?";
+                    $whereParams[] = (string)$orderIdentifier;
+                }
+                $cStmt = $db->prepare("SELECT * FROM orders WHERE " . implode(' OR ', $whereClauses) . " LIMIT 1");
+                $cStmt->execute($whereParams);
+                $currentOrder = $cStmt->fetch(\PDO::FETCH_ASSOC);
+
+                if (!$currentOrder) {
+                    return false;
+                }
+
+                $prevStatus = $currentOrder['fulfillment_status'] ?? ($currentOrder['order_status'] ?? ($currentOrder['status'] ?? 'pending'));
+                $orderDbId = (int)($currentOrder['id'] ?? 0);
+                $orderNumber = (string)($currentOrder['order_number'] ?? $orderIdentifier);
+
+                // Build dynamic update SET based on available columns
+                $setCols = [];
+                $params = [];
+
+                if (self::ordersHasColumn($db, 'fulfillment_status')) {
+                    $setCols[] = "fulfillment_status = ?";
+                    $params[] = $status;
+                }
+                if (self::ordersHasColumn($db, 'order_status')) {
+                    $setCols[] = "order_status = ?";
+                    $params[] = $status;
+                }
+                if (self::ordersHasColumn($db, 'status')) {
+                    $setCols[] = "status = ?";
+                    $params[] = $status;
+                }
+                if (self::ordersHasColumn($db, 'tracking_number')) {
+                    $setCols[] = "tracking_number = COALESCE(?, tracking_number)";
+                    $params[] = $trackingNumber;
+                }
+                if (self::ordersHasColumn($db, 'awb_number')) {
+                    $setCols[] = "awb_number = COALESCE(?, awb_number)";
+                    $params[] = $trackingNumber;
+                }
+                if (self::ordersHasColumn($db, 'courier_name')) {
+                    $setCols[] = "courier_name = COALESCE(?, courier_name)";
+                    $params[] = $courier;
+                }
+                if (self::ordersHasColumn($db, 'courier_partner')) {
+                    $setCols[] = "courier_partner = COALESCE(?, courier_partner)";
+                    $params[] = $courier;
+                }
+                if (self::ordersHasColumn($db, 'updated_at')) {
+                    $setCols[] = "updated_at = NOW()";
+                }
+
+                if (empty($setCols)) {
+                    return false;
+                }
+
+                $setSql = implode(', ', $setCols);
+                $params[] = $orderDbId;
+                $params[] = $orderNumber;
+
+                $stmt = $db->prepare("UPDATE orders SET {$setSql} WHERE id = ? OR order_number = ?");
+                $res = $stmt->execute($params);
+
+                // 2. Log in order_status_history if table exists
+                if ($res && $orderDbId > 0) {
+                    try {
+                        $hasHistory = self::tableHasColumn($db, 'order_status_history', 'order_id');
+                        if ($hasHistory) {
+                            $hasPrev = self::tableHasColumn($db, 'order_status_history', 'previous_status');
+                            $hasNew = self::tableHasColumn($db, 'order_status_history', 'new_status');
+                            $hasFrom = self::tableHasColumn($db, 'order_status_history', 'from_status');
+                            $hasTo = self::tableHasColumn($db, 'order_status_history', 'to_status');
+                            $hasComment = self::tableHasColumn($db, 'order_status_history', 'comment');
+                            $hasNotes = self::tableHasColumn($db, 'order_status_history', 'notes');
+                            $hasUpdatedBy = self::tableHasColumn($db, 'order_status_history', 'updated_by');
+                            $hasCreatedBy = self::tableHasColumn($db, 'order_status_history', 'created_by');
+
+                            $comment = "Order status updated to " . ucfirst(str_replace('_', ' ', $status)) . ($trackingNumber ? " (AWB: {$trackingNumber})" : "");
+
+                            $hCols = ['order_id'];
+                            $hVals = ['?'];
+                            $hParams = [$orderDbId];
+
+                            if ($hasPrev && $hasNew) {
+                                $hCols[] = 'previous_status'; $hVals[] = '?'; $hParams[] = $prevStatus;
+                                $hCols[] = 'new_status'; $hVals[] = '?'; $hParams[] = $status;
+                            } elseif ($hasFrom && $hasTo) {
+                                $hCols[] = 'from_status'; $hVals[] = '?'; $hParams[] = $prevStatus;
+                                $hCols[] = 'to_status'; $hVals[] = '?'; $hParams[] = $status;
+                            }
+
+                            if ($hasComment) {
+                                $hCols[] = 'comment'; $hVals[] = '?'; $hParams[] = $comment;
+                            } elseif ($hasNotes) {
+                                $hCols[] = 'notes'; $hVals[] = '?'; $hParams[] = $comment;
+                            }
+
+                            if ($hasUpdatedBy) {
+                                $hCols[] = 'updated_by'; $hVals[] = '?'; $hParams[] = $updatedBy;
+                            } elseif ($hasCreatedBy) {
+                                $hCols[] = 'created_by'; $hVals[] = '?'; $hParams[] = $updatedBy;
+                            }
+
+                            $hCols[] = 'created_at';
+                            $hVals[] = 'NOW()';
+
+                            $hSql = "INSERT INTO order_status_history (" . implode(', ', $hCols) . ") VALUES (" . implode(', ', $hVals) . ")";
+                            $hStmt = $db->prepare($hSql);
+                            $hStmt->execute($hParams);
+                        }
+                    } catch (\Throwable $ex) {
+                        error_log("order_status_history insert warning: " . $ex->getMessage());
+                    }
+                }
+
+                return $res;
+            } catch (\Exception $e) {
+                error_log("OrderManager::updateStatus error: " . $e->getMessage());
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Get Complete Order Details with Items and Status History
+     */
+    public static function getOrderDetails($orderIdentifier): ?array
+    {
+        $db = Database::getConnection();
+        if ($db !== null && !Database::isMockMode()) {
+            try {
+                $order = null;
+                $whereClauses = ["id = ?", "order_number = ?"];
+                $whereParams = [is_numeric($orderIdentifier) ? (int)$orderIdentifier : 0, (string)$orderIdentifier];
+                if (self::ordersHasColumn($db, 'tracking_number')) {
+                    $whereClauses[] = "tracking_number = ?";
+                    $whereParams[] = (string)$orderIdentifier;
+                }
+                if (self::ordersHasColumn($db, 'awb_number')) {
+                    $whereClauses[] = "awb_number = ?";
+                    $whereParams[] = (string)$orderIdentifier;
+                }
+                $stmt = $db->prepare("SELECT * FROM orders WHERE " . implode(' OR ', $whereClauses) . " LIMIT 1");
+                $stmt->execute($whereParams);
+                $order = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+                if ($order) {
+                    $orderId = (int)$order['id'];
+                    $itemsStmt = $db->prepare("
+                        SELECT oi.*, p.primary_image 
+                        FROM order_items oi 
+                        LEFT JOIN products p ON oi.product_id = p.id 
+                        WHERE oi.order_id = ? 
+                        ORDER BY oi.id ASC
+                    ");
+                    $itemsStmt->execute([$orderId]);
+                    $items = $itemsStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+                    foreach ($items as &$it) {
+                        $it['img'] = !empty($it['primary_image']) ? $it['primary_image'] : '/assets/images/placeholder-product.svg';
+                    }
+                    unset($it);
+                    $order['items'] = $items;
+
+                    $order['status'] = $order['fulfillment_status'] ?? ($order['order_status'] ?? ($order['status'] ?? 'processing'));
+                    $order['courier'] = $order['courier_name'] ?? ($order['courier_partner'] ?? 'Delhivery Logistics');
+                    $order['awb'] = $order['tracking_number'] ?? ($order['awb_number'] ?? '');
+                    $order['total'] = (float)($order['total_amount'] ?? 0);
+                    $order['subtotal'] = (float)($order['subtotal'] ?? 0);
+                    $order['discount'] = (float)($order['discount'] ?? 0);
+                    $order['tax'] = (float)($order['gst_amount'] ?? 0);
+                    $order['payment'] = (string)($order['payment_method'] ?? 'Bank Transfer');
+                    $order['date'] = date('d M Y, h:i A', strtotime($order['created_at'] ?? 'now'));
+
+                    // Status history
+                    $order['history'] = [];
+                    try {
+                        $histStmt = $db->prepare("SELECT * FROM order_status_history WHERE order_id = ? ORDER BY id ASC");
+                        $histStmt->execute([$orderId]);
+                        $order['history'] = $histStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+                    } catch (\Exception $he) {
+                        $order['history'] = [];
+                    }
+
+                    return $order;
+                }
+            } catch (\Exception $e) {
+                error_log("OrderManager::getOrderDetails error: " . $e->getMessage());
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Delete Order permanently along with line items, status history, and transactions
+     */
+    public static function deleteOrder($orderId): bool
+    {
+        $orderId = trim((string)$orderId);
+        if ($orderId === '') {
+            return false;
+        }
+
+        $db = Database::getConnection();
+        if ($db !== null && !Database::isMockMode()) {
+            try {
+                // 1. Locate the exact numerical ID and order_number
+                $orderRow = null;
+                if (is_numeric($orderId)) {
+                    $stmt = $db->prepare("SELECT id, order_number FROM orders WHERE id = ? OR order_number = ? LIMIT 1");
+                    $stmt->execute([(int)$orderId, $orderId]);
+                    $orderRow = $stmt->fetch(\PDO::FETCH_ASSOC);
+                } else {
+                    $stmt = $db->prepare("SELECT id, order_number FROM orders WHERE order_number = ? LIMIT 1");
+                    $stmt->execute([$orderId]);
+                    $orderRow = $stmt->fetch(\PDO::FETCH_ASSOC);
+                }
+
+                if (!$orderRow) {
+                    // Try direct delete by order_number or id anyway
+                    if (is_numeric($orderId)) {
+                        $del = $db->prepare("DELETE FROM orders WHERE id = ? OR order_number = ?");
+                        $del->execute([(int)$orderId, $orderId]);
+                    } else {
+                        $del = $db->prepare("DELETE FROM orders WHERE order_number = ?");
+                        $del->execute([$orderId]);
+                    }
+                    return true;
+                }
+
+                $numericId = (int)$orderRow['id'];
+                $orderNumber = (string)$orderRow['order_number'];
+
+                $inTransaction = false;
+                try {
+                    $db->beginTransaction();
+                    $inTransaction = true;
+                } catch (\Throwable $te) {
+                    $inTransaction = false;
+                }
+
+                // 2. Cascade delete order_items
+                try {
+                    $itStmt = $db->prepare("DELETE FROM order_items WHERE order_id = ?");
+                    $itStmt->execute([$numericId]);
+                } catch (\Throwable $ie) {
+                    error_log("deleteOrder items warning: " . $ie->getMessage());
+                }
+
+                // 3. Cascade delete order_status_history
+                try {
+                    $histStmt = $db->prepare("DELETE FROM order_status_history WHERE order_id = ?");
+                    $histStmt->execute([$numericId]);
+                } catch (\Throwable $he) {}
+
+                // 4. Cascade delete payment_transactions if any
+                try {
+                    $txStmt = $db->prepare("DELETE FROM payment_transactions WHERE order_id = ? OR order_number = ?");
+                    $txStmt->execute([$numericId, $orderNumber]);
+                } catch (\Throwable $txe) {}
+
+                // 5. Delete order from orders table
+                $stmt = $db->prepare("DELETE FROM orders WHERE id = ?");
+                $ok = $stmt->execute([$numericId]);
+
+                if ($inTransaction) {
+                    $db->commit();
+                }
+
+                return $ok;
+            } catch (\Exception $e) {
+                if (isset($inTransaction) && $inTransaction && $db->inTransaction()) {
+                    $db->rollBack();
+                }
+                error_log("OrderManager::deleteOrder error: " . $e->getMessage());
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Bulk Delete Orders permanently
+     */
+    public static function bulkDeleteOrders(array $orderIds): array
+    {
+        $deletedCount = 0;
+        $deletedIds = [];
+
+        foreach ($orderIds as $rawId) {
+            $id = trim((string)$rawId);
+            if ($id === '') continue;
+
+            if (self::deleteOrder($id)) {
+                $deletedCount++;
+                $deletedIds[] = $id;
+            }
+        }
+
+        return [
+            'success' => $deletedCount > 0 || empty($orderIds),
+            'deleted_count' => $deletedCount,
+            'deleted_ids' => $deletedIds
+        ];
+    }
+
+    /**
+     * Bulk Update Orders status
+     */
+    public static function bulkUpdateStatus(array $orderIds, string $status, ?string $tracking = null, ?string $courier = null): array
+    {
+        $updatedCount = 0;
+        $updatedIds = [];
+
+        foreach ($orderIds as $rawId) {
+            $id = trim((string)$rawId);
+            if ($id === '') continue;
+
+            if (self::updateStatus($id, $status, $tracking, $courier)) {
+                $updatedCount++;
+                $updatedIds[] = $id;
+            }
+        }
+
+        return [
+            'success' => $updatedCount > 0 || empty($orderIds),
+            'updated_count' => $updatedCount,
+            'updated_ids' => $updatedIds,
+            'status' => $status
+        ];
+    }
+}
+
+
+

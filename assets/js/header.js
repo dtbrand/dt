@@ -1,0 +1,192 @@
+/**
+ * assets/js/header.js — Header Search Autocomplete, Mobile Search & Ticker Logic
+ * DT Brand's & Jai Hanuman Tex
+ */
+
+(function () {
+    'use strict';
+
+    // 1. Top Announcement Ticker Auto-Slide
+    var tickerIndex = 0;
+    var tickerTimer = null;
+
+    window.slideDtTicker = function (dir) {
+        var slides = document.querySelectorAll('#dtTickerTrack .dt-ticker-slide');
+        if (!slides.length) return;
+
+        slides[tickerIndex].classList.remove('active');
+        slides[tickerIndex].classList.add('exit-up');
+
+        var prevIndex = tickerIndex;
+        tickerIndex = (tickerIndex + dir + slides.length) % slides.length;
+
+        setTimeout(function () {
+            slides[prevIndex].classList.remove('exit-up');
+        }, 500);
+
+        slides[tickerIndex].classList.add('active');
+    };
+
+    function startTickerAuto() {
+        if (tickerTimer) clearInterval(tickerTimer);
+        tickerTimer = setInterval(function () {
+            window.slideDtTicker(1);
+        }, 4000);
+    }
+
+    // 2. Desktop Amazon-Style Search Autocomplete
+    function initSearch() {
+        var searchInput = document.getElementById('dtSearchInput');
+        var catSelect = document.getElementById('dtSearchCatSelect');
+        var suggestionsBox = document.getElementById('dtSearchSuggestions');
+        var clearBtn = document.getElementById('dtSearchClear');
+        var submitBtn = document.getElementById('dtSearchSubmit');
+
+        if (!searchInput) return;
+
+        var debounceTimeout = null;
+
+        function performSearch(q) {
+            var cat = catSelect ? catSelect.value : 'All';
+
+            fetch('/api/search.php?q=' + encodeURIComponent(q || '') + '&cat=' + encodeURIComponent(cat || 'All'))
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    var data = (res.data || res.results || {});
+                    if (!data || (!data.products.length && !data.categories.length && !data.trending.length)) {
+                        suggestionsBox.innerHTML = '<div style="padding:12px; font-size:0.8rem; color:#6B7280; text-align:center;">No matching products found.</div>';
+                        suggestionsBox.style.display = 'block';
+                        return;
+                    }
+
+                    var html = '';
+                    if (!q && data.trending && data.trending.length) {
+                        html += '<div style="padding:6px 12px; background:#FAF8F4; font-size:0.7rem; font-weight:800; color:#8A681F; border-bottom:1px solid #F1ECE1; display:flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg> <span>TRENDING SEARCHES</span></div>';
+                        html += '<div style="display:flex; flex-wrap:wrap; gap:6px; padding:8px 12px;">';
+                        data.trending.forEach(function(t) {
+                            html += '<a href="/shop.php?search=' + encodeURIComponent(t) + '" style="font-size:0.75rem; background:#FAF5E8; border:1px solid #D4AF37; padding:3px 8px; border-radius:12px; color:#705114; text-decoration:none; font-weight:600;">' + t + '</a>';
+                        });
+                        html += '</div>';
+                    }
+
+                    if (data.categories && data.categories.length) {
+                        html += '<div style="padding:6px 12px; background:#FAF8F4; font-size:0.7rem; font-weight:800; color:#8A681F; border-top:1px solid #F1ECE1; border-bottom:1px solid #F1ECE1;">CATEGORIES</div>';
+                        data.categories.forEach(function (c) {
+                            html += '<a href="/shop.php?category=' + encodeURIComponent(c.name) + '" class="dt-suggestion-item">' +
+                                '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#8A681F;fill:none;stroke-width:2;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+                                '<span>' + c.name + '</span>' +
+                                '</a>';
+                        });
+                    }
+
+                    if (data.products && data.products.length) {
+                        html += '<div style="padding:6px 12px; background:#FAF8F4; font-size:0.7rem; font-weight:800; color:#8A681F; border-top:1px solid #F1ECE1; border-bottom:1px solid #F1ECE1;">' + (q ? 'MATCHING PRODUCTS' : 'FEATURED ENSEMBLES') + '</div>';
+                        data.products.forEach(function (p) {
+                            html += '<a href="' + p.url + '" class="dt-suggestion-item">' +
+                                '<img src="' + p.image + '" class="dt-suggestion-thumb" alt="' + p.name + '" />' +
+                                '<div style="flex:1; overflow:hidden;">' +
+                                '<div style="font-weight:700; font-size:0.82rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">' + p.name + '</div>' +
+                                '<div style="font-size:0.75rem; color:#8A681F; font-weight:800;">₹' + Number(p.price).toLocaleString('en-IN') + '</div>' +
+                                '</div>' +
+                                '</a>';
+                        });
+                    }
+
+                    suggestionsBox.innerHTML = html;
+                    suggestionsBox.style.display = 'block';
+                })
+                .catch(function () {
+                    suggestionsBox.style.display = 'none';
+                });
+        }
+
+        searchInput.addEventListener('input', function () {
+            var val = this.value.trim();
+            if (clearBtn) clearBtn.style.display = val.length ? 'flex' : 'none';
+
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(function () {
+                performSearch(val);
+            }, 120);
+        });
+
+        searchInput.addEventListener('focus', function () {
+            performSearch(this.value.trim());
+        });
+
+        searchInput.addEventListener('click', function () {
+            performSearch(this.value.trim());
+        });
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                this.style.display = 'none';
+                suggestionsBox.style.display = 'none';
+                searchInput.focus();
+            });
+        }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                var q = searchInput.value.trim();
+                var cat = catSelect ? catSelect.value : 'All';
+                window.location.href = '/shop.php?search=' + encodeURIComponent(q) + '&category=' + encodeURIComponent(cat);
+            });
+        }
+
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                if (submitBtn) submitBtn.click();
+            } else if (e.key === 'Escape') {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // Close suggestions on outside click
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#dtSearchAmazon')) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+    }
+
+    // 3. Mobile Search Overlay Toggle
+    function initMobileSearch() {
+        var trigger = document.getElementById('dtMobileSearchTrigger');
+        var bar = document.getElementById('dtMobileSearchBar');
+        var closeBtn = document.getElementById('dtMobileSearchClose');
+        var input = document.getElementById('dtMobileSearchInput');
+        var submitBtn = document.getElementById('dtMobileSearchSubmit');
+
+        if (!trigger || !bar) return;
+
+        trigger.addEventListener('click', function () {
+            bar.classList.add('active');
+            if (input) input.focus();
+        });
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function () {
+                bar.classList.remove('active');
+            });
+        }
+
+        if (submitBtn && input) {
+            submitBtn.addEventListener('click', function () {
+                var q = input.value.trim();
+                if (q) window.location.href = '/shop.php?search=' + encodeURIComponent(q);
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') submitBtn.click();
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        startTickerAuto();
+        initSearch();
+        initMobileSearch();
+    });
+
+})();

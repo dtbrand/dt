@@ -1,0 +1,64 @@
+<?php
+/**
+ * run_api_action.php — Robust CLI Test Harness for arbitrary API endpoints
+ * Usage: php run_api_action.php [GET|POST] [uri] [base64_or_json_payload]
+ */
+$method = $argv[1] ?? 'GET';
+$uri = $argv[2] ?? 'api/integrations.php?action=stats';
+$rawPost = $argv[3] ?? '';
+
+$_SERVER['REQUEST_METHOD'] = strtoupper($method);
+$_SERVER['REQUEST_URI'] = '/' . ltrim($uri, '/');
+$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+
+if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
+}
+$authMode = $argv[4] ?? (getenv('CLI_AUTH_MODE') ?: 'admin');
+if ($authMode === 'admin') {
+    if (!isset($_SESSION['admin_logged_in'])) {
+        $_SESSION['admin_logged_in'] = true;
+        $_SESSION['admin_user'] = ['id' => 1, 'name' => 'CLI Test Admin', 'email' => 'admin@dtbrand.in', 'role' => 'super_admin'];
+    }
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_SERVER['HTTP_X_CSRF_TOKEN'])) {
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = $_SESSION['csrf_token'];
+    }
+} elseif ($authMode === 'customer') {
+    $_SESSION = [
+        'user_id' => 888,
+        'user' => ['id' => 888, 'name' => 'Test Customer', 'role' => 'customer']
+    ];
+} elseif ($authMode === 'none') {
+    $_SESSION = [];
+}
+
+$parsed = parse_url($_SERVER['REQUEST_URI']);
+$path = ltrim($parsed['path'] ?? '', '/');
+$queryString = $parsed['query'] ?? '';
+
+$_GET = [];
+parse_str($queryString, $_GET);
+
+$_POST = [];
+if (!empty($rawPost)) {
+    $decoded = json_decode($rawPost, true);
+    if (!is_array($decoded)) {
+        $fromB64 = base64_decode($rawPost, true);
+        if ($fromB64 !== false) {
+            $decoded = json_decode($fromB64, true);
+        }
+    }
+    if (is_array($decoded)) {
+        $_POST = $decoded;
+    }
+}
+
+$target = __DIR__ . '/../' . $path;
+if (is_file($target)) {
+    require $target;
+} else {
+    echo json_encode(['success' => false, 'message' => "File not found: {$target}"]);
+}

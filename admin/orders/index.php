@@ -1,0 +1,112 @@
+<?php
+/* DT admin access guard */ $__dtg = $_SERVER['DOCUMENT_ROOT'] . '/admin/includes/adminguard.php'; if (is_file($__dtg)) { require_once $__dtg; } elseif (is_file(__DIR__ . '/../includes/adminguard.php')) { require_once __DIR__ . '/../includes/adminguard.php'; }
+
+/**
+ * index.php — Orders & Logistics Fulfillment Center Main Dashboard
+ * DT Brand's & Jai Hanuman Tex
+ */
+$page_title = "Orders & Logistics Fulfillment Center";
+$active_nav = "orders";
+$active_subnav = "all";
+$active_status_key = "all";
+$filter_status = "all";
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $page_title; ?> — DT Brand's Admin</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#8A681F">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/assets/css/admin.css?v=<?= @filemtime(__DIR__ . '/../assets/css/admin.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/orders/assets/css/orders.css?v=<?= @filemtime(__DIR__ . '/assets/css/orders.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/orders/assets/css/order-list.css?v=<?= @filemtime(__DIR__ . '/assets/css/order-list.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/orders/assets/css/order-status.css?v=<?= @filemtime(__DIR__ . '/assets/css/order-status.css') ?: '3.2.1' ?>">
+</head>
+<body>
+<div class="adm-layout">
+    <?php include_once __DIR__ . '/../includes/adminsidebar.php'; ?>
+    <div class="adm-main">
+        <?php include_once __DIR__ . '/../includes/adminheader.php'; ?>
+        <main class="adm-content" style="padding: 14px 18px; width: 100%; max-width: 100%; box-sizing: border-box;">
+            
+            <div class="dt-orders-container">
+                <!-- Page Header -->
+                <div class="dt-orders-head">
+                    <div class="dt-orders-title-group">
+                        <h1 class="dt-orders-title">
+                            <span>Orders &amp; Logistics Fulfillment Center</span>
+                            <span class="dt-title-counter-badge">
+                                <span class="dt-counter-dot"></span>
+                                <strong><?php require_once __DIR__ . '/../../src/OrderManager.php'; echo number_format(count(\DTBrand\OrderManager::getAll())); ?></strong> Total Orders
+                            </span>
+                        </h1>
+                        <p class="dt-orders-subtitle">Manage wholesale depot dispatches, reseller commissions, and retail parcel deliveries.</p>
+                    </div>
+                    <div class="dt-orders-actions">
+                        <button type="button" class="dt-btn dt-btn-pale" onclick="window.location.reload();">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                            <span>Refresh</span>
+                        </button>
+                        <a href="/admin/orders/export.php" class="dt-btn dt-btn-pale">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>Export All Orders</span>
+                        </a>
+                        <a href="/admin/orders/create.php" class="dt-btn dt-btn-gold">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>+ Create Order</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 12-Card KPI Metrics Ribbon -->
+                <?php include __DIR__ . '/components/order-stats.php'; ?>
+
+                <!-- Toolbar & Debounced Live Search -->
+                <?php include __DIR__ . '/components/order-search.php'; ?>
+
+                <!-- Master Orders Table -->
+                <?php include __DIR__ . '/components/order-table.php'; ?>
+            </div>
+
+            <!-- Modals & Drawers -->
+            <?php include __DIR__ . '/components/order-drawer.php'; ?>
+            <?php include __DIR__ . '/components/order-filters.php'; ?>
+            <?php include __DIR__ . '/components/order-actions.php'; ?>
+
+        </main>
+        <?php include_once __DIR__ . '/../includes/adminfooter.php'; ?>
+    </div>
+</div>
+
+<?php
+$ordersPayload = \DTBrand\OrderManager::getAll();
+?>
+<script>
+window.SERVER_ORDERS = <?php echo json_encode($ordersPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+
+// Global fetch wrapper with CSRF token for admin actions
+window.dtAdminFetch = async function(url, options = {}) {
+    const csrfToken = window.DT_ADMIN_CSRF_TOKEN || '';
+    const headers = new Headers(options.headers || {});
+    if (csrfToken) {
+        headers.set('X-CSRF-Token', csrfToken);
+    }
+    if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+    }
+    return fetch(url, { ...options, headers });
+};
+</script>
+<script src="/admin/orders/assets/js/orders.js?v=<?= @filemtime(__DIR__ . '/assets/js/orders.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/order-view.js?v=<?= @filemtime(__DIR__ . '/assets/js/order-view.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/order-list.js?v=<?= @filemtime(__DIR__ . '/assets/js/order-list.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/order-filters.js?v=<?= @filemtime(__DIR__ . '/assets/js/order-filters.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/order-status.js?v=<?= @filemtime(__DIR__ . '/assets/js/order-status.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/orders/assets/js/bulk-actions.js?v=<?= @filemtime(__DIR__ . '/assets/js/bulk-actions.js') ?: '3.2.1' ?>"></script>
+</body>
+</html>

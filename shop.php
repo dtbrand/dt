@@ -1,0 +1,568 @@
+<?php
+/**
+ * shop.php — MAIN PAGE (single complete HTML document)
+ * Includes shophader.php and shopbottomfotoer.php as partials.
+ * Premium Ethnic-Wear Shop — DT Brand's
+ */
+
+require_once __DIR__ . '/src/ProductCatalog.php';
+require_once __DIR__ . '/src/Database.php';
+require_once __DIR__ . '/src/Auth.php';
+
+use DTBrand\ProductCatalog;
+use DTBrand\Database;
+use DTBrand\Auth;
+
+// ── Dynamic Database-First Catalog Loader with Role-Based Visibility ──
+$currentUser = Auth::getCurrentUser();
+$csrfToken = Auth::generateCsrfToken();
+$currentUserRole = 'guest';
+if (Auth::isAdminLoggedIn()) {
+    $currentUserRole = 'admin';
+} elseif ($currentUser) {
+    $currentUserRole = strtolower(trim((string)($currentUser['type'] ?? ($currentUser['role'] ?? 'customer'))));
+}
+
+$allProducts = ProductCatalog::getForRole($currentUserRole);
+$products = $allProducts;
+
+$selectedCategory = isset($_GET['category']) ? trim($_GET['category']) : (isset($_GET['cat']) ? trim($_GET['cat']) : '');
+$selectedSubCategory = isset($_GET['subcategory']) ? trim($_GET['subcategory']) : (isset($_GET['subcat']) ? trim($_GET['subcat']) : '');
+$shopNoImage = ProductCatalog::NO_IMAGE;
+
+$initialSearch = isset($_GET['search']) ? trim($_GET['search']) : (isset($_GET['q']) ? trim($_GET['q']) : '');
+
+$categories = array_unique(array_merge(['All'], ProductCatalog::getCategories()));
+$categoriesDetails = ProductCatalog::getCategoriesWithDetails();
+$subcategoriesList = ProductCatalog::getSubcategories();
+$total_products = count($products);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="description" content="Shop premium Indian ethnic wear — silk sarees, kurtis, lehengas and designer gowns at DT Brand's." />
+<title>Shop — DT Brand's | Ethnic Luxury</title>
+
+<!-- ════ OPEN GRAPH & SOCIAL PREVIEW ENGINE ════ -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DT Brand's &amp; Jai Hanuman Tex">
+<meta property="og:title" content="Shop Ethnic Luxury — DT Brand's &amp; Jai Hanuman Tex">
+<meta property="og:description" content="Shop premium Indian ethnic wear — silk sarees, kurtis, lehengas and designer gowns at DT Brand's. Direct Surat mill rates.">
+<meta property="og:url" content="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in', ENT_QUOTES, 'UTF-8') ?>/shop">
+<meta property="og:image" content="https://<?= htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in', ENT_QUOTES, 'UTF-8') ?>/assets/images/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Shop Ethnic Luxury — DT Brand's &amp; Jai Hanuman Tex">
+<meta name="twitter:description" content="Shop premium Indian ethnic wear — silk sarees, kurtis, lehengas and designer gowns at DT Brand's.">
+
+<meta name="csrf-token" content="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#8A681F">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+
+<link rel="stylesheet" href="/assets/css/shop.css?v=<?= @filemtime(__DIR__ . '/assets/css/shop.css') ?: '3.2.1' ?>">
+
+    <!-- ════════════ GLOBAL PRODUCTS & MODAL ENGINE BOOTSTRAP ════════════ -->
+    <script>
+        window.DT_CSRF_TOKEN = <?php echo json_encode($csrfToken, JSON_UNESCAPED_SLASHES); ?>;
+        window.DT_CURRENT_USER = <?php echo json_encode($currentUser ? ['id' => (int)$currentUser['id'], 'name' => (string)($currentUser['name'] ?? ''), 'type' => $currentUserRole] : null, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        window.allProducts = <?php echo json_encode(isset($products) ? array_values($products) : []); ?>;
+        <?php $GLOBALS['dt_all_products_bootstrapped'] = true; ?>
+        window.catalogProducts = window.allProducts;
+        window.products = window.allProducts;
+        window.shopProductsData = window.allProducts;
+        window.allCategories = <?php echo json_encode($categoriesDetails); ?>;
+        window.allSubCategories = <?php echo json_encode($subcategoriesList); ?>;
+        window.initialCategory = <?php echo json_encode($selectedCategory ?: 'All'); ?>;
+        window.initialSubCategory = <?php echo json_encode($selectedSubCategory ?: ''); ?>;
+        window.initialSearchQuery = <?php echo json_encode($initialSearch); ?>;
+        window.openQuickView = function(id) { if(typeof window.openQV === 'function') window.openQV(id); };
+        window.openQuickViewModal = function(id) { if(typeof window.openQV === 'function') window.openQV(id); };
+    </script>
+</head>
+<body>
+
+<!-- ════════════ HEADER PARTIAL ════════════ -->
+<?php include_once __DIR__ . '/includes/shophader.php'; ?>
+
+<!-- ════════════ PAGE ════════════ -->
+<div class="page-wrapper">
+
+    <?php if (isset($_GET['restricted']) && $_GET['restricted'] === 'full_set'): ?>
+    <div style="max-width: 1200px; margin: 16px auto 0; padding: 14px 20px; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1.5px solid #D4AF37; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 4px 15px rgba(212,175,55,0.15);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8A681F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <div>
+                <strong style="color: #111827; font-size: 0.92rem; display: block; font-family: 'Inter', sans-serif;">Wholesale Full Set Notice</strong>
+                <span style="color: #5A4210; font-size: 0.82rem; font-family: 'Inter', sans-serif;">Full Set catalog lots are exclusively available to verified Retail &amp; Wholesale partners. Please sign in with a wholesale account to access lot orders.</span>
+            </div>
+        </div>
+        <a href="/login.php" class="dt-btn dt-btn-gold" style="padding: 8px 18px; font-size: 0.8rem; text-decoration: none; white-space: nowrap;">Partner Sign In</a>
+    </div>
+    <?php endif; ?>
+
+    <!-- ════ HERO PROMO BANNER SLIDER (Positioned above round sub-categories) ════ -->
+    <section class="hero-banner-section" aria-label="Featured Collections">
+        <div class="hero-banner-container" id="heroBannerContainer">
+            <div class="hero-banner-track" id="heroBannerTrack">
+                
+                <!-- Slide 1: Festive Sarees Edit -->
+                <div class="hero-banner-slide hero-slide-1" onclick="if(typeof window.filterByBanner==='function') window.filterByBanner('Sarees');">
+                    <div class="hero-slide-content">
+                        <span class="hero-slide-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>FESTIVE SILK UTSAV</span>
+                        <h2 class="hero-slide-title">Royal Banarasi & Kanjeevaram</h2>
+                        <p class="hero-slide-desc">Flat 25% OFF &bull; Pure Zari Heritage Weaves</p>
+                        <button class="hero-slide-btn dt-btn dt-btn-gold">Explore Sarees <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
+                    </div>
+                    <div class="hero-slide-img-wrap">
+                        <img src="/assets/images/product1.png" alt="Royal Silk Sarees" loading="lazy" />
+                    </div>
+                </div>
+
+                <!-- Slide 2: Designer Kurtis Extravaganza -->
+                <div class="hero-banner-slide hero-slide-2" onclick="if(typeof window.filterByBanner==='function') window.filterByBanner('Kurtis');">
+                    <div class="hero-slide-content">
+                        <span class="hero-slide-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-1px; margin-right:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>NEW SEASON DROP</span>
+                        <h2 class="hero-slide-title">Designer Anarkali & Kurtis</h2>
+                        <p class="hero-slide-desc">From ₹1,499 &bull; Pure Georgette & Cotton</p>
+                        <button class="hero-slide-btn dt-btn dt-btn-gold">Shop Kurtis <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
+                    </div>
+                    <div class="hero-slide-img-wrap">
+                        <img src="/assets/images/product5.png" alt="Designer Kurtis" loading="lazy" />
+                    </div>
+                </div>
+
+                <!-- Slide 3: Bridal Lehengas & Gowns -->
+                <div class="hero-banner-slide hero-slide-3" onclick="if(typeof window.filterByBanner==='function') window.filterByBanner('Lehengas');">
+                    <div class="hero-slide-content">
+                        <span class="hero-slide-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path></svg>ROYAL BRIDAL COUTURE</span>
+                        <h2 class="hero-slide-title">Velvet & Zardozi Lehengas</h2>
+                        <p class="hero-slide-desc">Complimentary Custom Fit Available</p>
+                        <button class="hero-slide-btn dt-btn dt-btn-gold">View Bridal <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
+                    </div>
+                    <div class="hero-slide-img-wrap">
+                        <img src="/assets/images/product6.png" alt="Bridal Lehengas" loading="lazy" />
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Left / Right Navigation Arrows -->
+            <button class="hero-banner-arrow prev dt-btn dt-btn-pale" id="heroBannerPrevBtn" aria-label="Previous Slide">
+                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button class="hero-banner-arrow next dt-btn dt-btn-pale" id="heroBannerNextBtn" aria-label="Next Slide">
+                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+
+            <!-- Bottom Indicator Dots -->
+            <div class="hero-banner-dots" id="heroBannerDots">
+                <span class="hero-banner-dot active" data-slide="0"></span>
+                <span class="hero-banner-dot" data-slide="1"></span>
+                <span class="hero-banner-dot" data-slide="2"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════ ROUND SUB-CATEGORY SLIDER (Positioned directly under Banner Slider) ════ -->
+    <nav class="cat-slider-section" aria-label="Sub categories">
+        <div class="cat-slider-track" id="catSliderTrack">
+            <!-- Dynamically populated from JS -->
+        </div>
+    </nav>
+
+    <!-- ════ SHOP LAYOUT: SIDEBAR + PRODUCTS ════ -->
+    <div class="shop-layout">
+
+    <!-- ── Desktop Left Sidebar Filter ── -->
+    <aside class="filter-sidebar" id="desktopFilterSidebar" aria-label="Filter products">
+
+        <div class="sf-header">
+            <span class="sf-title">
+                Filters
+                <span class="sf-title-badge" id="sfActiveBadge" style="display:none;">0</span>
+            </span>
+            <button class="sf-clear-all" id="sfClearAll">Clear All</button>
+        </div>
+
+        <!-- Category Section -->
+        <div class="sf-section open" id="sec-category">
+            <button class="sf-section-btn" aria-expanded="true">
+                <span class="sf-section-title-wrap">
+                    Category
+                    <span class="sf-sec-badge" id="badge-category">All</span>
+                </span>
+                <svg class="sf-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="sf-section-body">
+                <div class="sf-chips" role="group" aria-label="Category">
+                    <?php foreach ($categories as $catItem): 
+                        $isAct = ($catItem === 'All' && empty($selectedCategory)) || (strtolower($catItem) === strtolower($selectedCategory));
+                    ?>
+                    <button class="sf-chip <?= $isAct ? 'active' : '' ?>" data-sf-type="category" data-sf-val="<?= htmlspecialchars($catItem) ?>" aria-pressed="<?= $isAct ? 'true' : 'false' ?>"><?= htmlspecialchars($catItem) ?></button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Range Section -->
+        <div class="sf-section open" id="sec-price">
+            <button class="sf-section-btn" aria-expanded="true">
+                <span class="sf-section-title-wrap">
+                    Price Range
+                    <span class="sf-sec-badge" id="badge-price">Custom</span>
+                </span>
+                <svg class="sf-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="sf-section-body">
+                <div class="price-display-card">
+                    <div class="price-pill">
+                        <span class="price-pill-lbl">MIN</span>
+                        <span class="price-pill-val" id="sfPriceMinLabel">₹500</span>
+                    </div>
+                    <div class="price-pill-sep">—</div>
+                    <div class="price-pill">
+                        <span class="price-pill-lbl">MAX</span>
+                        <span class="price-pill-val" id="sfPriceMaxLabel">₹30,000</span>
+                    </div>
+                </div>
+                <div class="sf-range-track">
+                    <div class="sf-range-fill" id="sfRangeFill"></div>
+                    <input type="range" class="sf-range" id="sfPriceMin" min="500" max="30000" step="100" value="500" aria-label="Min price" />
+                    <input type="range" class="sf-range" id="sfPriceMax" min="500" max="30000" step="100" value="30000" aria-label="Max price" />
+                </div>
+                <div class="price-presets" role="group" aria-label="Price range presets">
+                    <button class="price-preset-chip" data-min="500" data-max="3000">Under ₹3k</button>
+                    <button class="price-preset-chip" data-min="3000" data-max="8000">₹3k – ₹8k</button>
+                    <button class="price-preset-chip" data-min="8000" data-max="15000">₹8k – ₹15k</button>
+                    <button class="price-preset-chip" data-min="15000" data-max="30000">₹15k+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Section -->
+        <div class="sf-section" id="sec-color">
+            <button class="sf-section-btn" aria-expanded="false">
+                <span class="sf-section-title-wrap">
+                    Colour
+                    <span class="sf-sec-badge" id="badge-color">0</span>
+                </span>
+                <svg class="sf-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="sf-section-body">
+                <div class="sf-swatches" role="group" aria-label="Colour">
+                    <div class="sf-swatch-wrapper" data-sf-type="color" data-sf-val="Navy">
+                        <span class="sf-swatch-circle" style="background:#1a237e;"></span>
+                        <span class="sf-swatch-text">Navy</span>
+                    </div>
+                    <div class="sf-swatch-wrapper" data-sf-type="color" data-sf-val="Maroon">
+                        <span class="sf-swatch-circle" style="background:#880e4f;"></span>
+                        <span class="sf-swatch-text">Maroon</span>
+                    </div>
+                    <div class="sf-swatch-wrapper" data-sf-type="color" data-sf-val="Green">
+                        <span class="sf-swatch-circle" style="background:#1b5e20;"></span>
+                        <span class="sf-swatch-text">Green</span>
+                    </div>
+                    <div class="sf-swatch-wrapper" data-sf-type="color" data-sf-val="Pink">
+                        <span class="sf-swatch-circle" style="background:#e91e63;"></span>
+                        <span class="sf-swatch-text">Pink</span>
+                    </div>
+                    <div class="sf-swatch-wrapper" data-sf-type="color" data-sf-val="Yellow">
+                        <span class="sf-swatch-circle" style="background:#f9a825;"></span>
+                        <span class="sf-swatch-text">Yellow</span>
+                    </div>
+                    <div class="sf-swatch-wrapper" data-sf-type="color" data-sf-val="Red">
+                        <span class="sf-swatch-circle" style="background:#b71c1c;"></span>
+                        <span class="sf-swatch-text">Red</span>
+                    </div>
+                    <div class="sf-swatch-wrapper" data-sf-type="color" data-sf-val="Orange">
+                        <span class="sf-swatch-circle" style="background:#f57c00;"></span>
+                        <span class="sf-swatch-text">Orange</span>
+                    </div>
+                    <div class="sf-swatch-wrapper" data-sf-type="color" data-sf-val="White">
+                        <span class="sf-swatch-circle" style="background:#ffffff;border:1px solid #ccc;"></span>
+                        <span class="sf-swatch-text">White</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Size Section -->
+        <div class="sf-section" id="sec-size">
+            <button class="sf-section-btn" aria-expanded="false">
+                <span class="sf-section-title-wrap">
+                    Size
+                    <span class="sf-sec-badge" id="badge-size">0</span>
+                </span>
+                <svg class="sf-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="sf-section-body">
+                <div class="sf-chips" role="group" aria-label="Size">
+                    <button class="sf-chip" data-sf-type="size" data-sf-val="XS" aria-pressed="false">XS</button>
+                    <button class="sf-chip" data-sf-type="size" data-sf-val="S" aria-pressed="false">S</button>
+                    <button class="sf-chip" data-sf-type="size" data-sf-val="M" aria-pressed="false">M</button>
+                    <button class="sf-chip" data-sf-type="size" data-sf-val="L" aria-pressed="false">L</button>
+                    <button class="sf-chip" data-sf-type="size" data-sf-val="XL" aria-pressed="false">XL</button>
+                    <button class="sf-chip" data-sf-type="size" data-sf-val="XXL" aria-pressed="false">XXL</button>
+                    <button class="sf-chip" data-sf-type="size" data-sf-val="Free Size" aria-pressed="false">Free Size</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fabric Section -->
+        <div class="sf-section" id="sec-fabric">
+            <button class="sf-section-btn" aria-expanded="false">
+                <span class="sf-section-title-wrap">
+                    Fabric
+                    <span class="sf-sec-badge" id="badge-fabric">0</span>
+                </span>
+                <svg class="sf-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="sf-section-body">
+                <div class="sf-chips" role="group" aria-label="Fabric">
+                    <button class="sf-chip" data-sf-type="fabric" data-sf-val="Pure Silk" aria-pressed="false">Pure Silk</button>
+                    <button class="sf-chip" data-sf-type="fabric" data-sf-val="Georgette" aria-pressed="false">Georgette</button>
+                    <button class="sf-chip" data-sf-type="fabric" data-sf-val="Cotton" aria-pressed="false">Cotton</button>
+                    <button class="sf-chip" data-sf-type="fabric" data-sf-val="Chiffon" aria-pressed="false">Chiffon</button>
+                    <button class="sf-chip" data-sf-type="fabric" data-sf-val="Organza" aria-pressed="false">Organza</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discount Section -->
+        <div class="sf-section" id="sec-discount">
+            <button class="sf-section-btn" aria-expanded="false">
+                <span class="sf-section-title-wrap">
+                    Discount
+                    <span class="sf-sec-badge" id="badge-discount">0</span>
+                </span>
+                <svg class="sf-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="sf-section-body">
+                <div class="sf-chips" role="group" aria-label="Discount">
+                    <button class="sf-chip" data-sf-type="discount" data-sf-val="10" aria-pressed="false">10% &amp; above</button>
+                    <button class="sf-chip" data-sf-type="discount" data-sf-val="20" aria-pressed="false">20% &amp; above</button>
+                    <button class="sf-chip" data-sf-type="discount" data-sf-val="25" aria-pressed="false">25% &amp; above</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Availability Section -->
+        <div class="sf-section" id="sec-availability">
+            <button class="sf-section-btn" aria-expanded="false">
+                <span class="sf-section-title-wrap">
+                    Availability
+                    <span class="sf-sec-badge" id="badge-availability">Active</span>
+                </span>
+                <svg class="sf-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="sf-section-body">
+                <div class="sf-chips" role="group" aria-label="Availability">
+                    <button class="sf-chip active" data-sf-type="availability" data-sf-val="In Stock" aria-pressed="true">In Stock</button>
+                    <button class="sf-chip" data-sf-type="availability" data-sf-val="Pre-Order" aria-pressed="false">Pre-Order</button>
+                </div>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ── Products Main Area ── -->
+    <div class="products-area">
+
+        <!-- Top Desktop Sort Header -->
+        <div class="products-top-bar">
+            <span class="ptb-count" id="ptbCount">Showing <?= $total_products ?> Products</span>
+            <div class="ptb-sort-wrap">
+                <span class="ptb-sort-label">Sort by:</span>
+                <select class="ptb-sort-select" id="ptbSortSelect" aria-label="Sort products">
+                    <option value="recommended">Recommended</option>
+                    <option value="newest">Newest First</option>
+                    <option value="price_asc">Price — Low to High</option>
+                    <option value="price_desc">Price — High to Low</option>
+                    <option value="discount">Best Discount</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Main Products Listing -->
+        <main class="products-section" aria-label="Product listing">
+
+            <!-- Dynamic Active Filter Tags -->
+            <div class="active-filter-bar" id="activeFilterBar" role="status" aria-live="polite">
+                <span class="active-filter-label">Active Filters:</span>
+                <div id="activeFilterTagsWrap" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-grid" id="productsGrid" role="list">
+            <?php foreach ($products as $p): ?>
+            <?php
+                // Everything below comes from the row. Where a value is genuinely
+                // missing the card says so instead of inventing one: the image
+                // used to fall back to /assets/images/product1.png, a product
+                // with no variants was printed as "1 Colours", and a product
+                // with no size rows was printed as "Free Size".
+                $pName       = (string)($p['name'] ?? '');
+                $badge_class = !empty($p['badge']) ? 'badge-' . strtolower(preg_replace('/[^a-z0-9]+/i', '-', (string)$p['badge'])) : '';
+                $pHasPhoto   = !empty($p['has_photo']);
+                $pImg        = $pHasPhoto ? (string)$p['image'] : $shopNoImage;
+                $pCols       = array_values(array_filter((array)($p['colors'] ?? []), static fn($c) => trim((string)$c) !== ''));
+                $pSizes      = array_values(array_filter((array)($p['size'] ?? []), static fn($s) => trim((string)$s) !== ''));
+                $size_str    = implode(',', $pSizes);
+                $pHasVideo   = !empty($p['has_video']);
+                
+                // Use centralized price display resolver
+                $priceDisplay = ProductCatalog::getPriceDisplay($p, $currentUserRole);
+                $pDispPrice = $priceDisplay['effective_price'];
+                $pBasePrice = $priceDisplay['base_price'];
+                $pSaleDisc = $priceDisplay['sale_price'];
+                $pShowSale = $priceDisplay['show_sale'];
+                $pPriceLabel = $priceDisplay['price_label'];
+                $pStrikePrice = $pShowSale ? $pBasePrice : (float)($p['mrp'] ?? ($p['old_price'] ?? 0));
+                $pDiscountPct = ($pStrikePrice > $pDispPrice && $pStrikePrice > 0) ? (int)round((($pStrikePrice - $pDispPrice) / $pStrikePrice) * 100) : 0;
+            ?>
+            <article
+                class="product-card"
+                role="listitem"
+                data-product-id="<?= (int)$p['id'] ?>"
+                data-sku="<?= htmlspecialchars((string)($p['sku'] ?? '')) ?>"
+                data-category="<?= htmlspecialchars((string)($p['category'] ?? ($p['category_name'] ?? ''))) ?>"
+                data-subcategory="<?= htmlspecialchars((string)($p['sub_category'] ?? ($p['subcategory'] ?? ''))) ?>"
+                data-price="<?= (float)$pDispPrice ?>"
+                data-color="<?= htmlspecialchars((string)($p['color'] ?? '')) ?>"
+                data-size="<?= htmlspecialchars($size_str) ?>"
+                data-fabric="<?= htmlspecialchars((string)($p['fabric'] ?? '')) ?>"
+                data-discount="<?= (int)$pDiscountPct ?>"
+                data-has-video="<?= $pHasVideo ? '1' : '0' ?>"
+                data-stock="<?= !empty($p['in_stock']) ? 'In Stock' : 'Pre-Order' ?>"
+                aria-label="<?= htmlspecialchars($pName) ?>"
+            >
+                <div class="card-image-wrap">
+                    <a href="/product.php?id=<?= (int)$p['id'] ?>" style="display:block;width:100%;height:100%;">
+                        <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pName) ?>" class="card-img" loading="lazy"<?= $pHasPhoto ? '' : ' style="object-fit:contain;padding:18%;opacity:.6;"' ?> />
+                    </a>
+
+                    <?php if (!empty($p['badge'])): ?>
+                    <span class="card-badge <?= $badge_class ?>"><?= htmlspecialchars((string)$p['badge']) ?></span>
+                    <?php endif; ?>
+
+                    <button class="card-wishlist-btn" data-id="<?= (int)$p['id'] ?>" aria-label="Wishlist <?= htmlspecialchars($pName) ?>" aria-pressed="false" onclick="event.preventDefault();event.stopPropagation();if(typeof window.dtToggleWishlist==='function'){window.dtToggleWishlist(<?= (int)$p['id'] ?>);}else if(typeof window.toggleWishlistProduct==='function'){window.toggleWishlistProduct(<?= (int)$p['id'] ?>);}">
+                        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    </button>
+
+                    <button class="card-mobile-qv-btn quick-view-btn" data-id="<?= (int)$p['id'] ?>" aria-label="Quick View <?= htmlspecialchars($pName) ?>">
+                        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+
+                    <div class="card-quick-view" aria-hidden="true">
+                        <button class="quick-view-btn" data-id="<?= (int)$p['id'] ?>">Quick View</button>
+                    </div>
+
+                    <!-- Share Button on Photo (Directly Above Category Tag) -->
+                    <button type="button" class="card-share-btn" data-id="<?= (int)$p['id'] ?>" aria-label="Share <?= htmlspecialchars($pName) ?>" title="Share <?= htmlspecialchars($pName) ?>" onclick="event.stopPropagation();event.preventDefault();if(typeof window.shareProductCard==='function'){window.shareProductCard(<?= (int)$p['id'] ?>);}">
+                        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    </button>
+
+                    <!-- Category Box on Photo Bottom-Right Corner -->
+                    <?php if (trim((string)($p['category'] ?? '')) !== ''): ?>
+                    <span class="card-cat-photo-tag"><?= htmlspecialchars((string)$p['category']) ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="card-body">
+                    <!-- Product Title -->
+                    <h2 class="card-name">
+                        <a href="/product.php?id=<?= (int)$p['id'] ?>" style="color:inherit;text-decoration:none;">
+                            <?= htmlspecialchars($pName) ?>
+                        </a>
+                    </h2>
+
+                    <!-- Colours and sizes, from product_variants only -->
+                    <?php if (!empty($pCols) || !empty($pSizes)): ?>
+                    <div class="card-info-text-row">
+                        <?php if (!empty($pCols)): ?>
+                        <span class="card-colors-text" title="<?= htmlspecialchars(implode(', ', $pCols)) ?>"><?= count($pCols) ?> Colour<?= count($pCols) === 1 ? '' : 's' ?></span>
+                        <?php endif; ?>
+                        <?php if (!empty($pSizes)): ?>
+                        <span class="card-sizes-text"><?= htmlspecialchars(implode(', ', $pSizes)) ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+
+                    <div class="card-price-row">
+                        <?php if ($pDispPrice > 0): ?>
+                        <span class="card-price">&#8377;<?= number_format($pDispPrice) ?></span>
+                        <?php else: ?>
+                        <span class="card-price" style="font-size:.82em;">Price on request</span>
+                        <?php endif; ?>
+                        <?php if ($pStrikePrice > $pDispPrice && $pDispPrice > 0): ?>
+                        <span class="card-old-price">&#8377;<?= number_format($pStrikePrice) ?></span>
+                        <?php endif; ?>
+                        <?php if ($pSaleDisc > 0): ?>
+                        <span class="card-price-discount" style="background:#FEF3C7; color:#B45309; font-weight:800; font-size:10px; padding:2px 6px; border-radius:3px;">SAVE &#8377;<?= (int)$pSaleDisc ?></span>
+                        <?php elseif ($pDiscountPct > 0): ?>
+                        <span class="card-price-discount"><?= $pDiscountPct ?>% OFF</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </article>
+            <?php endforeach; ?>
+            </div>
+
+            <!-- No Products Found Message -->
+            <div class="no-products-found" id="noProductsMsg" style="<?= $total_products === 0 ? '' : 'display:none;' ?>">
+                <h3 class="np-title">No Matching Products</h3>
+                <p class="np-desc"><?= $total_products === 0 && $selectedCategory !== '' && strtolower($selectedCategory) !== 'all'
+                    ? 'Nothing is listed under &ldquo;' . htmlspecialchars($selectedCategory) . '&rdquo; yet.'
+                    : "We couldn't find any items matching your selected filter criteria." ?></p>
+                <button class="np-reset-btn" id="npResetBtn">Clear All Filters</button>
+            </div>
+        </main>
+
+    </div><!-- /.products-area -->
+    </div><!-- /.shop-layout -->
+</div><!-- /.page-wrapper -->
+
+<!-- ════════════ QUICK VIEW PARTIAL ════════════ -->
+<?php include_once __DIR__ . '/Shared/quickview.php'; ?>
+
+<!-- ════════════ SMART WHATSAPP SHARE MODAL ════════════ -->
+<?php include_once __DIR__ . '/Shared/smartshare.php'; ?>
+
+<!-- ════════════ TOAST ════════════ -->
+<div class="toast-container" id="toastContainer" aria-live="assertive" aria-atomic="true"></div>
+
+<!-- ════════════ BOTTOM BAR PARTIAL ════════════ -->
+<?php include_once __DIR__ . '/includes/shopbottomfotoer.php'; ?>
+
+<!-- ════════════ MASTER SCRIPT ENGINE ════════════ -->
+<script>
+        window.shopProductsData = <?= json_encode(array_values($products)) ?>;
+    </script>
+    <script src="/assets/js/shop.js?v=1787019062"></script>
+
+<!-- ════════════ INSTAGRAM REELS VIDEO FEED PARTIAL ════════════ -->
+<?php include_once __DIR__ . '/Shared/reels.php'; ?>
+
+<!-- ════════════ CART PARTIAL ════════════ -->
+<?php include_once __DIR__ . '/Shared/cart.php'; ?>
+
+<!-- ════════════ WISHLIST PARTIAL ════════════ -->
+<?php include_once __DIR__ . '/Shared/wishlist.php'; ?>
+
+<!-- ════════════ CHECKOUT MODAL & ORDER SYSTEM ════════════ -->
+<?php include_once __DIR__ . '/Shared/checkout.php'; ?>
+
+<!-- ════ GLOBAL REAL-TIME CART & WISHLIST SYNC ENGINE ════ -->
+<script src="/assets/js/dt-cart-sync.js?v=<?= @filemtime(__DIR__ . '/assets/js/dt-cart-sync.js') ?: '3.3.0' ?>"></script>
+
+<?php include_once __DIR__ . '/includes/footer.php'; ?>
+</body>
+</html>

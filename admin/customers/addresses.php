@@ -1,0 +1,64 @@
+<?php
+/* DT admin access guard */ $__dtg = __DIR__ . '/../includes/adminguard.php'; if (!is_file($__dtg)) $__dtg = $_SERVER['DOCUMENT_ROOT'] . '/admin/includes/adminguard.php'; if (is_file($__dtg)) require_once $__dtg;
+
+/**
+ * addresses.php — Customer Address Book Management
+ * DT Brand's & Jai Hanuman Tex — Luxury Master Design System
+ */
+$page_title = "Customer Saved Addresses";
+$active_nav = "customers";
+$active_subnav = "addresses";
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $page_title; ?> — DT Brand's Admin</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#8A681F">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/assets/css/admin.css?v=<?= @filemtime(__DIR__ . '/../assets/css/admin.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/customers/assets/css/customers.css?v=<?= @filemtime(__DIR__ . '/assets/css/customers.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/customers/assets/css/customer-list.css?v=<?= @filemtime(__DIR__ . '/assets/css/customer-list.css') ?: '3.2.1' ?>">
+    <link rel="stylesheet" href="/admin/customers/assets/css/customer-profile.css?v=<?= @filemtime(__DIR__ . '/assets/css/customer-profile.css') ?: '3.2.1' ?>">
+</head>
+<body>
+<div class="adm-layout">
+    <?php include_once __DIR__ . '/../includes/adminsidebar.php'; ?>
+    <div class="adm-main">
+        <?php include_once __DIR__ . '/../includes/adminheader.php'; ?>
+        <main class="adm-content" style="padding: 14px 18px; width: 100%; max-width: 100%; box-sizing: border-box;">
+            
+            <div class="dt-customers-container">
+                <div class="dt-cust-head">
+                    <div class="dt-cust-title-group">
+                        <h1 class="dt-cust-title">
+                            <span>Customer Address Books</span>
+                            <span class="dt-cust-badge gold">Shipping &amp; Billing</span>
+                        </h1>
+                        <p class="dt-cust-subtitle">Verify pin codes, state tax jurisdictions, and courier dispatch addresses.</p>
+                    </div>
+                    <div class="dt-cust-actions">
+                        <a href="/admin/customers/index.php" class="dt-btn dt-btn-pale"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:4px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Back to Directory</a>
+                    </div>
+                </div>
+
+                <div class="dt-card">
+                    <?php if (include __DIR__ . '/_require-customer.php'): ?>
+                        <?php include __DIR__ . '/components/customer-addresses.php'; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+        </main>
+        <?php include_once __DIR__ . '/../includes/adminfooter.php'; ?>
+    </div>
+</div>
+
+<script src="/admin/customers/assets/js/customers.js?v=<?= @filemtime(__DIR__ . '/assets/js/customers.js') ?: '3.2.1' ?>"></script>
+<script src="/admin/customers/assets/js/customer-view.js?v=<?= @filemtime(__DIR__ . '/assets/js/customer-view.js') ?: '3.2.1' ?>"></script>
+</body>
+</html>

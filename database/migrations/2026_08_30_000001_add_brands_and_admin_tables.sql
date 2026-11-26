@@ -1,0 +1,94 @@
+-- DT Brand's & Jai Hanuman Tex — BRANDS, ATTRIBUTES & ADMIN SUPPORT TABLES
+-- Idempotent: every CREATE TABLE here uses IF NOT EXISTS, so re-applying this
+-- migration against an existing schema is a no-op.
+
+CREATE TABLE IF NOT EXISTS `product_brands` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(150) NOT NULL,
+    `slug` VARCHAR(150) NOT NULL UNIQUE,
+    `description` TEXT NULL,
+    `logo_url` VARCHAR(255) NULL,
+    `tier` VARCHAR(50) NULL,
+    `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_brand_slug` (`slug`),
+    INDEX `idx_brand_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Link products to their house label. Idempotent column add: MariaDB/MySQL 8
+-- have no "ADD COLUMN IF NOT EXISTS", so we gate on information_schema.
+-- NOTE: The AFTER anchor is determined dynamically — early schema uses `category`,
+--       later schema uses `category_name`. We pick whichever exists.
+SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'brand');
+
+SET @after_col = (
+    SELECT CASE
+        WHEN COUNT(*) > 0 THEN 'category_name'
+        ELSE 'category'
+    END
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'category_name'
+);
+
+SET @ddl = IF(@col_exists = 0,
+    CONCAT('ALTER TABLE `products` ADD COLUMN `brand` VARCHAR(150) NULL DEFAULT NULL AFTER `', @after_col, '`, ADD INDEX `idx_products_brand` (`brand`)'),
+    'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+CREATE TABLE IF NOT EXISTS `product_attributes` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(100) NOT NULL,
+    `slug` VARCHAR(100) NOT NULL UNIQUE,
+    `type` ENUM('text','select','color','size','swatch') NOT NULL DEFAULT 'text',
+    `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_attr_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `banners` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(255) NOT NULL,
+    `subtitle` VARCHAR(255) NULL,
+    `image` VARCHAR(255) NULL,
+    `cta_text` VARCHAR(100) NULL,
+    `cta_url` VARCHAR(255) NULL,
+    `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    `display_order` INT NOT NULL DEFAULT 1,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_banner_status` (`status`),
+    INDEX `idx_banner_order` (`display_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `cms_pages` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `slug` VARCHAR(100) NOT NULL UNIQUE,
+    `title` VARCHAR(255) NOT NULL,
+    `content` LONGTEXT NULL,
+    `status` ENUM('draft','published','archived') NOT NULL DEFAULT 'draft',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_cms_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `settings` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `key_name` VARCHAR(100) NOT NULL UNIQUE,
+    `value` TEXT NULL,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Store-owner reply shown under each customer review (used by
+-- api/reviews.php action=reply). Gated on information_schema for idempotency.
+SET @reply_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews' AND COLUMN_NAME = 'store_reply');
+SET @ddl_reply = IF(@reply_exists = 0,
+    'ALTER TABLE `reviews` ADD COLUMN `store_reply` TEXT NULL AFTER `review_text`',
+    'SELECT 1');
+PREPARE stmt_reply FROM @ddl_reply;
+EXECUTE stmt_reply;
+DEALLOCATE PREPARE stmt_reply;

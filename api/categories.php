@@ -1,0 +1,268 @@
+<?php
+/**
+ * api/categories.php — Category Tree & Lookbooks Feed API & Real Database CRUD
+ * DT Brand's & Jai Hanuman Tex
+ */
+
+require_once __DIR__ . '/cors.php';
+cors_json();
+
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+if ($method === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+require_once __DIR__ . '/../src/Database.php';
+require_once __DIR__ . '/../src/ProductCatalog.php';
+require_once __DIR__ . '/_guard.php';
+
+use DTBrand\ProductCatalog;
+use DTBrand\Database;
+
+try {
+
+    if ($method === 'POST' || $method === 'DELETE') {
+        // Admin-only. GET stays public so the category feed can be read by the
+        // storefront; every write caller lives under /admin/products/categories/.
+        // This block was unauthenticated, so any visitor could rename, re-order,
+        // create or bulk-delete the shop's entire category tree.
+        dt_api_require_admin('change product categories');
+
+        $rawInput = file_get_contents('php://input');
+        $jsonData = json_decode($rawInput, true) ?: [];
+        $data = array_merge($_POST, $jsonData);
+
+        $action = trim($data['action'] ?? ($method === 'DELETE' ? 'delete' : 'create'));
+        $targetId = (int)($data['id'] ?? ($_GET['id'] ?? 0));
+
+        if ($action === 'create_subcategory') {
+            $name = trim((string)($data['name'] ?? ''));
+            $categoryId = (int)($data['category_id'] ?? 0);
+            if ($categoryId <= 0 && (!empty($data['category']) || !empty($data['category_name']))) {
+                $cName = trim((string)($data['category'] ?? $data['category_name']));
+                $foundCat = Database::fetchOne('SELECT id FROM categories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1', [$cName]);
+                if (!empty($foundCat)) {
+                    $categoryId = (int)$foundCat['id'];
+                }
+            }
+            if ($name === '' || $categoryId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Subcategory name and parent category are required.'], JSON_PRETTY_PRINT);
+                exit;
+            }
+            // The parent must exist
+            $parent = Database::fetchOne('SELECT id, name FROM categories WHERE id = ? LIMIT 1', [$categoryId]);
+            if (!$parent) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Parent category #' . $categoryId . ' does not exist.'], JSON_PRETTY_PRINT);
+                exit;
+            }
+            // Check if subcategory with same name already exists under this parent category
+            $existingSub = Database::fetchOne('SELECT id, name, slug FROM subcategories WHERE category_id = ? AND LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1', [$categoryId, $name]);
+            if (!empty($existingSub)) {
+                echo json_encode([
+                    'success' => true,
+                    'id' => (int)$existingSub['id'],
+                    'name' => $existingSub['name'],
+                    'slug' => $existingSub['slug'],
+                    'category_id' => $categoryId,
+                    'category_name' => $parent['name'],
+                    'message' => 'Subcategory "' . $existingSub['name'] . '" already exists under ' . $parent['name'] . '.',
+                    'already_existed' => true
+                ], JSON_PRETTY_PRINT);
+                exit;
+            }
+
+            $slug = strtolower(trim((string)preg_replace('/[^a-z0-9]+/i', '-', $name), '-'));
+            if ($slug === '') {
+                $slug = 'subcat-' . time();
+            }
+            // De-dupe the slug
+            $suffix = 2;
+            $candidate = $slug;
+            while (Database::fetchOne('SELECT id FROM subcategories WHERE slug = ? LIMIT 1', [$candidate])) {
+                $candidate = $slug . '-' . $suffix++;
+            }
+            $desc = trim((string)($data['description'] ?? ''));
+            $status = strtolower(trim((string)($data['status'] ?? 'active'))) === 'inactive' ? 'inactive' : 'active';
+            $ok = Database::execute(
+                'INSERT INTO subcategories (category_id, name, slug, description, status) VALUES (?, ?, ?, ?, ?)',
+                [$categoryId, $name, $candidate, $desc, $status]
+            );
+            $newSubId = $ok ? (int)Database::getConnection()->lastInsertId() : 0;
+            echo json_encode([
+                'success' => (bool)$ok,
+                'id' => $newSubId,
+                'name' => $name,
+                'slug' => $candidate,
+                'category_id' => $categoryId,
+                'category_name' => $parent['name'],
+                'message' => $ok ? 'Subcategory "' . $name . '" created under ' . $parent['name'] . '.' : 'Could not create the subcategory.'
+            ], JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        if ($action === 'update_subcategory') {
+            if ($targetId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Subcategory ID required.'], JSON_PRETTY_PRINT);
+                exit;
+            }
+            $name = trim((string)($data['name'] ?? ''));
+            $status = strtolower(trim((string)($data['status'] ?? '')));
+            $categoryId = (int)($data['category_id'] ?? 0);
+
+            $sets = [];
+            $params = [];
+            if ($name !== '') {
+                $sets[] = 'name = ?';
+                $params[] = $name;
+            }
+            if ($categoryId > 0) {
+                $sets[] = 'category_id = ?';
+                $params[] = $categoryId;
+            }
+            if (in_array($status, ['active', 'inactive'], true)) {
+                $sets[] = 'status = ?';
+                $params[] = $status;
+            }
+            if (empty($sets)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Nothing to update.'], JSON_PRETTY_PRINT);
+                exit;
+            }
+            $params[] = $targetId;
+            $ok = Database::execute('UPDATE subcategories SET ' . implode(', ', $sets) . ' WHERE id = ?', $params);
+            echo json_encode([
+                'success' => (bool)$ok,
+                'id' => $targetId,
+                'message' => $ok ? 'Subcategory updated.' : 'The subcategory was not changed.'
+            ], JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        if ($action === 'create') {
+            $res = ProductCatalog::createCategory($data);
+            echo json_encode($res, JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        if ($action === 'update') {
+            if ($targetId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Category ID required for update.'], JSON_PRETTY_PRINT);
+                exit;
+            }
+            $res = ProductCatalog::updateCategory($targetId, $data);
+            echo json_encode($res, JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        if ($action === 'reorder') {
+            $items = $data['items'] ?? ($data['categories'] ?? $data['order'] ?? []);
+            if (is_string($items)) {
+                $items = json_decode($items, true) ?: [];
+            }
+            $res = ProductCatalog::reorderCategories((array)$items);
+            echo json_encode($res, JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        if ($action === 'delete') {
+            // Subcategory deletion routes through the same guarded block; the
+            // subcategories list passes action=delete_subcategory so we never
+            // delete a parent category by mistake from that screen.
+            if (($data['action'] ?? '') === 'delete_subcategory') {
+                if ($targetId <= 0) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Subcategory ID required.'], JSON_PRETTY_PRINT);
+                    exit;
+                }
+                $ok = Database::execute('DELETE FROM subcategories WHERE id = ?', [$targetId]);
+                echo json_encode([
+                    'success' => (bool)$ok,
+                    'id' => $targetId,
+                    'message' => $ok ? 'Subcategory deleted.' : 'The subcategory was not deleted.'
+                ], JSON_PRETTY_PRINT);
+                exit;
+            }
+
+            if ($targetId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Category ID required.'], JSON_PRETTY_PRINT);
+                exit;
+            }
+            // deleteCategory() deliberately refuses while products still point at
+            // the category. Reporting that as the generic "Failed to delete"
+            // left the admin guessing; the real reason and the count are named.
+            $held = ProductCatalog::categoryProductCount($targetId);
+            if ($held > 0) {
+                echo json_encode([
+                    'success' => false,
+                    'id' => $targetId,
+                    'products_count' => $held,
+                    'message' => $held . ' product(s) are still in this category. Move or delete them first.'
+                ], JSON_PRETTY_PRINT);
+                exit;
+            }
+            $ok = ProductCatalog::deleteCategory($targetId);
+            echo json_encode([
+                'success' => $ok,
+                'id' => $targetId,
+                'message' => $ok ? 'Category deleted.' : 'The category was not deleted.'
+            ], JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        if ($action === 'bulk_delete') {
+            $ids = $data['ids'] ?? [];
+            if (is_string($ids)) {
+                $ids = explode(',', $ids);
+            }
+            $ids = array_values(array_filter(array_map('intval', is_array($ids) ? $ids : [])));
+            $count = ProductCatalog::bulkDeleteCategories($ids);
+            // "Successfully removed {$count} categories" was reported even when
+            // count was 0 because every category still held products.
+            $skipped = max(0, count($ids) - $count);
+            $msg = $count > 0
+                ? ('Deleted ' . $count . ' categor' . ($count === 1 ? 'y' : 'ies') . '.')
+                : 'No categories were deleted.';
+            if ($skipped > 0) {
+                $msg .= ' ' . $skipped . ' kept because product(s) are still filed under them.';
+            }
+            echo json_encode([
+                'success' => ($count > 0),
+                'affected_count' => $count,
+                'skipped_count' => $skipped,
+                'message' => $msg
+            ], JSON_PRETTY_PRINT);
+            exit;
+        }
+
+    }
+
+    $isAdmin = function_exists('dt_api_is_admin') && dt_api_is_admin();
+    $showAll = isset($_GET['all']) || isset($_GET['include_inactive']) || isset($_GET['admin']) || $isAdmin;
+    $categories = ProductCatalog::getCategoriesWithDetails(!$showAll);
+    $rawCategories = Database::query("SELECT id, name, slug, status, display_order FROM categories ORDER BY display_order ASC, id ASC");
+    $categoryNames = ProductCatalog::getCategories(false);
+    $subcategories = ProductCatalog::getSubcategories(0, !$showAll);
+
+    echo json_encode([
+        'success' => true,
+        'count' => count($categories),
+        'categories' => $categories,
+        'category_names' => $categoryNames,
+        'raw_categories' => $rawCategories,
+        'subcategories' => $subcategories
+    ], JSON_PRETTY_PRINT);
+} catch (\Throwable $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Failed to process category request: ' . $e->getMessage()
+    ], JSON_PRETTY_PRINT);
+}
+

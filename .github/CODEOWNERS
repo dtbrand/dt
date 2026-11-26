@@ -1,0 +1,32 @@
+# DT Brand's & Jai Hanuman Tex — Master Code Owners
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global Default Owner
+* @dtbrand
+
+# Critical Infrastructure & CI/CD
+/.github/ @dtbrand
+/composer.json @dtbrand
+/package.json @dtbrand
+/.htaccess @dtbrand
+
+# Core Business Logic, Pricing & Portals
+/src/ @dtbrand
+/Shared/ @dtbrand
+/wholesale.php @dtbrand
+/retailer.php @dtbrand
+/reseller.php @dtbrand
+/cart.php @dtbrand
+/checkout.php @dtbrand
+/product.php @dtbrand
+/shop.php @dtbrand
+/admin/ @dtbrand
+/api/ @dtbrand
+
+# Database & Migrations
+/database/ @dtbrand
+
+# Security & Compliance
+/SECURITY.md @dtbrand
+/docs/disaster-recovery.md @dtbrand
+/scripts/backup-database.php @dtbrand

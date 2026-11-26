@@ -1,0 +1,158 @@
+<?php
+/**
+ * wishlist.php — Customer Saved Favorites
+ * DT Brand's & Jai Hanuman Tex
+ */
+$page_title = "My Wishlist & Saved Weaves";
+require_once __DIR__ . '/src/ProductCatalog.php';
+require_once __DIR__ . '/src/Database.php';
+require_once __DIR__ . '/src/Auth.php';
+
+\DTBrand\Auth::initSession();
+$wishUser = \DTBrand\Auth::getCurrentUser();
+$wishCsrf = \DTBrand\Auth::generateCsrfToken();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= htmlspecialchars($wishCsrf, ENT_QUOTES, 'UTF-8') ?>">
+    <script>
+        window.DT_CSRF_TOKEN = <?= json_encode($wishCsrf, JSON_UNESCAPED_SLASHES) ?>;
+        window.DT_CURRENT_USER = <?= json_encode($wishUser ? ['id' => (int)$wishUser['id'], 'name' => (string)($wishUser['name'] ?? ''), 'type' => strtolower((string)($wishUser['type'] ?? 'customer'))] : null, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+    </script>
+    <title><?= $page_title ?> — DT Brand's Pure Silk</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#8A681F">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="/assets/css/shop.css?v=<?= @filemtime(__DIR__ . '/assets/css/shop.css') ?: '3.2.1' ?>">
+    <style>
+        .dt-wsh-container { max-width: 1200px; margin: 30px auto; padding: 0 20px; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .dt-wsh-hero { background: linear-gradient(135deg, #181512 0%, #2A241E 100%); border: 2px solid #D4AF37; border-radius: 12px; padding: 24px; color: #FAF5E8; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .dt-wsh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+        .dt-wsh-card { background: #FFFFFF; border: 1px solid #EAE5D9; border-radius: 10px; overflow: hidden; transition: transform 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+        .dt-wsh-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(212,175,55,0.18); border-color: #D4AF37; }
+    </style>
+</head>
+<body style="background:#FAF8F5; margin:0; padding:0; color:#181512;">
+
+<?php include_once __DIR__ . '/includes/singleproductbottomfooter.php'; ?>
+
+<div class="dt-wsh-container">
+    <div class="dt-wsh-hero">
+        <h1 style="font-family:'Cinzel',serif; font-size:1.8rem; margin:0 0 6px 0; color:#D4AF37;">Saved Masterpieces &amp; Wishlist</h1>
+        <p style="margin:0; font-size:0.88rem; color:#E5E1D7;">Bookmark pure zari sarees, bridal lehengas, and wholesale catalogs for rapid ordering.</p>
+    </div>
+
+    <div class="dt-wsh-grid" id="wishlistGrid">
+        <!-- Rendered from the shopper's real saved wishlist (localStorage: dtbrands_wishlist) -->
+    </div>
+    <div id="wishlistEmptyState" style="display:none; text-align:center; padding:50px 20px;">
+        <div style="display:flex; justify-content:center; margin-bottom:12px;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
+        <h3 style="font-size:1.15rem; font-weight:800; margin:0 0 6px 0;">Your Wishlist is Empty</h3>
+        <p style="font-size:0.88rem; color:#78716C; margin:0 0 20px 0;">Tap the heart on any product to save it here for later.</p>
+        <a href="/shop" style="display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #E6CA65 100%); color:#111827; padding:10px 24px; border-radius:8px; font-weight:800; text-decoration:none; border:1px solid #8A681F;">Discover the Collection</a>
+    </div>
+</div>
+
+<?php include_once __DIR__ . '/Shared/cart.php'; ?>
+<?php include_once __DIR__ . '/Shared/wishlist.php'; ?>
+<?php include_once __DIR__ . '/Shared/checkout.php'; ?>
+
+<script>
+/* Render the dedicated /wishlist page from the shopper's real saved items. */
+(function() {
+    function readWishlist() {
+        try { return JSON.parse(localStorage.getItem('dtbrands_wishlist') || '[]') || []; } catch (e) { return []; }
+    }
+    function money(n) { return '₹' + (Number(String(n).replace(/[^0-9.]/g, '')) || 0).toLocaleString('en-IN'); }
+
+    window.renderWishlistPage = function() {
+        var grid = document.getElementById('wishlistGrid');
+        var empty = document.getElementById('wishlistEmptyState');
+        if (!grid) return;
+
+        var items = readWishlist();
+        if (!items.length) {
+            grid.innerHTML = '';
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+        if (empty) empty.style.display = 'none';
+
+        grid.innerHTML = items.map(function(p) {
+            // Fallbacks removed: 'Saved Weave' as a name, 'Handloom' as a category
+            // and product1.png (a different product's photo) as the image.
+            var name = p.name || p.title || 'Saved product';
+            var img = p.image || '/assets/images/no-image.svg';
+            var cat = p.category || '';
+            var saleDisc = Number(p.sale_discount || p.sale_price) || 0;
+            var custBase = Number(p.customer_price) || Number(p.retail_price) || Number(p.price) || 0;
+            var price = Number(p.effective_customer_price || p.price) || (custBase > 0 ? Math.max(0, custBase - saleDisc) : 0);
+            var oldPrice = saleDisc > 0 ? custBase : (Number(p.old_price || p.mrp) || 0);
+            // "In Stock" status badge
+            var stockNote = (p.in_stock === true) ? 'In Stock' : (p.in_stock === false ? 'Out of stock' : '');
+            return '' +
+              '<div class="dt-wsh-card" data-wid="' + p.id + '">' +
+                '<div style="position:relative;">' +
+                  '<img src="' + img + '" alt="' + name + '" style="width:100%; height:280px; object-fit:cover;">' +
+                  '<button data-remove-wish="' + p.id + '" title="Remove from wishlist" aria-label="Remove from wishlist" class="dt-btn dt-btn-pale dt-wsh-remove-btn" style="position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; border:1px solid #E2E8F0; background:rgba(255,255,255,0.95); color:#DC2626; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.12);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>' +
+                '</div>' +
+                '<div style="padding:14px;">' +
+                  (cat ? '<div style="font-size:0.75rem; font-weight:700; color:#8A681F; text-transform:uppercase;">' + cat + '</div>' : '') +
+                  '<h3 style="font-size:1rem; font-weight:800; color:#181512; margin:4px 0 8px 0;">' + name + '</h3>' +
+                  '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">' +
+                    '<div>' +
+                      '<strong style="font-size:1.15rem; color:#8A681F;">' + (price > 0 ? money(price) : 'Price on request') + '</strong>' +
+                      (oldPrice > price && price > 0 ? ' <span style="font-size:0.85rem; color:#94A3B8; text-decoration:line-through; margin-left:4px;">' + money(oldPrice) + '</span>' : '') +
+                      (saleDisc > 0 ? ' <span style="font-size:0.75rem; background:#FEF3C7; color:#B45309; font-weight:800; padding:1px 5px; border-radius:3px; margin-left:4px;">SAVE ₹' + saleDisc + '</span>' : '') +
+                    '</div>' +
+                    (stockNote ? '<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; color:#15803D; font-weight:700;"><span style="width:6px; height:6px; border-radius:50%; background:#15803D; display:inline-block;"></span>' + stockNote + '</span>' : '') +
+                  '</div>' +
+                  '<div style="display:flex; gap:8px;">' +
+                    '<button data-add-wish="' + p.id + '" class="dt-btn dt-btn-gold" style="flex:1; padding:8px 0; border-radius:6px; font-weight:800; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;"><span>Add to Bag</span></button>' +
+                    '<a href="/product.php?id=' + p.id + '" class="dt-btn dt-btn-dark" style="flex:1; text-align:center; padding:8px 0; border-radius:6px; font-weight:800; font-size:13px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">View</a>' +
+                  '</div>' +
+                '</div>' +
+              '</div>';
+        }).join('');
+    };
+
+    document.addEventListener('click', function(e) {
+        var btn = e.target && e.target.closest ? e.target.closest('button[data-remove-wish], button[data-add-wish]') : null;
+        if (!btn) return;
+        var removeId = btn.getAttribute('data-remove-wish');
+        var addId = btn.getAttribute('data-add-wish');
+
+        if (removeId !== null) {
+            if (typeof window.dtRemoveWishlistItem === 'function') {
+                window.dtRemoveWishlistItem(removeId);
+            } else if (typeof window.toggleWishlistProduct === 'function') {
+                window.toggleWishlistProduct(removeId);
+            } else {
+                var kept = readWishlist().filter(function(x) { return String(x.id) !== String(removeId); });
+                localStorage.setItem('dtbrands_wishlist', JSON.stringify(kept));
+            }
+            window.renderWishlistPage();
+        } else if (addId !== null) {
+            if (typeof window.dtMoveWishlistToCart === 'function') {
+                window.dtMoveWishlistToCart(addId);
+            } else {
+                var item = readWishlist().find(function(x) { return String(x.id) === String(addId); });
+                if (item && typeof window.addToCart === 'function') window.addToCart(item);
+            }
+            window.renderWishlistPage();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', window.renderWishlistPage);
+    if (document.readyState !== 'loading') window.renderWishlistPage();
+})();
+</script>
+<script src="/assets/js/dt-cart-sync.js?v=<?= @filemtime(__DIR__ . '/assets/js/dt-cart-sync.js') ?: '1' ?>"></script>
+
+</body>
+</html>

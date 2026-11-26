@@ -1,0 +1,1138 @@
+<?php
+namespace DTBrand;
+
+use PDO;
+use Exception;
+
+/**
+ * PaymentManager — Unified Enterprise Payment Processing & Audit Engine
+ * Supports: Instant UPI Deep Linking & Dynamic QR Studio, Razorpay PG, Cashfree PG, COD & WhatsApp Pay
+ * DT Brand's & Jai Hanuman Tex
+ */
+class PaymentManager
+{
+    private static ?array $cachedGateways = null;
+
+    /**
+     * Get all configured gateways from DB with default fallbacks
+     */
+    public static function getAllGateways(bool $onlyActive = false): array
+    {
+        $db = Database::getConnection();
+        if ($db === null || Database::isMockMode()) {
+            return self::getDefaultGateways($onlyActive);
+        }
+
+        try {
+            $sql = "SELECT * FROM `payment_gateways` " . ($onlyActive ? "WHERE `is_active` = 1 " : "") . "ORDER BY `sort_order` ASC, `id` ASC";
+            $stmt = $db->query($sql);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($rows)) {
+                return self::getDefaultGateways($onlyActive);
+            }
+
+            $gateways = [];
+            foreach ($rows as $r) {
+                $config = json_decode($r['config_json'] ?? '{}', true) ?: [];
+                $gateways[$r['gateway_key']] = [
+                    'id'             => (int)$r['id'],
+                    'gateway_key'    => $r['gateway_key'],
+                    'name'           => $r['name'],
+                    'description'    => $r['description'],
+                    'is_active'      => (bool)$r['is_active'],
+                    'is_test_mode'   => (bool)$r['is_test_mode'],
+                    'is_recommended' => (bool)$r['is_recommended'],
+                    'sort_order'     => (int)$r['sort_order'],
+                    'config'         => $config,
+                    'updated_at'     => $r['updated_at'] ?? date('Y-m-d H:i:s')
+                ];
+            }
+            return $gateways;
+        } catch (\Throwable $e) {
+            error_log("PaymentManager::getAllGateways error: " . $e->getMessage());
+            return self::getDefaultGateways($onlyActive);
+        }
+    }
+
+    /**
+     * Get single gateway by key
+     */
+    public static function getGateway(string $key): ?array
+    {
+        $all = self::getAllGateways(false);
+        return $all[$key] ?? null;
+    }
+
+    /**
+     * Get gateway configuration array by key
+     */
+    public static function getConfig(string $key): array
+    {
+        $gw = self::getGateway($key);
+        return is_array($gw) && !empty($gw['config']) && is_array($gw['config']) ? $gw['config'] : [];
+    }
+
+    /**
+     * Get safe public configuration payload for Storefront Checkout
+     */
+    public static function getPublicConfig(): array
+    {
+        $gateways = self::getAllGateways(true);
+        $publicList = [];
+
+        foreach ($gateways as $k => $g) {
+            $cfg = $g['config'] ?? [];
+            $safeCfg = [];
+
+            switch ($k) {
+                case 'direct_upi':
+                    $safeCfg = [
+                        'upi_vpa'       => $cfg['upi_vpa'] ?? '917046363528@okaxis',
+                        'upi_name'      => $cfg['upi_name'] ?? "DT Brand's & Jai Hanuman Tex",
+                        'backup_vpa'    => $cfg['backup_vpa'] ?? 'dtbrands@icici',
+                        'mcc'           => $cfg['mcc'] ?? '5691',
+                        'auto_open_app' => !empty($cfg['auto_open_app']),
+                        'dynamic_qr'    => !empty($cfg['dynamic_qr']),
+                        'require_utr'   => !empty($cfg['require_utr'])
+                    ];
+                    break;
+                case 'razorpay':
+                    $safeCfg = [
+                        'key_id'       => $cfg['key_id'] ?? (getenv('RAZORPAY_KEY_ID') ?: ''),
+                        'is_test'      => !empty($g['is_test_mode']),
+                        'theme_color'  => $cfg['theme_color'] ?? '#8A681F',
+                        'auto_capture' => !empty($cfg['auto_capture'])
+                    ];
+                    break;
+                case 'cashfree':
+                    $safeCfg = [
+                        'app_id'      => $cfg['app_id'] ?? '',
+                        'is_test'     => !empty($g['is_test_mode']),
+                        'theme_color' => $cfg['theme_color'] ?? '#8A681F'
+                    ];
+                    break;
+                case 'cod':
+                    $safeCfg = [
+                        'handling_fee'    => (float)($cfg['handling_fee'] ?? 0),
+                        'min_order'       => (float)($cfg['min_order'] ?? 299),
+                        'max_order'       => (float)($cfg['max_order'] ?? 25000),
+                        'verify_otp'      => !empty($cfg['verify_otp']),
+                        'partial_deposit' => (float)($cfg['partial_deposit'] ?? 0)
+                    ];
+                    break;
+                case 'whatsapp_pay':
+                    $safeCfg = [
+                        'phone'         => $cfg['phone'] ?? '917046363528',
+                        'auto_upi_link' => !empty($cfg['auto_upi_link']),
+                        'welcome_msg'   => $cfg['welcome_msg'] ?? "Namaste! I would like to place an order from DT Brand's."
+                    ];
+                    break;
+            }
+
+            $publicList[$k] = [
+                'gateway_key'    => $k,
+                'name'           => $g['name'],
+                'description'    => $g['description'],
+                'is_recommended' => $g['is_recommended'],
+                'sort_order'     => $g['sort_order'],
+                'config'         => $safeCfg
+            ];
+        }
+
+        return $publicList;
+    }
+
+    /**
+     * Generate Instant Direct UPI Deep Link & QR string
+     */
+    public static function generateUpiPayload(string $orderNumber, float $amount, string $customerName = ''): array
+    {
+        $upiGate = self::getGateway('direct_upi');
+        $cfg = $upiGate['config'] ?? [];
+
+        $vpa = trim((string)($cfg['upi_vpa'] ?? '917046363528@okaxis'));
+        $payeeName = trim((string)($cfg['upi_name'] ?? 'DT Brands Jai Hanuman Tex'));
+        $mcc = trim((string)($cfg['mcc'] ?? '5691'));
+        $note = "Order " . $orderNumber . ($customerName ? " - " . substr($customerName, 0, 15) : "");
+        $amtFormatted = number_format($amount, 2, '.', '');
+
+        // Standard NPCI UPI URI Specification
+        $params = [
+            'pa' => $vpa,
+            'pn' => $payeeName,
+            'mc' => $mcc,
+            'tr' => $orderNumber,
+            'tn' => $note,
+            'am' => $amtFormatted,
+            'cu' => 'INR'
+        ];
+
+        $upiUri = "upi://pay?" . http_build_query($params);
+
+        // Dedicated app deep links
+        $gpayUri = "gpay://upi/pay?" . http_build_query($params);
+        $phonepeUri = "phonepe://pay?" . http_build_query($params);
+        $paytmUri = "paytmmp://pay?" . http_build_query($params);
+        $credUri = "cred://upi/pay?" . http_build_query($params);
+        $bhimUri = "bhim://pay?" . http_build_query($params);
+
+        return [
+            'order_number'    => $orderNumber,
+            'amount'          => $amount,
+            'amount_fmt'      => '₹' . number_format($amount, 2),
+            'upi_vpa'         => $vpa,
+            'payee_name'      => $payeeName,
+            'upi_uri'         => $upiUri,
+            'qr_data'         => $upiUri,
+            'app_links'       => [
+                'generic' => $upiUri,
+                'gpay'    => $gpayUri,
+                'phonepe' => $phonepeUri,
+                'paytm'   => $paytmUri,
+                'cred'    => $credUri,
+                'bhim'    => $bhimUri
+            ]
+        ];
+    }
+
+    /**
+     * Create Razorpay Standard Order
+     */
+    public static function createRazorpayOrder(string $orderNumber, float $amount, string $customerEmail = '', string $customerPhone = ''): array
+    {
+        $rzpGate = self::getGateway('razorpay');
+        $cfg = $rzpGate['config'] ?? [];
+
+        $keyId = trim((string)($cfg['key_id'] ?? (getenv('RAZORPAY_KEY_ID') ?: '')));
+        $keySecret = trim((string)($cfg['key_secret'] ?? (getenv('RAZORPAY_KEY_SECRET') ?: '')));
+
+        if (empty($keyId) || empty($keySecret)) {
+            return [
+                'success' => false,
+                'error'   => 'Razorpay API credentials not configured.'
+            ];
+        }
+
+        $amountInPaise = (int)round($amount * 100);
+        $payload = [
+            'amount'          => $amountInPaise,
+            'currency'        => 'INR',
+            'receipt'         => $orderNumber,
+            'payment_capture' => !empty($cfg['auto_capture']) ? 1 : 1,
+            'notes'           => [
+                'order_number' => $orderNumber,
+                'store'        => "DT Brand's & Jai Hanuman Tex"
+            ]
+        ];
+
+        $ch = curl_init('https://api.razorpay.com/v1/orders');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode($payload),
+            CURLOPT_USERPWD        => $keyId . ':' . $keySecret,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT        => 15
+        ]);
+
+        $res = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $json = json_decode((string)$res, true) ?: [];
+
+        if ($httpCode >= 200 && $httpCode < 300 && !empty($json['id'])) {
+            return [
+                'success'          => true,
+                'gateway_order_id' => $json['id'],
+                'amount_paise'     => $json['amount'],
+                'currency'         => $json['currency'],
+                'key_id'           => $keyId
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error'   => $json['error']['description'] ?? 'Failed to initialize Razorpay order.'
+        ];
+    }
+
+    /**
+     * Verify Razorpay payment signature
+     */
+    public static function verifyRazorpaySignature(string $orderId, string $paymentId, string $signature): bool
+    {
+        $rzpGate = self::getGateway('razorpay');
+        $cfg = $rzpGate['config'] ?? [];
+        $keySecret = trim((string)($cfg['key_secret'] ?? (getenv('RAZORPAY_KEY_SECRET') ?: '')));
+
+        if (empty($keySecret)) {
+            return false;
+        }
+
+        $expected = hash_hmac('sha256', $orderId . '|' . $paymentId, $keySecret);
+        return hash_equals($expected, $signature);
+    }
+
+    /**
+     * Verify Razorpay webhook signature
+     */
+    public static function verifyRazorpayWebhookSignature(string $rawBody, string $signature): bool
+    {
+        $rzpGate = self::getGateway('razorpay');
+        $cfg = $rzpGate['config'] ?? [];
+        $webhookSecret = trim((string)($cfg['webhook_secret'] ?? (getenv('RAZORPAY_WEBHOOK_SECRET') ?: '')));
+
+        if (empty($webhookSecret) || empty($signature)) {
+            return false;
+        }
+
+        $expected = hash_hmac('sha256', $rawBody, $webhookSecret);
+        return hash_equals($expected, $signature);
+    }
+
+    /**
+     * Verify Cashfree webhook signature
+     */
+    public static function verifyCashfreeWebhookSignature(string $rawBody, string $signature, string|int $timestamp = ''): bool
+    {
+        $cfGate = self::getGateway('cashfree');
+        $cfg = $cfGate['config'] ?? [];
+        $webhookSecret = trim((string)($cfg['webhook_secret'] ?? ($cfg['secret_key'] ?? (getenv('CASHFREE_WEBHOOK_SECRET') ?: getenv('CASHFREE_SECRET_KEY') ?: ''))));
+
+        if (empty($webhookSecret) || empty($signature) || empty($timestamp)) {
+            return false;
+        }
+
+        $expected = base64_encode(hash_hmac('sha256', (string)$timestamp . $rawBody, $webhookSecret, true));
+        return hash_equals($expected, $signature);
+    }
+
+    /**
+     * Server-side verification of a Cashfree PG order payment via Cashfree /pg/orders/{order_id}/payments
+     */
+    public static function verifyCashfreeOrderPayment(string $orderNumber, string $cfPaymentId = '', string $cfOrderId = ''): array
+    {
+        $cfGate = self::getGateway('cashfree');
+        $cfg = $cfGate['config'] ?? [];
+        $appId = trim((string)($cfg['app_id'] ?? (getenv('CASHFREE_APP_ID') ?: '')));
+        $secretKey = trim((string)($cfg['secret_key'] ?? (getenv('CASHFREE_SECRET_KEY') ?: '')));
+        $isTest = !empty($cfGate['is_test_mode']);
+
+        if (empty($appId) || empty($secretKey)) {
+            return [
+                'success'  => false,
+                'verified' => false,
+                'error'    => 'Cashfree API credentials not configured; cannot verify payment server-side.'
+            ];
+        }
+
+        $lookupOrderId = $cfOrderId;
+        $expectedAmount = null;
+        $db = Database::getConnection();
+        if ($db) {
+            try {
+                $stmt = $db->prepare("SELECT gateway_order_id, amount FROM `payment_transactions` WHERE `order_number` = :ord AND `gateway` = 'cashfree' ORDER BY id DESC LIMIT 1");
+                $stmt->execute([':ord' => $orderNumber]);
+                $tx = $stmt->fetch(\PDO::FETCH_ASSOC);
+                if ($tx) {
+                    if ($lookupOrderId === '' && !empty($tx['gateway_order_id'])) {
+                        $lookupOrderId = (string)$tx['gateway_order_id'];
+                    }
+                    $expectedAmount = (float)$tx['amount'];
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        if ($lookupOrderId === '') {
+            return [
+                'success'  => false,
+                'verified' => false,
+                'error'    => 'Missing Cashfree gateway_order_id for this order.'
+            ];
+        }
+
+        $baseUrl = $isTest ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
+        $ch = curl_init($baseUrl . '/orders/' . rawurlencode($lookupOrderId) . '/payments');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => [
+                'Accept: application/json',
+                'x-client-id: ' . $appId,
+                'x-client-secret: ' . $secretKey,
+                'x-api-version: 2023-08-01'
+            ],
+            CURLOPT_TIMEOUT        => 15
+        ]);
+        $resp = curl_exec($ch);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($err || $httpCode < 200 || $httpCode >= 300) {
+            return [
+                'success'  => false,
+                'verified' => false,
+                'error'    => 'Cashfree verification request failed' . ($err ? ': ' . $err : ' (HTTP ' . $httpCode . ')')
+            ];
+        }
+
+        $payments = json_decode((string)$resp, true);
+        if (!is_array($payments)) {
+            return ['success' => false, 'verified' => false, 'error' => 'Invalid Cashfree verification response.'];
+        }
+
+        foreach ($payments as $p) {
+            if (!is_array($p)) continue;
+            $status = strtoupper((string)($p['payment_status'] ?? ''));
+            $pid = (string)($p['cf_payment_id'] ?? '');
+            $amt = (float)($p['payment_amount'] ?? 0);
+            if ($status === 'SUCCESS' && ($cfPaymentId === '' || $pid === $cfPaymentId)) {
+                if ($expectedAmount !== null && $expectedAmount > 0 && abs($amt - $expectedAmount) > 1.0) {
+                    return [
+                        'success'  => false,
+                        'verified' => false,
+                        'error'    => 'Cashfree payment amount mismatch.'
+                    ];
+                }
+                return [
+                    'success'       => true,
+                    'verified'      => true,
+                    'cf_payment_id' => $pid ?: $cfPaymentId,
+                    'payment_amount' => $amt
+                ];
+            }
+        }
+
+        return [
+            'success'  => false,
+            'verified' => false,
+            'error'    => 'Cashfree payment not confirmed as SUCCESS.'
+        ];
+    }
+
+    /**
+     * Create Cashfree Order
+     */
+    public static function createCashfreeOrder(string $orderNumber, float $amount, string $customerPhone, string $customerName = 'Customer', string $customerEmail = 'customer@dtbrands.com'): array
+    {
+        $cfGate = self::getGateway('cashfree');
+        $cfg = $cfGate['config'] ?? [];
+
+        $appId = trim((string)($cfg['app_id'] ?? ''));
+        $secretKey = trim((string)($cfg['secret_key'] ?? ''));
+        $isTest = !empty($cfGate['is_test_mode']);
+
+        if (empty($appId) || empty($secretKey)) {
+            return [
+                'success' => false,
+                'error'   => 'Cashfree API credentials not configured.'
+            ];
+        }
+
+        $baseUrl = $isTest ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
+        $payload = [
+            'order_id'       => $orderNumber . '_' . time(),
+            'order_amount'   => (float)number_format($amount, 2, '.', ''),
+            'order_currency' => 'INR',
+            'customer_details' => [
+                'customer_id'    => 'CUST_' . preg_replace('/[^0-9]/', '', $customerPhone ?: '0000000000'),
+                'customer_name'  => $customerName ?: 'Customer',
+                'customer_phone' => preg_replace('/[^0-9]/', '', $customerPhone ?: '9999999999'),
+                'customer_email' => $customerEmail ?: 'guest@jaihanumantex.in'
+            ],
+            'order_meta' => [
+                'return_url' => 'https://jaihanumantex.in/checkout.php?status=success&order_id={order_id}'
+            ]
+        ];
+
+        $ch = curl_init($baseUrl . '/orders');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode($payload),
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'x-client-id: ' . $appId,
+                'x-client-secret: ' . $secretKey,
+                'x-api-version: 2023-08-01'
+            ],
+            CURLOPT_TIMEOUT        => 15
+        ]);
+
+        $res = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $json = json_decode((string)$res, true) ?: [];
+
+        if ($httpCode >= 200 && $httpCode < 300 && !empty($json['payment_session_id'])) {
+            return [
+                'success'            => true,
+                'payment_session_id' => $json['payment_session_id'],
+                'cf_order_id'        => $json['order_id'] ?? '',
+                'environment'        => $isTest ? 'sandbox' : 'production'
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error'   => $json['message'] ?? 'Failed to initialize Cashfree payment session.'
+        ];
+    }
+
+    /**
+     * Record payment transaction in audit log
+     */
+    public static function recordTransaction(array $data): int
+    {
+        $db = Database::getConnection();
+        if ($db === null || Database::isMockMode()) {
+            return 1;
+        }
+
+        try {
+            $hasEventId = false;
+            $hasFailureReason = false;
+            try {
+                if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                    $ptInfo = $db->query("PRAGMA table_info(`payment_transactions`)")->fetchAll(PDO::FETCH_ASSOC);
+                    $names = array_column($ptInfo, 'name');
+                    $hasEventId = in_array('gateway_event_id', $names, true);
+                    $hasFailureReason = in_array('failure_reason', $names, true);
+                } else {
+                    $c1 = $db->query("SHOW COLUMNS FROM `payment_transactions` LIKE 'gateway_event_id'");
+                    $hasEventId = ($c1 && $c1->fetch());
+                    $c2 = $db->query("SHOW COLUMNS FROM `payment_transactions` LIKE 'failure_reason'");
+                    $hasFailureReason = ($c2 && $c2->fetch());
+                }
+            } catch (\Throwable $pe) {}
+
+            $extraCols = "";
+            $extraVals = "";
+            $params = [
+                ':order_id'           => $data['order_id'] ?? null,
+                ':order_number'       => $data['order_number'] ?? 'ORD-0',
+                ':customer_id'        => $data['customer_id'] ?? null,
+                ':customer_name'      => $data['customer_name'] ?? null,
+                ':customer_phone'     => $data['customer_phone'] ?? null,
+                ':gateway'            => $data['gateway'] ?? 'direct_upi',
+                ':payment_method'     => $data['payment_method'] ?? 'upi',
+                ':amount'             => (float)($data['amount'] ?? 0.00),
+                ':currency'           => $data['currency'] ?? 'INR',
+                ':status'             => $data['status'] ?? 'pending',
+                ':gateway_order_id'   => $data['gateway_order_id'] ?? null,
+                ':gateway_payment_id' => $data['gateway_payment_id'] ?? null,
+                ':gateway_signature'  => $data['gateway_signature'] ?? null,
+                ':utr_reference'      => $data['utr_reference'] ?? null,
+                ':webhook_payload'    => isset($data['webhook_payload']) ? (is_array($data['webhook_payload']) ? json_encode($data['webhook_payload']) : (string)$data['webhook_payload']) : null,
+                ':notes'              => $data['notes'] ?? null
+            ];
+
+            if ($hasEventId) {
+                $extraCols .= ", `gateway_event_id`";
+                $extraVals .= ", :gateway_event_id";
+                $params[':gateway_event_id'] = $data['gateway_event_id'] ?? null;
+            }
+            if ($hasFailureReason) {
+                $extraCols .= ", `failure_reason`";
+                $extraVals .= ", :failure_reason";
+                $params[':failure_reason'] = $data['failure_reason'] ?? null;
+            }
+
+            $stmt = $db->prepare("
+                INSERT INTO `payment_transactions` (
+                    `order_id`, `order_number`, `customer_id`, `customer_name`, `customer_phone`,
+                    `gateway`, `payment_method`, `amount`, `currency`, `status`,
+                    `gateway_order_id`, `gateway_payment_id`, `gateway_signature`,
+                    `utr_reference`, `webhook_payload`, `notes` {$extraCols}
+                ) VALUES (
+                    :order_id, :order_number, :customer_id, :customer_name, :customer_phone,
+                    :gateway, :payment_method, :amount, :currency, :status,
+                    :gateway_order_id, :gateway_payment_id, :gateway_signature,
+                    :utr_reference, :webhook_payload, :notes {$extraVals}
+                )
+            ");
+
+            $stmt->execute($params);
+            return (int)$db->lastInsertId();
+        } catch (\Throwable $e) {
+            error_log("PaymentManager::recordTransaction error: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Mark Order as Paid & Decrement Stock in Database (Audit Safeguard)
+     */
+    public static function markOrderPaidAndAdjustStock(string $orderNumber, string $gateway, string $paymentRef = '', array $extraData = []): bool
+    {
+        $db = Database::getConnection();
+        if ($db === null || Database::isMockMode()) {
+            return true;
+        }
+
+        try {
+            // Idempotency check (Section 23 & 34: Safe against duplicate callbacks)
+            $stmtCheck = $db->prepare("SELECT payment_status FROM `orders` WHERE `order_number` = :ord LIMIT 1");
+            $stmtCheck->execute([':ord' => $orderNumber]);
+            $currentStatus = $stmtCheck->fetchColumn();
+
+            if ($currentStatus === 'paid') {
+                return true;
+            }
+
+            // 1. Update Order Table
+            $stmtOrder = $db->prepare("
+                UPDATE `orders` 
+                SET `payment_status` = 'paid', 
+                    `payment_gateway` = :gateway, 
+                    `gateway_payment_id` = :pid,
+                    `updated_at` = NOW()
+                WHERE `order_number` = :ord
+            ");
+            $stmtOrder->execute([
+                ':gateway' => $gateway,
+                ':pid'     => $paymentRef,
+                ':ord'     => $orderNumber
+            ]);
+
+            // 2. Fetch order items to decrement inventory stock safely (if not already reserved)
+            $alreadyDecremented = false;
+            try {
+                $checkNotes = $db->prepare("SELECT notes, stock_decremented FROM `orders` WHERE `order_number` = :ord LIMIT 1");
+                $checkNotes->execute([':ord' => $orderNumber]);
+                $orderRow = $checkNotes->fetch(PDO::FETCH_ASSOC);
+                if ($orderRow) {
+                    if (!empty($orderRow['stock_decremented']) || (isset($orderRow['notes']) && strpos((string)$orderRow['notes'], '[stock_reserved]') !== false)) {
+                        $alreadyDecremented = true;
+                    }
+                }
+            } catch (\Throwable $ne) {
+                // Fallback to notes query if stock_decremented column is not yet present
+                try {
+                    $fallbackNotes = $db->prepare("SELECT notes FROM `orders` WHERE `order_number` = :ord LIMIT 1");
+                    $fallbackNotes->execute([':ord' => $orderNumber]);
+                    $orderNotes = (string)$fallbackNotes->fetchColumn();
+                    if (strpos($orderNotes, '[stock_reserved]') !== false) {
+                        $alreadyDecremented = true;
+                    }
+                } catch (\Throwable $fe) {}
+            }
+
+            if (!$alreadyDecremented) {
+                $isSqlite = ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
+                $hasVarIdCol = true;
+                try {
+                    if ($isSqlite) {
+                        $oiInfo = $db->query("PRAGMA table_info(`order_items`)")->fetchAll(PDO::FETCH_ASSOC);
+                        $hasVarIdCol = in_array('variant_id', array_column($oiInfo, 'name'), true);
+                    } else {
+                        $checkOi = $db->query("SHOW COLUMNS FROM `order_items` LIKE 'variant_id'");
+                        $hasVarIdCol = ($checkOi && $checkOi->fetch());
+                    }
+                } catch (\Throwable $oe) {
+                    $hasVarIdCol = false;
+                }
+
+                $selectCols = $hasVarIdCol ? "`product_id`, `quantity`, `variant_id`" : "`product_id`, `quantity`";
+                $stmtItems = $db->prepare("
+                    SELECT {$selectCols} 
+                    FROM `order_items` 
+                    WHERE `order_id` = (SELECT `id` FROM `orders` WHERE `order_number` = :ord LIMIT 1)
+                ");
+                $stmtItems->execute([':ord' => $orderNumber]);
+                $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!empty($items)) {
+                    $col = 'stock_qty';
+                    try {
+                        if ($isSqlite) {
+                            $pInfo = $db->query("PRAGMA table_info(`products`)")->fetchAll(PDO::FETCH_ASSOC);
+                            $colNames = array_column($pInfo, 'name');
+                            if (in_array('stock_qty', $colNames, true)) {
+                                $col = 'stock_qty';
+                            } elseif (in_array('stock', $colNames, true)) {
+                                $col = 'stock';
+                            }
+                        } else {
+                            $check = $db->query("SHOW COLUMNS FROM `products` LIKE 'stock_qty'");
+                            if ($check && !$check->fetch()) {
+                                $col = 'stock';
+                            }
+                        }
+                    } catch (\Throwable $te) {
+                        $col = 'stock_qty';
+                    }
+
+                    $safeStockExpr = $isSqlite ? "MAX(0, `{$col}` - :qty_dec)" : "GREATEST(0, `{$col}` - :qty_dec)";
+                    $stmtDec = $db->prepare("
+                        UPDATE `products` 
+                        SET `{$col}` = {$safeStockExpr}
+                        WHERE `id` = :pid AND `{$col}` >= :qty_chk
+                    ");
+
+                    $safeVarStockExpr = $isSqlite ? "MAX(0, `stock_qty` - :qty_dec)" : "GREATEST(0, `stock_qty` - :qty_dec)";
+                    $stmtDecVar = null;
+                    try {
+                        $stmtDecVar = $db->prepare("
+                            UPDATE `product_variants` 
+                            SET `stock_qty` = {$safeVarStockExpr}
+                            WHERE `id` = :vid AND `stock_qty` >= :qty_chk
+                        ");
+                    } catch (\Throwable $ve) {}
+
+                    foreach ($items as $item) {
+                        $pid = (int)($item['product_id'] ?? 0);
+                        $qty = (int)($item['quantity'] ?? 1);
+                        $vid = (int)($item['variant_id'] ?? 0);
+                        if ($pid > 0 && $qty > 0) {
+                            $stmtDec->execute([':qty_dec' => $qty, ':qty_chk' => $qty, ':pid' => $pid]);
+
+                            // Log to inventory_ledger
+                            try {
+                                $nowSql = $isSqlite ? "datetime('now')" : "NOW()";
+                                $db->prepare("
+                                    INSERT INTO `inventory_ledger` 
+                                    (`product_id`, `variant_id`, `sku`, `movement_type`, `previous_qty`, `adjustment_qty`, `new_qty`, `reason`, `reference_id`, `operator`, `created_at`)
+                                    SELECT `id`, :vid, `sku`, 'order_deduction', `{$col}` + :qty_prev, :qty_adj, `{$col}`, :reason, :ref, 'System/PaymentManager', {$nowSql}
+                                    FROM `products` WHERE `id` = :pid LIMIT 1
+                                ")->execute([
+                                    ':vid' => $vid > 0 ? $vid : null,
+                                    ':qty_prev' => $qty,
+                                    ':qty_adj' => -$qty,
+                                    ':reason' => "Order #{$orderNumber} verified payment ({$gateway})",
+                                    ':ref' => $orderNumber,
+                                    ':pid' => $pid
+                                ]);
+                            } catch (\Throwable $le) {}
+                        }
+                        if ($vid > 0 && $qty > 0 && $stmtDecVar !== null) {
+                            try {
+                                $stmtDecVar->execute([':qty_dec' => $qty, ':qty_chk' => $qty, ':vid' => $vid]);
+                            } catch (\Throwable $dve) {}
+                        }
+                    }
+
+                    // Mark as stock decremented & reserved to prevent any future duplicate decrement
+                    try {
+                        $updNoteSql = $isSqlite
+                            ? "UPDATE `orders` SET `stock_decremented` = 1, `notes` = COALESCE(`notes`, '') || ' [stock_reserved]' WHERE `order_number` = :ord"
+                            : "UPDATE `orders` SET `stock_decremented` = 1, `notes` = CASE WHEN `notes` IS NULL OR `notes` = '' THEN '[stock_reserved]' ELSE CONCAT(`notes`, ' [stock_reserved]') END WHERE `order_number` = :ord";
+                        $db->prepare($updNoteSql)->execute([':ord' => $orderNumber]);
+                    } catch (\Throwable $noteEx) {
+                        try {
+                            $db->prepare("UPDATE `orders` SET `notes` = CONCAT(COALESCE(`notes`, ''), ' [stock_reserved]') WHERE `order_number` = :ord")->execute([':ord' => $orderNumber]);
+                        } catch (\Throwable $fEx) {}
+                    }
+                }
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            error_log("PaymentManager::markOrderPaidAndAdjustStock error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Save/Update Payment Gateway Settings from Admin Console
+     */
+    public static function saveGatewayConfig(string $gatewayKey, array $data): bool
+    {
+        $db = Database::getConnection();
+        if ($db === null || Database::isMockMode()) {
+            return false;
+        }
+
+        try {
+            $existing = self::getGateway($gatewayKey);
+            $name = $data['name'] ?? ($existing['name'] ?? ucfirst($gatewayKey));
+            $desc = $data['description'] ?? ($existing['description'] ?? '');
+            $isActive = isset($data['is_active']) ? (int)$data['is_active'] : (int)($existing['is_active'] ?? 1);
+            $isTest = isset($data['is_test_mode']) ? (int)$data['is_test_mode'] : (int)($existing['is_test_mode'] ?? 0);
+            $isRec = isset($data['is_recommended']) ? (int)$data['is_recommended'] : (int)($existing['is_recommended'] ?? 0);
+            $sortOrder = isset($data['sort_order']) ? (int)$data['sort_order'] : (int)($existing['sort_order'] ?? 0);
+            $config = $data['config'] ?? ($existing['config'] ?? []);
+
+            if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $stmt = $db->prepare("
+                    INSERT INTO `payment_gateways` (
+                        `gateway_key`, `name`, `description`, `is_active`, `is_test_mode`, `is_recommended`, `config_json`, `sort_order`
+                    ) VALUES (
+                        :key, :name, :desc, :active, :test, :rec, :cfg, :sort
+                    ) ON CONFLICT(`gateway_key`) DO UPDATE SET
+                        `name` = excluded.`name`,
+                        `description` = excluded.`description`,
+                        `is_active` = excluded.`is_active`,
+                        `is_test_mode` = excluded.`is_test_mode`,
+                        `is_recommended` = excluded.`is_recommended`,
+                        `config_json` = excluded.`config_json`,
+                        `sort_order` = excluded.`sort_order`
+                ");
+            } else {
+                $stmt = $db->prepare("
+                    INSERT INTO `payment_gateways` (
+                        `gateway_key`, `name`, `description`, `is_active`, `is_test_mode`, `is_recommended`, `config_json`, `sort_order`
+                    ) VALUES (
+                        :key, :name, :desc, :active, :test, :rec, :cfg, :sort
+                    ) ON DUPLICATE KEY UPDATE
+                        `name` = VALUES(`name`),
+                        `description` = VALUES(`description`),
+                        `is_active` = VALUES(`is_active`),
+                        `is_test_mode` = VALUES(`is_test_mode`),
+                        `is_recommended` = VALUES(`is_recommended`),
+                        `config_json` = VALUES(`config_json`),
+                        `sort_order` = VALUES(`sort_order`)
+                ");
+            }
+
+            return $stmt->execute([
+                ':key'    => $gatewayKey,
+                ':name'   => $name,
+                ':desc'   => $desc,
+                ':active' => $isActive,
+                ':test'   => $isTest,
+                ':rec'    => $isRec,
+                ':cfg'    => json_encode($config),
+                ':sort'   => $sortOrder
+            ]);
+        } catch (\Throwable $e) {
+            error_log("PaymentManager::saveGatewayConfig error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Fallback default gateways when database is unavailable
+     */
+    private static function getDefaultGateways(bool $onlyActive = false): array
+    {
+        $list = [
+            'direct_upi' => [
+                'id'             => 1,
+                'gateway_key'    => 'direct_upi',
+                'name'           => 'Instant UPI / Dynamic QR (0% Fee)',
+                'description'    => 'Direct 1-Click App Auto-Open (Google Pay, PhonePe, Paytm, BHIM, CRED) & Dynamic Desktop QR',
+                'is_active'      => true,
+                'is_test_mode'   => false,
+                'is_recommended' => true,
+                'sort_order'     => 1,
+                'config'         => [
+                    'upi_vpa'       => '917046363528@okaxis',
+                    'upi_name'      => "DT Brand's & Jai Hanuman Tex",
+                    'backup_vpa'    => 'dtbrands@icici',
+                    'mcc'           => '5691',
+                    'auto_open_app' => true,
+                    'dynamic_qr'    => true,
+                    'require_utr'   => true
+                ]
+            ],
+            'razorpay' => [
+                'id'             => 2,
+                'gateway_key'    => 'razorpay',
+                'name'           => 'Razorpay Online Payments',
+                'description'    => 'Cards, Net Banking (50+ Banks), UPI, Wallets, PayLater & EMI',
+                'is_active'      => true,
+                'is_test_mode'   => false,
+                'is_recommended' => false,
+                'sort_order'     => 2,
+                'config'         => [
+                    'key_id'         => getenv('RAZORPAY_KEY_ID') ?: '',
+                    'key_secret'     => getenv('RAZORPAY_KEY_SECRET') ?: '',
+                    'webhook_secret' => getenv('RAZORPAY_WEBHOOK_SECRET') ?: '',
+                    'auto_capture'   => true,
+                    'theme_color'    => '#8A681F'
+                ]
+            ],
+            'cashfree' => [
+                'id'             => 3,
+                'gateway_key'    => 'cashfree',
+                'name'           => 'Cashfree Payment Gateway',
+                'description'    => 'Fast checkout via Cashfree PG, Instant UPI Intent & Netbanking',
+                'is_active'      => true,
+                'is_test_mode'   => false,
+                'is_recommended' => false,
+                'sort_order'     => 3,
+                'config'         => [
+                    'app_id'         => '',
+                    'secret_key'     => '',
+                    'webhook_secret' => '',
+                    'theme_color'    => '#8A681F'
+                ]
+            ],
+            'cod' => [
+                'id'             => 4,
+                'gateway_key'    => 'cod',
+                'name'           => 'Cash on Delivery (COD)',
+                'description'    => 'Doorstep cash payment upon delivery with flexible order limits',
+                'is_active'      => true,
+                'is_test_mode'   => false,
+                'is_recommended' => false,
+                'sort_order'     => 4,
+                'config'         => [
+                    'handling_fee'    => 0,
+                    'min_order'       => 299,
+                    'max_order'       => 25000,
+                    'verify_otp'      => false,
+                    'partial_deposit' => 0
+                ]
+            ],
+            'whatsapp_pay' => [
+                'id'             => 5,
+                'gateway_key'    => 'whatsapp_pay',
+                'name'           => 'Direct WhatsApp Order & Pay',
+                'description'    => '1-Click WhatsApp Concierge order with embedded instant payment link',
+                'is_active'      => true,
+                'is_test_mode'   => false,
+                'is_recommended' => false,
+                'sort_order'     => 5,
+                'config'         => [
+                    'phone'         => '917046363528',
+                    'auto_upi_link' => true,
+                    'welcome_msg'   => "Namaste! I would like to place an order from DT Brand's."
+                ]
+            ]
+        ];
+
+        return $list;
+    }
+
+    private static array $mockWebhooks = [];
+
+    /**
+     * Mask sensitive API key or secret for zero secret exposure
+     */
+    public static function maskSecret(?string $secret): string
+    {
+        if (empty($secret)) {
+            return '••••••••••••';
+        }
+        $len = strlen($secret);
+        if ($len <= 6) {
+            return '••••••••••••';
+        }
+        return '••••••••••••' . substr($secret, -4);
+    }
+
+    /**
+     * Check whether an incoming webhook event has already been processed (Idempotency Guard)
+     */
+    public static function isWebhookEventProcessed(string $gateway, string $eventId): bool
+    {
+        if (empty($eventId)) {
+            return false;
+        }
+        $db = Database::getConnection();
+        if ($db === null || Database::isMockMode()) {
+            return isset(self::$mockWebhooks[$gateway . ':' . $eventId]) && self::$mockWebhooks[$gateway . ':' . $eventId] === 'PROCESSED';
+        }
+
+        try {
+            // Check if table exists
+            $stmt = $db->prepare("SELECT COUNT(*) FROM `payment_webhooks` WHERE `gateway` = :gw AND `event_id` = :eid AND `status` = 'PROCESSED' LIMIT 1");
+            $stmt->execute([':gw' => $gateway, ':eid' => $eventId]);
+            return ((int)$stmt->fetchColumn() > 0);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Record incoming webhook event with deduplication and replay protection (Section 28)
+     */
+    public static function recordWebhookEvent(string $gateway, ?string $eventId, string $eventType, ?string $signature, $payload, string $status = 'PROCESSED', ?string $ipAddress = null): array
+    {
+        $db = Database::getConnection();
+        $payloadStr = is_array($payload) ? json_encode($payload) : (string)$payload;
+        $ip = $ipAddress ?: ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+
+        if (!empty($eventId) && self::isWebhookEventProcessed($gateway, $eventId)) {
+            // Log the duplicate attempt
+            try {
+                if ($db !== null && !Database::isMockMode()) {
+                    $db->prepare("
+                        INSERT INTO `payment_webhooks` 
+                        (`gateway`, `event_id`, `event_type`, `signature_header`, `payload_json`, `status`, `ip_address`, `processed_at`)
+                        VALUES (:gw, :eid, :etype, :sig, :payload, 'REPLAY_IGNORED', :ip, NOW())
+                    ")->execute([
+                        ':gw'      => $gateway,
+                        ':eid'     => $eventId,
+                        ':etype'   => $eventType,
+                        ':sig'     => $signature,
+                        ':payload' => $payloadStr,
+                        ':ip'      => $ip
+                    ]);
+                }
+            } catch (\Throwable $e) {}
+
+            return [
+                'idempotent' => false,
+                'status'     => 'REPLAY_IGNORED',
+                'event_id'   => $eventId,
+                'message'    => 'Duplicate webhook event ignored. Stock decrement skipped.'
+            ];
+        }
+
+        if (!empty($eventId)) {
+            self::$mockWebhooks[$gateway . ':' . $eventId] = $status;
+        }
+
+        try {
+            if ($db !== null && !Database::isMockMode()) {
+                $db->prepare("
+                    INSERT INTO `payment_webhooks` 
+                    (`gateway`, `event_id`, `event_type`, `signature_header`, `payload_json`, `status`, `ip_address`, `processed_at`)
+                    VALUES (:gw, :eid, :etype, :sig, :payload, :status, :ip, NOW())
+                ")->execute([
+                    ':gw'      => $gateway,
+                    ':eid'     => $eventId,
+                    ':etype'   => $eventType,
+                    ':sig'     => $signature,
+                    ':payload' => $payloadStr,
+                    ':status'  => $status,
+                    ':ip'      => $ip
+                ]);
+            }
+        } catch (\Throwable $e) {
+            error_log("PaymentManager::recordWebhookEvent error: " . $e->getMessage());
+        }
+
+        return [
+            'idempotent' => true,
+            'status'     => $status,
+            'event_id'   => $eventId,
+            'message'    => 'Webhook event recorded successfully.'
+        ];
+    }
+
+    /**
+     * 3-Way Financial Reconciliation Engine (Orders vs Payment Transactions vs Settlements)
+     */
+    public static function reconcileOrders(array $filters = []): array
+    {
+        $db = Database::getConnection();
+        if ($db === null || Database::isMockMode()) {
+            return [
+                'summary' => [
+                    'total_orders'         => 0,
+                    'reconciled_count'     => 0,
+                    'discrepancy_count'    => 0,
+                    'matched_amount'       => 0.0,
+                    'discrepancy_amount'   => 0.0,
+                    'unpaid_captured_count'=> 0
+                ],
+                'records' => []
+            ];
+        }
+
+        try {
+            $limit = isset($filters['limit']) ? (int)$filters['limit'] : 100;
+            $orderSql = "SELECT `id`, `order_number`, `total_amount`, `payment_status`, `payment_gateway`, `gateway_payment_id`, `created_at` 
+                         FROM `orders` ORDER BY `id` DESC LIMIT {$limit}";
+            $orders = $db->query($orderSql)->fetchAll(PDO::FETCH_ASSOC);
+
+            $records = [];
+            $totalOrders = count($orders);
+            $reconciledCount = 0;
+            $discrepancyCount = 0;
+            $matchedAmount = 0.0;
+            $discrepancyAmount = 0.0;
+            $unpaidCapturedCount = 0;
+
+            foreach ($orders as $ord) {
+                $orderNum = $ord['order_number'];
+                $orderAmt = (float)($ord['total_amount'] ?? 0);
+                $orderStatus = (string)($ord['payment_status'] ?? 'pending');
+
+                // Find corresponding captured transaction
+                $txStmt = $db->prepare("
+                    SELECT `id`, `amount`, `status`, `gateway`, `gateway_payment_id`, `utr_reference`, `created_at`
+                    FROM `payment_transactions` 
+                    WHERE `order_number` = :ord 
+                    ORDER BY `id` DESC LIMIT 1
+                ");
+                $txStmt->execute([':ord' => $orderNum]);
+                $tx = $txStmt->fetch(PDO::FETCH_ASSOC);
+
+                $txAmt = $tx ? (float)$tx['amount'] : 0.0;
+                $txStatus = $tx ? (string)$tx['status'] : 'none';
+                $txGateway = $tx ? (string)$tx['gateway'] : ($ord['payment_gateway'] ?: 'unknown');
+                $txRef = $tx ? ($tx['gateway_payment_id'] ?: $tx['utr_reference'] ?: '-') : '-';
+
+                $status = 'matched';
+                $diff = abs($orderAmt - $txAmt);
+                $note = 'Financial ledger verified';
+
+                if ($orderStatus === 'paid') {
+                    if (!$tx || $txStatus !== 'captured') {
+                        $status = 'missing_gateway';
+                        $note = 'Order marked paid in storefront, but no captured gateway transaction found';
+                        $discrepancyCount++;
+                        $discrepancyAmount += $orderAmt;
+                    } elseif ($diff > 0.05) {
+                        $status = 'discrepancy';
+                        $note = "Amount mismatch: Order is {$orderAmt}, Gateway captured {$txAmt}";
+                        $discrepancyCount++;
+                        $discrepancyAmount += $diff;
+                    } else {
+                        $reconciledCount++;
+                        $matchedAmount += $orderAmt;
+                    }
+                } else {
+                    if ($tx && $txStatus === 'captured') {
+                        $status = 'unpaid_order';
+                        $note = 'Payment was captured by gateway, but order status remains unpaid/pending!';
+                        $unpaidCapturedCount++;
+                        $discrepancyCount++;
+                        $discrepancyAmount += $txAmt;
+                    } else {
+                        $status = 'pending_unpaid';
+                        $note = 'Pending order and pending payment';
+                    }
+                }
+
+                $records[] = [
+                    'order_id'           => $ord['id'],
+                    'order_number'       => $orderNum,
+                    'order_amount'       => $orderAmt,
+                    'order_status'       => $orderStatus,
+                    'gateway'            => $txGateway,
+                    'gateway_amount'     => $txAmt,
+                    'gateway_status'     => $txStatus,
+                    'gateway_ref'        => $txRef,
+                    'discrepancy_amount' => $diff,
+                    'status'             => $status,
+                    'notes'              => $note,
+                    'date'               => $ord['created_at']
+                ];
+            }
+
+            return [
+                'summary' => [
+                    'total_orders'          => $totalOrders,
+                    'reconciled_count'      => $reconciledCount,
+                    'discrepancy_count'     => $discrepancyCount,
+                    'matched_amount'        => $matchedAmount,
+                    'discrepancy_amount'    => $discrepancyAmount,
+                    'unpaid_captured_count' => $unpaidCapturedCount
+                ],
+                'records' => $records
+            ];
+        } catch (\Throwable $e) {
+            error_log("PaymentManager::reconcileOrders error: " . $e->getMessage());
+            return [
+                'summary' => [
+                    'total_orders'         => 0,
+                    'reconciled_count'     => 0,
+                    'discrepancy_count'    => 0,
+                    'matched_amount'       => 0.0,
+                    'discrepancy_amount'   => 0.0,
+                    'unpaid_captured_count'=> 0
+                ],
+                'records' => []
+            ];
+        }
+    }
+}
