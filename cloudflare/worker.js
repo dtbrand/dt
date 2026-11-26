@@ -1,12 +1,13 @@
 /**
  * DT Brand's & Jai Hanuman Tex — Cloudflare Workers Edge Storefront,
- * D1 SQL API Gateway, KV/R2 Cloud Storage & Transactional Email Service.
+ * Real Enterprise Admin Panel (230+ pages), D1 SQL API Gateway, KV/R2 Cloud Storage & Email Service.
  */
 
-import { renderAdminConsoleHtml } from './lib/admin-ui.js';
+import { buildAdminDashboardPayload } from './lib/admin-data.js';
 import { routeApiRequest } from './lib/api-handlers.js';
 import { getStorageStatus, readCloudObject, sendTransactionalEmail } from './lib/storage.js';
 import {
+    ADMIN_COOKIE,
     SID_COOKIE,
     buildCookieHeader,
     getSessionContext,
@@ -15,6 +16,7 @@ import {
     normalizeProduct,
     readRequestBody,
     signToken,
+    verifyPassword,
 } from './lib/utils.js';
 
 const PAGE_ROUTES = {
@@ -51,14 +53,31 @@ const PAGE_ROUTES = {
     '/terms.php': 'terms.html',
 };
 
-const ADMIN_ROUTES = new Set([
-    '/admin',
-    '/admin/',
-    '/admin.php',
-    '/adminlogin.php',
-    '/admin/login.php',
-    '/admin/index.php',
-]);
+const ADMIN_REDIRECTS = {
+    '/admin.php': '/admin/',
+    '/admin': '/admin/',
+    '/adminlogin.php': '/admin/login/',
+    '/admin/notifications/whatsapp.php': '/admin/whatsapp/templates.php',
+    '/admin/products/categories.php': '/admin/products/categories/',
+    '/admin/products/attributes/add.php': '/admin/products/attributes/index.php?action=new_attribute',
+    '/admin/products/attributes/edit.php': '/admin/products/attributes/index.php',
+    '/admin/products/attributes/values.php': '/admin/products/attributes/',
+    '/admin/products/duplicate.php': '/admin/products/',
+    '/admin/products/exports/history.php': '/admin/products/exports/index.php?tab=history',
+    '/admin/products/imports/errors.php': '/admin/products/imports/index.php?tab=errors',
+    '/admin/products/imports/history.php': '/admin/products/imports/index.php?tab=history',
+    '/admin/products/imports/preview.php': '/admin/products/imports/index.php?tab=preview',
+    '/admin/products/imports/upload.php': '/admin/products/imports/index.php?tab=upload',
+    '/admin/products/media/gallery.php': '/admin/products/media/index.php?view=gallery',
+    '/admin/products/reviews/approved.php': '/admin/products/reviews/index.php?status=approved',
+    '/admin/products/reviews/rejected.php': '/admin/products/reviews/index.php?status=rejected',
+    '/admin/products/reviews/reported.php': '/admin/products/reviews/index.php?status=reported',
+    '/admin/products/variants/add.php': '/admin/products/variants/index.php?action=new_variant',
+    '/admin/products/variants/edit.php': '/admin/products/variants/index.php',
+    '/admin/products/variants/view.php': '/admin/products/variants/index.php',
+};
+
+const ADMIN_STATIC_EXT_RE = /\.(css|js|png|jpg|jpeg|webp|svg|gif|woff2?|json)$/i;
 
 function escapeHtml(str) {
     return String(str || '')
@@ -66,6 +85,213 @@ function escapeHtml(str) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+function safeJsonInline(data) {
+    return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
+function rewriteOriginUrls(text, url) {
+    return String(text || '')
+        .replace(/https?:\/\/yourdomain\.com/gi, () => url.origin)
+        .replace(/yourdomain\.com/gi, () => url.host);
+}
+
+async function fetchAdminAssetHtml(url, env, candidates) {
+    for (const rel of candidates) {
+        const assetReq = new Request(new URL(`/_admin_pages/${rel}`, url.origin), {
+            method: 'GET',
+            headers: { accept: 'text/html' },
+        });
+        const res = await env.ASSETS.fetch(assetReq);
+        if (res.ok) return res;
+    }
+    return null;
+}
+
+function resolveAdminTemplateCandidates(path) {
+    if (
+        path === '/admin/' ||
+        path === '/admin/index.php' ||
+        path === '/admin/admin.php' ||
+        path === '/admin/dashboard' ||
+        path === '/admin/dashboard/' ||
+        path === '/admin/dashboard/index.php'
+    ) {
+        return ['index.html'];
+    }
+    if (
+        path === '/admin/login' ||
+        path === '/admin/login/' ||
+        path === '/admin/login.php' ||
+        path === '/admin/login/index.php'
+    ) {
+        return ['login.html', 'login/index.html'];
+    }
+
+    const rel = path.replace(/^\/admin\//, '');
+    if (!rel) return ['index.html'];
+    if (rel.endsWith('/')) {
+        return [`${rel}index.html`, `${rel.slice(0, -1)}.html`];
+    }
+    if (rel.endsWith('.php')) {
+        return [rel.replace(/\.php$/i, '.html')];
+    }
+    if (rel.endsWith('.html')) {
+        return [rel];
+    }
+    return [`${rel}/index.html`, `${rel}.html`];
+}
+
+async function handleAdminRoutes(request, url, env, session) {
+    const path = url.pathname;
+
+    // 1. Static CSS/JS/images under /admin/*
+    if (path.startsWith('/admin/') && ADMIN_STATIC_EXT_RE.test(path)) {
+        return env.ASSETS.fetch(request);
+    }
+
+    // 2. Logout
+    if (
+        path === '/admin/logout.php' ||
+        path === '/admin/logout/' ||
+        ((path.startsWith('/admin/login') || path === '/adminlogin.php') && url.searchParams.get('action') === 'logout')
+    ) {
+        return new Response(null, {
+            status: 302,
+            headers: {
+                location: new URL('/admin/login/?logged_out=1', url.origin).toString(),
+                'set-cookie': buildCookieHeader(ADMIN_COOKIE, '', 0, true),
+            },
+        });
+    }
+
+    // 3. Direct redirects for PHP shim / helper routes
+    if (Object.prototype.hasOwnProperty.call(ADMIN_REDIRECTS, path)) {
+        const dest = ADMIN_REDIRECTS[path];
+        if (!session.isAdmin && dest !== '/admin/login/') {
+            return Response.redirect(new URL('/admin/login/', url.origin).toString(), 302);
+        }
+        return Response.redirect(new URL(dest, url.origin).toString(), 302);
+    }
+
+    // 4. Admin Login Portal (/admin/login/)
+    const isLoginRoute =
+        path === '/admin/login' ||
+        path === '/admin/login/' ||
+        path === '/admin/login.php' ||
+        path === '/admin/login/index.php';
+
+    if (isLoginRoute) {
+        if (request.method === 'POST') {
+            const body = await readRequestBody(request);
+            const email = String(body.email || '')
+                .trim()
+                .toLowerCase();
+            const password = String(body.password || '');
+            const userRow = await env.DB.prepare(
+                "SELECT * FROM users WHERE LOWER(email) = ? AND status = 'active' LIMIT 1"
+            )
+                .bind(email)
+                .first();
+            if (userRow && (await verifyPassword(password, userRow.password_hash))) {
+                const secret = await getSigningSecret(env);
+                const token = await signToken({ aid: Number(userRow.id), exp: Date.now() + 86400000 * 3 }, secret);
+                return new Response(null, {
+                    status: 302,
+                    headers: {
+                        location: new URL('/admin/', url.origin).toString(),
+                        'set-cookie': buildCookieHeader(ADMIN_COOKIE, token, 86400 * 3, true),
+                    },
+                });
+            }
+            return Response.redirect(new URL('/admin/login/?error=1', url.origin).toString(), 302);
+        }
+
+        if (session.isAdmin) {
+            return Response.redirect(new URL('/admin/', url.origin).toString(), 302);
+        }
+
+        const assetRes = await fetchAdminAssetHtml(url, env, ['login.html', 'login/index.html']);
+        if (!assetRes) {
+            return new Response('Admin login template not found.', { status: 404 });
+        }
+        let html = rewriteOriginUrls(await assetRes.text(), url);
+        const cnt = await env.DB.prepare('SELECT COUNT(*) AS c FROM users').first();
+        const needsSetup = Number(cnt?.c || 0) === 0;
+        const inject = `<script>window.DT_ADMIN_NEEDS_SETUP=${needsSetup ? 'true' : 'false'};</script><script src="/admin/assets/js/admin-edge-bridge.js?v=cf"></script>`;
+        html = html.includes('</body>') ? html.replace('</body>', `${inject}\n</body>`) : `${html}\n${inject}`;
+        return new Response(html, {
+            status: 200,
+            headers: {
+                'content-type': 'text/html; charset=utf-8',
+                'cache-control': 'no-store',
+                'x-frame-options': 'SAMEORIGIN',
+                'x-content-type-options': 'nosniff',
+            },
+        });
+    }
+
+    // 5. Auth Guard for all authenticated Real Admin Panel routes
+    if (!session.isAdmin) {
+        return Response.redirect(new URL('/admin/login/', url.origin).toString(), 302);
+    }
+
+    const candidates = resolveAdminTemplateCandidates(path);
+    let assetRes = await fetchAdminAssetHtml(url, env, candidates);
+    if (!assetRes) {
+        return new Response(
+            `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Admin Page Not Found — DT Brand's</title></head><body style="font-family:Inter,sans-serif;text-align:center;padding:60px 20px;background:#FAF5E8;color:#111827;"><h1>Admin Route Not Found</h1><p>${escapeHtml(path)}</p><p><a href="/admin/" style="color:#8A681F;font-weight:700;">Return to Admin Dashboard</a></p></body></html>`,
+            { status: 404, headers: { 'content-type': 'text/html; charset=utf-8' } }
+        );
+    }
+
+    let html = rewriteOriginUrls(await assetRes.text(), url);
+
+    const [secret, dash] = await Promise.all([getSigningSecret(env), buildAdminDashboardPayload(env)]);
+    const adminCsrf = await signToken(
+        { sid: session.sid, aid: session.admin?.id || 0, exp: Date.now() + 86400000 },
+        secret
+    );
+
+    const dashJson = safeJsonInline(dash);
+    const csrfJson = safeJsonInline(adminCsrf);
+    const prodsJson = safeJsonInline(dash.products);
+    const ordersJson = safeJsonInline(dash.orders);
+    const partnersJson = safeJsonInline(dash.partners);
+    const catsJson = safeJsonInline(dash.categories_list);
+
+    html = html
+        .replace(/window\.DT_ADMIN_CSRF_TOKEN\s*=\s*'[^']*';/g, () => `window.DT_ADMIN_CSRF_TOKEN = ${csrfJson};`)
+        .replace(/window\.DT_DASH\s*=\s*\{[^\r\n]*\};/g, () => `window.DT_DASH = ${dashJson};`)
+        .replace(/window\.DT_GLOBAL_PRODS\s*=\s*\[[^\r\n]*\];/g, () => `window.DT_GLOBAL_PRODS = ${prodsJson};`)
+        .replace(/window\.DT_GLOBAL_ORDERS\s*=\s*\[[^\r\n]*\];/g, () => `window.DT_GLOBAL_ORDERS = ${ordersJson};`)
+        .replace(
+            /window\.DT_GLOBAL_PARTNERS\s*=\s*\[[^\r\n]*\];/g,
+            () => `window.DT_GLOBAL_PARTNERS = ${partnersJson};`
+        )
+        .replace(/window\.SERVER_ORDERS\s*=\s*\[[^\r\n]*\];/g, () => `window.SERVER_ORDERS = ${ordersJson};`)
+        .replace(/window\.DT_ORDER_PRODUCTS\s*=\s*\[[^\r\n]*\];/g, () => `window.DT_ORDER_PRODUCTS = ${prodsJson};`)
+        .replace(/window\.DT_SHIPPING_ORDERS\s*=\s*\[[^\r\n]*\];/g, () => `window.DT_SHIPPING_ORDERS = ${ordersJson};`)
+        .replace(
+            /window\.DT_AVAILABLE_CATEGORIES\s*=\s*\[[^\r\n]*\];/g,
+            () => `window.DT_AVAILABLE_CATEGORIES = ${catsJson};`
+        );
+
+    const bridgeTag = `<script>window.DT_ADMIN_USER=${safeJsonInline(session.admin)};window.DT_ADMIN_CSRF_TOKEN=${csrfJson};window.DT_DASH=window.DT_DASH||${dashJson};</script><script src="/admin/assets/js/admin-edge-bridge.js?v=cf"></script>`;
+    html = html.includes('</body>') ? html.replace('</body>', `${bridgeTag}\n</body>`) : `${html}\n${bridgeTag}`;
+
+    return new Response(html, {
+        status: 200,
+        headers: {
+            'content-type': 'text/html; charset=utf-8',
+            'cache-control': 'no-store',
+            'x-content-type-options': 'nosniff',
+            'x-frame-options': 'SAMEORIGIN',
+            'referrer-policy': 'strict-origin-when-cross-origin',
+            'x-dt-edge': 'cloudflare-workers-admin-d1',
+        },
+    });
 }
 
 async function servePageTemplate(url, env, session, templateName) {
@@ -78,9 +304,7 @@ async function servePageTemplate(url, env, session, templateName) {
         return new Response('Storefront template not found.', { status: 404 });
     }
 
-    let html = await assetRes.text();
-    const origin = url.origin;
-    html = html.replace(/https:\/\/yourdomain\.com/gi, origin).replace(/http:\/\/yourdomain\.com/gi, origin);
+    let html = rewriteOriginUrls(await assetRes.text(), url);
 
     const [prodRes, catRes] = await Promise.all([
         env.DB.prepare("SELECT * FROM products WHERE status != 'draft' ORDER BY id ASC").all(),
@@ -209,13 +433,13 @@ export default {
         console.log(JSON.stringify({ event: 'request', method: request.method, path }));
 
         try {
-            // 1. Static assets & robots.txt
+            // 1. Storefront static assets & robots.txt
             if (path.startsWith('/assets/') || path === '/manifest.json') {
                 return env.ASSETS.fetch(request);
             }
             if (path === '/robots.txt') {
                 const res = await env.ASSETS.fetch(request);
-                const text = (await res.text()).replace(/https:\/\/yourdomain\.com/gi, url.origin);
+                const text = rewriteOriginUrls(await res.text(), url);
                 return new Response(text, {
                     status: 200,
                     headers: { 'content-type': 'text/plain; charset=utf-8' },
@@ -277,6 +501,11 @@ export default {
                 return handleSitemap(url, env);
             }
 
+            // Fast-path static admin assets before session parsing
+            if (path.startsWith('/admin/') && ADMIN_STATIC_EXT_RE.test(path)) {
+                return env.ASSETS.fetch(request);
+            }
+
             const session = await getSessionContext(request, env);
 
             // 5. Complete REST & Legacy API Mapping (/api & /api/*)
@@ -284,18 +513,9 @@ export default {
                 return routeApiRequest(request, url, env, session);
             }
 
-            // 6. Edge Admin Console (/admin*)
-            if (ADMIN_ROUTES.has(path)) {
-                return new Response(renderAdminConsoleHtml(url.origin), {
-                    status: 200,
-                    headers: {
-                        'content-type': 'text/html; charset=utf-8',
-                        'cache-control': 'no-store',
-                        'x-content-type-options': 'nosniff',
-                        'x-frame-options': 'SAMEORIGIN',
-                        'referrer-policy': 'strict-origin-when-cross-origin',
-                    },
-                });
+            // 6. Real Enterprise Admin Panel (/admin/*, /admin.php, /adminlogin.php)
+            if (path.startsWith('/admin') || path === '/admin.php' || path === '/adminlogin.php') {
+                return handleAdminRoutes(request, url, env, session);
             }
 
             // 7. Contact Form Submission -> D1 + Email Outbox

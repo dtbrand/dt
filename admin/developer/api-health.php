@@ -89,7 +89,7 @@ $page_title = 'API Health & Latency Monitor — DT Brand\'s Developer Studio';
                             <span>Service Uptime (30d)</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A681F" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </div>
-                        <div class="dev-kpi-value"><?= htmlspecialchars($health['uptime_percent']) ?></div>
+                        <div class="dev-kpi-value"><?= htmlspecialchars((string)($health['uptime_percent'] ?? '')) ?></div>
                         <div class="dev-kpi-sub" style="color:#15803D;">Zero critical downtime recorded</div>
                     </div>
                     <div class="dev-kpi-card">

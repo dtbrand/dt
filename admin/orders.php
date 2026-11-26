@@ -95,13 +95,13 @@ $orders = OrderManager::getAll();
                                 <td>
                                     <span class="dt-trust-tag"><?= strtoupper($o['channel']) ?></span>
                                 </td>
-                                <td><?= count($o['items']) ?> Items</td>
-                                <td><strong style="color:#8A681F;">₹<?= number_format($o['total_amount']) ?></strong></td>
+                                <td><?= count($o['items'] ?? []) ?> Items</td>
+                                <td><strong style="color:#8A681F;">₹<?= number_format((float)($o['total_amount'] ?? 0)) ?></strong></td>
                                 <td>
-                                    <span class="dt-trust-tag" style="background:#DCFCE7; color:#15803D;"><?= ucfirst($o['payment_status']) ?> (<?= strtoupper($o['payment_method']) ?>)</span>
+                                    <span class="dt-trust-tag" style="background:#DCFCE7; color:#15803D;"><?= ucfirst($o['payment_status'] ?? 'pending') ?> (<?= strtoupper($o['payment_method'] ?? 'UPI') ?>)</span>
                                 </td>
                                 <td>
-                                    <span class="dt-trust-tag" style="background:#EFF6FF; color:#1D4ED8;"><?= ucfirst($o['fulfillment_status']) ?></span>
+                                    <span class="dt-trust-tag" style="background:#EFF6FF; color:#1D4ED8;"><?= ucfirst($o['fulfillment_status'] ?? 'processing') ?></span>
                                 </td>
                                 <td><?= date('d M Y, h:i A', strtotime($o['created_at'])) ?></td>
                             </tr>

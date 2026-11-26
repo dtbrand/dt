@@ -99,7 +99,7 @@ $page_title = 'Developer & API Console — DT Brand\'s';
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
                         </div>
                         <div class="dev-kpi-value" style="color:#15803D;"><?= $health['health_score'] ?>%</div>
-                        <div class="dev-kpi-sub">Uptime: <?= htmlspecialchars($health['uptime_percent']) ?></div>
+                        <div class="dev-kpi-sub">Uptime: <?= htmlspecialchars((string)($health['uptime_percent'] ?? '')) ?></div>
                     </div>
                     <div class="dev-kpi-card">
                         <div class="dev-kpi-label">
