@@ -80,7 +80,7 @@ class IntegrationManager
                     'currency' => 'INR',
                     'auto_capture' => 1
                 ]),
-                'webhook_url' => 'https://jaihanumantex.in/api/webhooks/razorpay.php',
+                'webhook_url' => 'https://yourdomain.com/api/webhooks/razorpay.php',
                 'webhook_status' => 'active',
                 'last_request_at' => date('Y-m-d H:i:s', strtotime('-4 minutes')),
                 'last_request_status' => '200 OK',
@@ -105,7 +105,7 @@ class IntegrationManager
                     'environment' => 'production',
                     'currency' => 'INR'
                 ]),
-                'webhook_url' => 'https://jaihanumantex.in/api/webhooks/cashfree.php',
+                'webhook_url' => 'https://yourdomain.com/api/webhooks/cashfree.php',
                 'webhook_status' => 'active',
                 'last_request_at' => date('Y-m-d H:i:s', strtotime('-18 minutes')),
                 'last_request_status' => '200 OK',
@@ -131,7 +131,7 @@ class IntegrationManager
                     'pickup_location' => 'DT Brands Surat Central Hub',
                     'mode' => 'production'
                 ]),
-                'webhook_url' => 'https://jaihanumantex.in/api/webhooks/delhivery.php',
+                'webhook_url' => 'https://yourdomain.com/api/webhooks/delhivery.php',
                 'webhook_status' => 'active',
                 'last_request_at' => date('Y-m-d H:i:s', strtotime('-12 minutes')),
                 'last_request_status' => '200 OK',
@@ -157,7 +157,7 @@ class IntegrationManager
                     'service_type' => 'Apex Domestic Air Express',
                     'origin_hub' => 'STV'
                 ]),
-                'webhook_url' => 'https://jaihanumantex.in/api/webhooks/bluedart.php',
+                'webhook_url' => 'https://yourdomain.com/api/webhooks/bluedart.php',
                 'webhook_status' => 'active',
                 'last_request_at' => date('Y-m-d H:i:s', strtotime('-35 minutes')),
                 'last_request_status' => '200 OK',
@@ -183,7 +183,7 @@ class IntegrationManager
                     'vehicle_booking' => 1,
                     'e_way_bill_sync' => 1
                 ]),
-                'webhook_url' => 'https://jaihanumantex.in/api/webhooks/tci.php',
+                'webhook_url' => 'https://yourdomain.com/api/webhooks/tci.php',
                 'webhook_status' => 'active',
                 'last_request_at' => date('Y-m-d H:i:s', strtotime('-2 hours')),
                 'last_request_status' => '200 OK',
@@ -209,7 +209,7 @@ class IntegrationManager
                     'webhook_verify_token' => '••••••••••••••••',
                     'sender_phone' => '917046363528'
                 ]),
-                'webhook_url' => 'https://jaihanumantex.in/api/webhooks/whatsapp.php',
+                'webhook_url' => 'https://yourdomain.com/api/webhooks/whatsapp.php',
                 'webhook_status' => 'active',
                 'last_request_at' => date('Y-m-d H:i:s', strtotime('-1 minute')),
                 'last_request_status' => '200 OK',
@@ -232,9 +232,9 @@ class IntegrationManager
                     'smtp_host' => 'smtp.hostinger.com',
                     'smtp_port' => 465,
                     'encryption' => 'ssl',
-                    'username' => 'info@jaihanumantex.in',
+                    'username' => 'info@yourdomain.com',
                     'password' => '••••••••••••••••',
-                    'from_email' => 'info@jaihanumantex.in',
+                    'from_email' => 'info@yourdomain.com',
                     'from_name' => "DT Brand's & Jai Hanuman Tex"
                 ]),
                 'webhook_url' => null,

@@ -4,10 +4,14 @@
  * DT Brand's & Jai Hanuman Tex
  */
 
-$allowedOrigin = 'https://jaihanumantex.in';
+$host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+$proto = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')) ? 'https://' : 'http://';
+$allowedOrigin = $host !== '' ? ($proto . $host) : rtrim((string)(getenv('APP_URL') ?: 'https://yourdomain.com'), '/');
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if ($origin === $allowedOrigin) {
-    header('Access-Control-Allow-Origin: ' . $allowedOrigin);
+$originHost = strtolower((string)(parse_url($origin, PHP_URL_HOST) ?: ''));
+$currentHost = strtolower(explode(':', $host)[0]);
+if ($origin !== '' && (($currentHost !== '' && $originHost === $currentHost) || str_ends_with($originHost, '.workers.dev') || $origin === $allowedOrigin)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
 } else {
     header('Access-Control-Allow-Origin: ' . $allowedOrigin);
 }

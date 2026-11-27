@@ -5,7 +5,7 @@ import ssl
 import time
 
 FTP_HOST = '147.93.99.134'
-FTP_USER = 'u602484543.harmitethnic.com'
+FTP_USER = 'u602484543.yourdomain.com'
 FTP_PASS = 'Gautam@9006'
 
 PROBE_PHP = """<?php
@@ -59,7 +59,7 @@ ftp.quit()
 
 print("2. Fetching schema from live server...")
 ctx = ssl._create_unverified_context()
-req = urllib.request.Request('https://harmitethnic.com/db_probe_temp.php', headers={'User-Agent': 'Mozilla/5.0'})
+req = urllib.request.Request('https://yourdomain.com/db_probe_temp.php', headers={'User-Agent': 'Mozilla/5.0'})
 try:
     with urllib.request.urlopen(req, context=ctx, timeout=15) as res:
         output = res.read().decode('utf-8')

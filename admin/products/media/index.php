@@ -7,7 +7,7 @@
  * DT Brand's & Jai Hanuman Tex
  *
  * The previous revision shipped twelve invented assets pointing at a CDN
- * (cdn.jaihanumantex.in) that does not exist, and a Delete button that only
+ * (cdn.yourdomain.com) that does not exist, and a Delete button that only
  * removed the DOM node. The gallery now lists the real contents of
  * assets/images/uploads/ (where /api/upload.php writes), with sizes straight
  * from filesystem stat. Delete actually unlinks the file behind an

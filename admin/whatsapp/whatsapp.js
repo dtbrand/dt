@@ -108,7 +108,7 @@
                 .replace(/\{\{bale_qty\}\}/g, '25')
                 .replace(/\{\{courier\}\}/g, 'Delhivery Express')
                 .replace(/\{\{tracking_no\}\}/g, 'DL8891234')
-                .replace(/\{\{tracking_url\}\}/g, 'https://jaihanumantex.in/track');
+                .replace(/\{\{tracking_url\}\}/g, 'https://yourdomain.com/track');
 
             const contentElem = document.getElementById(contentId);
             if (contentElem) {

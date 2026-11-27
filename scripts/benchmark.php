@@ -44,7 +44,7 @@ if (file_exists(__DIR__ . '/../src/ProductCatalog.php')) {
     } catch (\Throwable $e) {}
 }
 
-$baseUrl = getenv('BASE_URL') ?: 'https://jaihanumantex.in';
+$baseUrl = getenv('BASE_URL') ?: 'https://yourdomain.com';
 
 $endpoints = [
     'Homepage (Storefront)'      => "{$baseUrl}/index.php",

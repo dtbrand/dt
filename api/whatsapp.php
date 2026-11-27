@@ -149,7 +149,7 @@ try {
         $templateKey = trim((string)($data['template_key'] ?? 'dt_festive_alert'));
 
         if (empty($message)) {
-            $message = "Namaste! DT Brand's & Jai Hanuman Tex Festive Silk Collection Alert is live at https://jaihanumantex.in/shop";
+            $message = "Namaste! DT Brand's & Jai Hanuman Tex Festive Silk Collection Alert is live at https://yourdomain.com/shop";
         }
 
         $allowedAudiences = ['wholesale', 'reseller', 'retailer', 'retail', 'all'];
@@ -307,7 +307,7 @@ try {
                     'title' => 'Festive Silk Weaves Drop & VIP Sale',
                     'category' => 'Marketing',
                     'meta_template_id' => 'dt_festive_silk_v3',
-                    'content' => "Namaste {{customer_name}}! DT Brand's festive 2026 silk catalogue is now live. Exclusive factory rates for VIP buyers: https://jaihanumantex.in/shop",
+                    'content' => "Namaste {{customer_name}}! DT Brand's festive 2026 silk catalogue is now live. Exclusive factory rates for VIP buyers: https://yourdomain.com/shop",
                     'variables' => ['customer_name']
                 ]
             ];

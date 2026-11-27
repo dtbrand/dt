@@ -71,7 +71,7 @@ $catNextOrder++;
                     <div class="adm-form-group">
                         <label class="adm-form-label" for="catSlug">URL Slug</label>
                         <input type="text" id="catSlug" class="adm-form-input" placeholder="bandhani-sarees" autocomplete="off">
-                        <small style="color:#8a8a8a;">jaihanumantex.in/shop.php?category=<b id="catSlugLive">...</b> — left blank, it is built from the name.</small>
+                        <small style="color:#8a8a8a;">yourdomain.com/shop.php?category=<b id="catSlugLive">...</b> — left blank, it is built from the name.</small>
                     </div>
                     <div class="adm-form-group">
                         <label class="adm-form-label" for="catStatus">Status</label>

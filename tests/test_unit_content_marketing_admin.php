@@ -142,7 +142,7 @@ $setSeoOk = ContentManager::setSeoMetadata('/wholesale', [
     'meta_title' => 'B2B Wholesale Loom Sarees Surat — DT Brand\'s',
     'meta_description' => 'Direct loom wholesale sourcing for boutiques and resellers across India.',
     'meta_keywords' => 'wholesale sarees, surat mill, loom pricing',
-    'canonical_url' => 'https://jaihanumantex.in/wholesale'
+    'canonical_url' => 'https://yourdomain.com/wholesale'
 ]);
 assertTest($setSeoOk, "ContentManager::setSeoMetadata persists SEO metadata for /wholesale");
 

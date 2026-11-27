@@ -6,7 +6,7 @@
 function testApiEndpoint($file, $method, $requestData) {
     $cmd = 'php -r ' . escapeshellarg('
         $_SERVER["REQUEST_METHOD"] = "' . $method . '";
-        $_SERVER["HTTP_ORIGIN"] = "https://jaihanumantex.in";
+        $_SERVER["HTTP_ORIGIN"] = "https://yourdomain.com";
         $_REQUEST = ' . var_export($requestData, true) . ';
         $_POST = $_REQUEST;
         $_GET = $_REQUEST;

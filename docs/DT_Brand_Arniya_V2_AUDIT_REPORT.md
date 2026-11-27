@@ -3,7 +3,7 @@
 > **AUDIT STANDARD**: DT Brand Arniya Next Level Complete Audit Fix Production Master V2 (`docs/DT_Brand_Arniya_NEXT_LEVEL_COMPLETE_AUDIT_FIX_PRODUCTION_MASTER_V2.md`)  
 > **EVALUATION DATE**: September 11, 2026  
 > **SYSTEM REPOSITORY**: `c:\Users\sai\Desktop\DT Reseller HUB` (Branch: `main`)  
-> **PRODUCTION TARGETS**: `https://harmitethnic.com/` | `https://jaihanumantex.in/`  
+> **PRODUCTION TARGETS**: `https://yourdomain.com/` | `https://yourdomain.com/`  
 > **FINAL PLATFORM STATUS**: `PRODUCTION READY` (100% Passing Verification across all 30 Sections)
 
 ---
@@ -18,7 +18,7 @@ Following an exhaustive audit against Master Specification V2, all core pillars 
 - **Interactive Storefront Role Preview**: Admin product catalog studio now includes real-time 5-role preview tabs (`[ Guest ] [ Customer ] [ Retailer ] [ Reseller ] [ Wholesaler ]`) with live visible price, strikethrough MRP/regular rate, and dynamic profit margin calculations.
 - **Wholesaler Minimum Color/Size Commitment Quantity (MCQ) Tool**: Automated real-time calculation based on active variants formula (`Available Colors × Available Sizes = MOQ Pieces`) with live lot valuation and sellable combinations chips.
 - **Security Hardening**: Locked down `install.php` with permanent `.installed` check, HTTP 403 Forbidden on reinstall attempts, removed `?force` bypass, and zero credential leakage.
-- **Automated Triple-Sync Deployment**: Local PHP syntax linting (`php -l`), automated Git version control, and dual live FTP deployment to Hostinger production servers (`harmitethnic.com` and `jaihanumantex.in`).
+- **Automated Triple-Sync Deployment**: Local PHP syntax linting (`php -l`), automated Git version control, and dual live FTP deployment to Hostinger production servers (`yourdomain.com` and `yourdomain.com`).
 - **100% Test Pass Rate**: 69 / 69 passing assertions in `tests/test_unit_pricing.php` and 131 / 131 passing tests in `vendor/bin/phpunit` (710 assertions, 0 failures, 0 errors).
 
 ---
@@ -252,8 +252,8 @@ Following an exhaustive audit against Master Specification V2, all core pillars 
 
 - **Deployment Workflow**: Triple-Sync Protocol (Local Clean ➔ Git Commit & Push ➔ Hostinger Live FTP Upload).
 - **Live Servers Verified**:
-  - `harmitethnic.com`: Live FTP root `/public_html/` — HTTP 200 OK.
-  - `jaihanumantex.in`: Live FTP root `/public_html/` — HTTP 200 OK.
+  - `yourdomain.com`: Live FTP root `/public_html/` — HTTP 200 OK.
+  - `yourdomain.com`: Live FTP root `/public_html/` — HTTP 200 OK.
 - **Database Schema Synced**: Migration script verified on production MySQL.
 
 ---

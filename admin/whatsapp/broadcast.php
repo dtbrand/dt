@@ -148,7 +148,7 @@ $hasToken = trim((string)getenv('WHATSAPP_ACCESS_TOKEN')) !== ''
 
                     <div class="adm-form-group" style="margin-bottom:14px;">
                         <label class="adm-form-label" style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:4px;">Campaign Message Text</label>
-                        <textarea class="adm-form-input wa-textarea" id="dtWaMsg" rows="4" style="width:100%; height:auto; padding:10px 12px; font-size:12.5px; box-sizing:border-box; resize:none;" oninput="DTWhatsApp.syncMockup('dtWaMsg', 'bcastMockupBody')">Namaste! DT Brand's &amp; Jai Hanuman Tex is offering factory-direct rates on our latest pure Silk &amp; Banarasi Saree lots. View catalogue: https://jaihanumantex.in/shop</textarea>
+                        <textarea class="adm-form-input wa-textarea" id="dtWaMsg" rows="4" style="width:100%; height:auto; padding:10px 12px; font-size:12.5px; box-sizing:border-box; resize:none;" oninput="DTWhatsApp.syncMockup('dtWaMsg', 'bcastMockupBody')">Namaste! DT Brand's &amp; Jai Hanuman Tex is offering factory-direct rates on our latest pure Silk &amp; Banarasi Saree lots. View catalogue: https://yourdomain.com/shop</textarea>
                     </div>
 
                     <!-- Progress bar -->
@@ -188,7 +188,7 @@ $hasToken = trim((string)getenv('WHATSAPP_ACCESS_TOKEN')) !== ''
                                 <div class="wa-bubble-time">10:45 AM</div>
                             </div>
                             <div class="wa-chat-bubble wa-bubble-sent">
-                                <div id="bcastMockupBody">Namaste! DT Brand's &amp; Jai Hanuman Tex is offering factory-direct rates on our latest pure Silk &amp; Banarasi Saree lots. View catalogue: https://jaihanumantex.in/shop</div>
+                                <div id="bcastMockupBody">Namaste! DT Brand's &amp; Jai Hanuman Tex is offering factory-direct rates on our latest pure Silk &amp; Banarasi Saree lots. View catalogue: https://yourdomain.com/shop</div>
                                 <div class="wa-bubble-time">
                                     <span>Just now</span>
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.4"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-7.5 7.5L13 16"></path></svg>
@@ -218,11 +218,11 @@ function applyPresetTemplate() {
     const val = document.getElementById('dtPresetSelect').value;
     const msg = document.getElementById('dtWaMsg');
     if (val === 'festive') {
-        msg.value = "Namaste! DT Brand's & Jai Hanuman Tex Festive Silk Collection is now available. Pure Kanjivaram & Banarasi Handloom with Surat wholesale pricing: https://jaihanumantex.in/shop";
+        msg.value = "Namaste! DT Brand's & Jai Hanuman Tex Festive Silk Collection is now available. Pure Kanjivaram & Banarasi Handloom with Surat wholesale pricing: https://yourdomain.com/shop";
     } else if (val === 'wholesale_offer') {
         msg.value = "Namaste Partner! Exclusive Surat Loom Discount: Order 10+ Master Bales this week and receive an instant 15% wholesale rebate. Enquire with your mill manager now!";
     } else if (val === 'order_status') {
-        msg.value = "Namaste! Your pure silk order has been dispatched from Surat Handloom Depot via Delhivery Express. Live tracking: https://jaihanumantex.in/track";
+        msg.value = "Namaste! Your pure silk order has been dispatched from Surat Handloom Depot via Delhivery Express. Live tracking: https://yourdomain.com/track";
     }
     DTWhatsApp.syncMockup('dtWaMsg', 'bcastMockupBody');
 }

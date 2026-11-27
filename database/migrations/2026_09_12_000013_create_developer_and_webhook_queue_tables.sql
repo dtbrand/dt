@@ -162,9 +162,9 @@ PREPARE _st FROM @_s; EXECUTE _st; DEALLOCATE PREPARE _st;
 -- Seed Default Production Webhook Events
 INSERT INTO `webhook_events` (`event_id`, `event_type`, `direction`, `source_gateway`, `target_url`, `payload_json`, `status`, `http_status`, `attempts`, `max_attempts`)
 VALUES
-('evt_rzp_01', 'payment.captured', 'inbound', 'razorpay', 'https://jaihanumantex.in/api/webhooks/razorpay.php', '{\"entity\":\"event\",\"event\":\"payment.captured\",\"payload\":{\"payment\":{\"id\":\"pay_live_019283\",\"amount\":450000,\"currency\":\"INR\",\"status\":\"captured\"}}}', 'delivered', 200, 1, 5),
-('evt_cfr_02', 'order.paid', 'inbound', 'cashfree', 'https://jaihanumantex.in/api/webhooks/cashfree.php', '{\"type\":\"PAYMENT_SUCCESS_WEBHOOK\",\"data\":{\"order\":{\"order_id\":\"JH-2026-9021\",\"order_amount\":6200.00}}}', 'delivered', 200, 1, 5),
-('evt_wa_03', 'message.status', 'inbound', 'whatsapp', 'https://jaihanumantex.in/api/whatsapp/webhook.php', '{\"entry\":[{\"changes\":[{\"field\":\"messages\",\"value\":{\"statuses\":[{\"id\":\"wamid.HBgMOTE3MDQ2MzYzNTI4FQIAERgSRTIwQzUxRjQ4RDhF\",\"status\":\"delivered\"}]}}]}]}', 'delivered', 200, 1, 5),
+('evt_rzp_01', 'payment.captured', 'inbound', 'razorpay', 'https://yourdomain.com/api/webhooks/razorpay.php', '{\"entity\":\"event\",\"event\":\"payment.captured\",\"payload\":{\"payment\":{\"id\":\"pay_live_019283\",\"amount\":450000,\"currency\":\"INR\",\"status\":\"captured\"}}}', 'delivered', 200, 1, 5),
+('evt_cfr_02', 'order.paid', 'inbound', 'cashfree', 'https://yourdomain.com/api/webhooks/cashfree.php', '{\"type\":\"PAYMENT_SUCCESS_WEBHOOK\",\"data\":{\"order\":{\"order_id\":\"JH-2026-9021\",\"order_amount\":6200.00}}}', 'delivered', 200, 1, 5),
+('evt_wa_03', 'message.status', 'inbound', 'whatsapp', 'https://yourdomain.com/api/whatsapp/webhook.php', '{\"entry\":[{\"changes\":[{\"field\":\"messages\",\"value\":{\"statuses\":[{\"id\":\"wamid.HBgMOTE3MDQ2MzYzNTI4FQIAERgSRTIwQzUxRjQ4RDhF\",\"status\":\"delivered\"}]}}]}]}', 'delivered', 200, 1, 5),
 ('evt_out_04', 'order.dispatched', 'outbound', 'shiprocket', 'https://apiv2.shiprocket.in/v1/external/orders/create/adhoc', '{\"order_id\":\"JH-2026-8910\",\"pickup_location\":\"Surat Textile Market\",\"delivery_pincode\":\"395002\"}', 'delivered', 200, 1, 5)
 ON DUPLICATE KEY UPDATE `event_type` = VALUES(`event_type`);
 

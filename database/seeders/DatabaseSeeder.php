@@ -57,7 +57,7 @@ class DatabaseSeeder
         }
 
         // ── 2. Admin user ──
-        $adminEmail = 'admin@jaihanumantex.in';
+        $adminEmail = 'admin@yourdomain.com';
         $checkAdmin = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
         $checkAdmin->execute([$adminEmail]);
         if ($checkAdmin->fetch() === false) {

@@ -95,8 +95,8 @@ ON DUPLICATE KEY UPDATE
 INSERT INTO `settings` (`key_name`, `value`)
 VALUES
     ('app_name', 'DT Brand\'s & Jai Hanuman Tex'),
-    ('app_url', 'https://jaihanumantex.in'),
-    ('store_email', 'sales@jaihanumantex.in'),
+    ('app_url', 'https://yourdomain.com'),
+    ('store_email', 'sales@yourdomain.com'),
     ('store_phone', '+91 70463 63528'),
     ('store_whatsapp', '917046363528'),
     ('timezone', 'Asia/Kolkata'),

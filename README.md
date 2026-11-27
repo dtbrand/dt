@@ -65,7 +65,7 @@ cannot buy at bulk rates.
 From the Hostinger terminal (or via SSH):
 
 ```bash
-cd ~/domains/jaihanumantex.in/public_html
+cd ~/domains/yourdomain.com/public_html
 php install.php
 ```
 
@@ -85,11 +85,11 @@ public cannot re-trigger it.
 ### Final manual steps
 
 - In Hostinger control panel → **Cron Jobs**, add:
-  - `*/5 * * * * php /home/u602484543/domains/jaihanumantex.in/public_html/api/db_health.php >/dev/null 2>&1`
-- Point `jaihanumantex.in` and `www.jaihanumantex.in` at `/public_html/` in
+  - `*/5 * * * * php /home/u602484543/domains/yourdomain.com/public_html/api/db_health.php >/dev/null 2>&1`
+- Point `yourdomain.com` and `www.yourdomain.com` at `/public_html/` in
   Hostinger's **Domains** panel.
-- Sign in at `https://jaihanumantex.in/admin/login.php`. The seeded
-  credentials are `admin@jaihanumantex.in` / `DtBrand@Admin2026`. Change the
+- Sign in at `https://yourdomain.com/admin/login.php`. The seeded
+  credentials are `admin@yourdomain.com` / `DtBrand@Admin2026`. Change the
   password on first login.
 
 ---

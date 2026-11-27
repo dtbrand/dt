@@ -26,5 +26,5 @@ def probe(base_url):
     except Exception as e:
         print(f"Error probing {base_url}: {e}")
 
-probe("https://harmitethnic.com")
-probe("https://jaihanumantex.in")
+probe("https://yourdomain.com")
+probe("https://yourdomain.com")

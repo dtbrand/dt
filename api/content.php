@@ -351,8 +351,8 @@ try {
                 'mrp' => (string)($_GET['mrp'] ?? '3499'),
                 'reseller_price' => (string)($_GET['reseller_price'] ?? '1899'),
                 'reseller_margin' => (string)($_GET['reseller_margin'] ?? '1600'),
-                'shop_url' => (string)($_GET['shop_url'] ?? 'https://jaihanumantex.in/shop'),
-                'order_link' => (string)($_GET['order_link'] ?? 'https://jaihanumantex.in/shop?ref=reseller'),
+                'shop_url' => (string)($_GET['shop_url'] ?? 'https://yourdomain.com/shop'),
+                'order_link' => (string)($_GET['order_link'] ?? 'https://yourdomain.com/shop?ref=reseller'),
                 'phone' => (string)($_GET['phone'] ?? '+91 70463 63528'),
             ];
 

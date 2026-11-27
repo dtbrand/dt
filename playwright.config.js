@@ -12,7 +12,7 @@ export default defineConfig({
   workers: 1,
   reporter: 'list',
   use: {
-    baseURL: process.env.BASE_URL || 'https://jaihanumantex.in',
+    baseURL: process.env.BASE_URL || 'https://dt.gkv906128.workers.dev',
     navigationTimeout: 45000,
     actionTimeout: 15000,
     trace: 'on-first-retry',

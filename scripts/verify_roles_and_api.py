@@ -18,7 +18,7 @@ def open_with_retry(opener, req, timeout=25, retries=3):
 
 default_opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ctx))
 
-for domain in ['harmitethnic.com', 'jaihanumantex.in']:
+for domain in ['yourdomain.com', 'yourdomain.com']:
     print(f"\n{'='*60}")
     print(f"=== TESTING ROLE GATES ON {domain} ===")
     print(f"{'='*60}")

@@ -250,9 +250,9 @@ Every button across all pages, modals, tables, and forms **MUST ALWAYS** follow 
 
 ### 🌐 Production Credentials
 
-- **FTP Host**: `147.93.99.134:21` (User: `u602484543.harmitethnic.com`, Pass: `Gautam@9006`, Remote Dir: `/public_html` (FTP root))
+- **FTP Host**: `147.93.99.134:21` (User: `u602484543.yourdomain.com`, Pass: `Gautam@9006`, Remote Dir: `/public_html` (FTP root))
 - **MySQL Database**: `u602484543_demodt121` on `localhost:3306` (User: `u602484543_demodt121`, Pass: `Gautam@9006`)
-- **Website Base URL**: `https://jaihanumantex.in/`
+- **Website Base URL**: `https://yourdomain.com/`
 - **Official WhatsApp**: `917046363528` (`+91 70463 63528`)
 - **Official UPI VPA**: `917046363528@okaxis` / `dtbrands@icici` (MCC: `5691`)
 - **GitHub Repository**: `https://github.com/dtbrand/arniya.git` (Branch: `main`)

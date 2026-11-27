@@ -106,6 +106,6 @@ VALUES
 INSERT IGNORE INTO `notification_providers` (`provider_key`, `channel`, `display_name`, `is_enabled`, `config_json`, `status`, `last_health_check`, `latency_ms`)
 VALUES
 ('whatsapp_cloud', 'whatsapp', 'Meta WhatsApp Cloud API', 1, '{"phone_number_id":"1029384756","waba_id":"9876543210","api_version":"v19.0","access_token":"••••••••••••••••"}', 'operational', NOW(), 42),
-('smtp_mail', 'email', 'Hostinger Enterprise SMTP', 1, '{"host":"smtp.hostinger.com","port":465,"encryption":"ssl","username":"concierge@jaihanumantex.in","password":"••••••••••••••••"}', 'operational', NOW(), 58),
+('smtp_mail', 'email', 'Hostinger Enterprise SMTP', 1, '{"host":"smtp.hostinger.com","port":465,"encryption":"ssl","username":"concierge@yourdomain.com","password":"••••••••••••••••"}', 'operational', NOW(), 58),
 ('msg91_sms', 'sms', 'MSG91 DLT Enterprise SMS', 1, '{"sender_id":"DTHNTX","route":"4","auth_key":"••••••••••••••••"}', 'operational', NOW(), 35),
 ('fcm_push', 'push', 'Firebase Cloud Messaging (FCM)', 1, '{"project_id":"dt-brands-arniya","server_key":"••••••••••••••••"}', 'operational', NOW(), 28);

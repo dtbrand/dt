@@ -48,7 +48,7 @@ $webhooksList = [
     [
         'name' => 'Razorpay Payment Capture Webhook',
         'slug' => 'razorpay',
-        'endpoint' => 'https://jaihanumantex.in/api/webhooks/razorpay.php',
+        'endpoint' => 'https://yourdomain.com/api/webhooks/razorpay.php',
         'events' => ['payment.captured', 'payment.failed', 'refund.processed', 'order.paid'],
         'signature' => 'HMAC-SHA256 (Protected Secret: ••••••••••••••••)',
         'status' => 'active',
@@ -58,7 +58,7 @@ $webhooksList = [
     [
         'name' => 'Delhivery Shipment Status Webhook',
         'slug' => 'delhivery',
-        'endpoint' => 'https://jaihanumantex.in/api/webhooks/delhivery.php',
+        'endpoint' => 'https://yourdomain.com/api/webhooks/delhivery.php',
         'events' => ['package.manifested', 'package.in_transit', 'package.out_for_delivery', 'package.delivered', 'package.rto'],
         'signature' => 'Client API Token Header (Protected: ••••••••••••••••)',
         'status' => 'active',
@@ -68,7 +68,7 @@ $webhooksList = [
     [
         'name' => 'WhatsApp Cloud API Status Webhook',
         'slug' => 'whatsapp',
-        'endpoint' => 'https://jaihanumantex.in/api/webhooks/whatsapp.php',
+        'endpoint' => 'https://yourdomain.com/api/webhooks/whatsapp.php',
         'events' => ['messages.sent', 'messages.delivered', 'messages.read', 'messages.failed'],
         'signature' => 'X-Hub-Signature-256 (Protected: ••••••••••••••••)',
         'status' => 'active',
@@ -78,7 +78,7 @@ $webhooksList = [
     [
         'name' => 'Cashfree Drop PG Payment Webhook',
         'slug' => 'cashfree',
-        'endpoint' => 'https://jaihanumantex.in/api/webhooks/cashfree.php',
+        'endpoint' => 'https://yourdomain.com/api/webhooks/cashfree.php',
         'events' => ['PAYMENT_SUCCESS_WEBHOOK', 'PAYMENT_FAILED_WEBHOOK', 'USER_DROPPED_WEBHOOK'],
         'signature' => 'Timestamp + Base64 HMAC (Protected: ••••••••••••••••)',
         'status' => 'active',

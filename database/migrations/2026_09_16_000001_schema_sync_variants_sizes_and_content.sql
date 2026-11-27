@@ -145,7 +145,7 @@ VALUES (
     "DT Brand's & Jai Hanuman Tex — Premier Surat Sarees Wholesale",
     'Direct from Surat weaving mill. Premium designer sarees, wedding silks, georgette, and cotton at direct factory pricing.',
     '/assets/images/logo.png',
-    'https://jaihanumantex.in/'
+    'https://yourdomain.com/'
 ) ON DUPLICATE KEY UPDATE
     `meta_title` = VALUES(`meta_title`),
     `og_title` = COALESCE(`og_title`, VALUES(`og_title`)),

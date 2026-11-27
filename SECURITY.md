@@ -9,7 +9,7 @@
 We take the security of DT Brand's and our wholesale, reseller, and customer data seriously.
 If you discover a security vulnerability, please report it privately:
 
-- **Email:** `security@jaihanumantex.in`
+- **Email:** `security@yourdomain.com`
 - **Response SLA:** Within 24 hours acknowledging receipt, fix within 72 hours for critical items.
 
 ## 3. Strict Security Rules

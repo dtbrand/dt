@@ -2,8 +2,8 @@
 /**
  * Test Security Guard: ensure spoofed Referer + fake cookie cannot bypass dt_api_is_admin()
  */
-$_SERVER['HTTP_REFERER'] = 'https://harmitethnic.com/admin/products.php';
-$_SERVER['HTTP_HOST'] = 'harmitethnic.com';
+$_SERVER['HTTP_REFERER'] = 'https://yourdomain.com/admin/products.php';
+$_SERVER['HTTP_HOST'] = 'yourdomain.com';
 $_COOKIE['PHPSESSID'] = 'dummy_attacker_cookie_123';
 $_COOKIE['DTBRANDS_SESS'] = 'dummy_attacker_cookie_456';
 

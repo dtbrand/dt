@@ -29,8 +29,8 @@ class SystemManager
     /** @var array<string,string> In-memory fallback settings */
     private array $mockSettings = [
         'app_name' => 'DT Brand\'s & Jai Hanuman Tex',
-        'app_url' => 'https://jaihanumantex.in',
-        'store_email' => 'sales@jaihanumantex.in',
+        'app_url' => 'https://yourdomain.com',
+        'store_email' => 'sales@yourdomain.com',
         'store_phone' => '+91 70463 63528',
         'store_whatsapp' => '917046363528',
         'timezone' => 'Asia/Kolkata',
@@ -49,7 +49,7 @@ class SystemManager
         // General section defaults
         'site_name' => 'DT Brand\'s & Jai Hanuman Tex',
         'tagline' => 'Wholesale Ethnic Wear — Since 2005',
-        'admin_email' => 'admin@jaihanumantex.in',
+        'admin_email' => 'admin@yourdomain.com',
         'support_phone' => '+91 70463 63528',
         'whatsapp_number' => '917046363528',
         'date_format' => 'd M Y, h:i A',
@@ -57,17 +57,17 @@ class SystemManager
         'mail_driver' => 'smtp',
         'smtp_host' => 'smtp.hostinger.com',
         'smtp_port' => '465',
-        'smtp_user' => 'sales@jaihanumantex.in',
+        'smtp_user' => 'sales@yourdomain.com',
         'smtp_pass' => '',
         'smtp_encryption' => 'ssl',
-        'from_email' => 'sales@jaihanumantex.in',
+        'from_email' => 'sales@yourdomain.com',
         'from_name' => 'DT Brand\'s & Jai Hanuman Tex',
         // SEO defaults
         'meta_title' => 'DT Brand\'s & Jai Hanuman Tex — Premier Wholesale Ethnic Wear',
         'meta_description' => 'Manufacturer and wholesale exporter of premium kurtis, sets, sarees and ethnic apparel since 2005.',
         'meta_keywords' => 'wholesale kurtis, ethnic wear manufacturer, surat textile, b2b ethnic wear',
-        'og_image' => 'https://jaihanumantex.in/assets/images/brand/logo.png',
-        'canonical_url' => 'https://jaihanumantex.in/',
+        'og_image' => 'https://yourdomain.com/assets/images/brand/logo.png',
+        'canonical_url' => 'https://yourdomain.com/',
         // B2B Rules
         'min_order_qty' => '4',
         'min_order_amount' => '2500',
@@ -348,8 +348,8 @@ class SystemManager
     {
         $defaults = [
             'app_name' => 'DT Brand\'s & Jai Hanuman Tex',
-            'app_url' => 'https://jaihanumantex.in',
-            'store_email' => 'sales@jaihanumantex.in',
+            'app_url' => 'https://yourdomain.com',
+            'store_email' => 'sales@yourdomain.com',
             'store_phone' => '+91 70463 63528',
             'store_whatsapp' => '917046363528',
             'timezone' => 'Asia/Kolkata',

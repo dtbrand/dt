@@ -74,7 +74,7 @@ echo dt_set_save_button(); ?>
                     </div>
                     <div class="adm-form-group">
                         <label class="adm-form-label">Support Email</label>
-                        <input type="email" class="adm-form-input" id="dtSet-support_email" value="<?= htmlspecialchars(dt_set('support_email', 'admin@jaihanumantex.in')) ?>">
+                        <input type="email" class="adm-form-input" id="dtSet-support_email" value="<?= htmlspecialchars(dt_set('support_email', 'admin@yourdomain.com')) ?>">
                     </div>
                     <div class="adm-form-group">
                         <label class="adm-form-label">Order Number Prefix</label>

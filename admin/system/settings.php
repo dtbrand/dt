@@ -129,7 +129,7 @@ function sc(array $arr, string $key): bool {
                                 </div>
                                 <div class="sys-field">
                                     <label class="sys-field-label">Admin Email</label>
-                                    <input type="email" name="admin_email" class="sys-input" value="<?= sv($g, 'admin_email', 'admin@jaihanumantex.in') ?>">
+                                    <input type="email" name="admin_email" class="sys-input" value="<?= sv($g, 'admin_email', 'admin@yourdomain.com') ?>">
                                 </div>
                                 <div class="sys-field">
                                     <label class="sys-field-label">Support Phone</label>
@@ -240,7 +240,7 @@ function sc(array $arr, string $key): bool {
                                 </div>
                                 <div class="sys-field">
                                     <label class="sys-field-label">From Email</label>
-                                    <input type="email" name="mail_from_email" class="sys-input" value="<?= sv($m,'mail_from_email','noreply@jaihanumantex.in') ?>">
+                                    <input type="email" name="mail_from_email" class="sys-input" value="<?= sv($m,'mail_from_email','noreply@yourdomain.com') ?>">
                                 </div>
                                 <div class="sys-field">
                                     <label class="sys-field-label">Encryption</label>
@@ -304,7 +304,7 @@ function sc(array $arr, string $key): bool {
                                 </div>
                                 <div class="sys-field">
                                     <label class="sys-field-label">Open Graph Image URL</label>
-                                    <input type="url" name="og_image" class="sys-input" value="<?= sv($s,'og_image','') ?>" placeholder="https://jaihanumantex.in/assets/og.jpg">
+                                    <input type="url" name="og_image" class="sys-input" value="<?= sv($s,'og_image','') ?>" placeholder="https://yourdomain.com/assets/og.jpg">
                                 </div>
                             </div>
                         </div>

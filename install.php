@@ -54,10 +54,11 @@ function rate_limit(string $key, int $max = 10, int $window = 300): bool {
 
 // ─── ALREADY INSTALLED / PRODUCTION GUARD ────────────────────────────────────
 $installedFile = __DIR__ . '/.installed';
-$isProdHost = isset($_SERVER['HTTP_HOST']) && (
-    strpos($_SERVER['HTTP_HOST'], 'jaihanumantex.in') !== false ||
-    strpos($_SERVER['HTTP_HOST'], 'harmitethnic.com') !== false
-);
+$hostHeader = strtolower(trim((string)($_SERVER['HTTP_HOST'] ?? '')));
+$hostOnly = explode(':', $hostHeader)[0];
+$isProdHost = $hostOnly !== '' &&
+    !in_array($hostOnly, ['localhost', '127.0.0.1', '::1'], true) &&
+    !str_ends_with($hostOnly, '.local');
 $isProdEnv = in_array(strtolower((string)(getenv('APP_ENV') ?: (getenv('ENVIRONMENT') ?: ''))), ['production', 'prod'], true);
 
 // If installed or running on live production host → permanently lock installer with HTTP 403 Forbidden
@@ -175,7 +176,7 @@ $hostingerDefaults = [
     'db_name'     => 'u602484543_demodt121',
     'db_user'     => 'u602484543_demodt121',
     'db_pass'     => 'Gautam@9006',
-    'site_domain' => 'harmitethnic.com',
+    'site_domain' => 'yourdomain.com',
     'site_name'   => "DT Brand's — Harmit Ethnic",
     'site_tagline'=> 'Premium Ethnic Wear, Reseller & Wholesale Hub',
     'whatsapp'    => '917046363528',
@@ -183,7 +184,7 @@ $hostingerDefaults = [
     'timezone'    => 'Asia/Kolkata',
     'currency'    => 'INR',
     'admin_name'  => 'DT Brand Admin',
-    'admin_email' => 'admin@harmitethnic.com',
+    'admin_email' => 'admin@yourdomain.com',
 ];
 
 // ─── STEP HANDLERS ───
@@ -386,7 +387,7 @@ if ($step === 4 && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Validate domain
         if (!preg_match('/^([a-z0-9-]+\.)+[a-z]{2,}$/i', $domain)) {
-            $errors[] = 'Please enter a valid domain (e.g., jaihanumantex.in).';
+            $errors[] = 'Please enter a valid domain (e.g., yourdomain.com).';
         }
         if (empty($errors)) {
             $_SESSION['install_site'] = [
@@ -981,7 +982,7 @@ $stepLabels = ['Requirements Check', 'Database Setup', 'Admin Account', 'Site Co
                     </div>
                     <div>
                         <div style="font-family:'Cinzel',serif; font-size:0.95rem; font-weight:800; color:#D4AF37; margin-bottom:4px;">⚡ One-Click Hostinger Install</div>
-                        <div style="font-size:0.78rem; color:#94A3B8; line-height:1.4;">Auto-fill all credentials for <strong style="color:#E2E8F0;">harmitethnic.com</strong> — DB, Admin & Site Config pre-loaded.</div>
+                        <div style="font-size:0.78rem; color:#94A3B8; line-height:1.4;">Auto-fill all credentials for <strong style="color:#E2E8F0;">yourdomain.com</strong> — DB, Admin & Site Config pre-loaded.</div>
                     </div>
                 </div>
                 <a href="install.php?step=2&prefill=hostinger" style="display:inline-flex; align-items:center; gap:8px; padding:12px 22px; background:linear-gradient(135deg,#B8860B,#D4AF37,#E6CA65); color:#111827; font-weight:800; font-size:0.875rem; border-radius:10px; text-decoration:none; border:1px solid #8A681F; white-space:nowrap; box-shadow:0 4px 14px rgba(184,134,11,0.35); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
@@ -1051,7 +1052,7 @@ $stepLabels = ['Requirements Check', 'Database Setup', 'Admin Account', 'Site Co
                 <?php if ($prefill): ?>
                 <div style="background:#DCFCE7; border:1px solid #15803D; border-radius:10px; padding:12px 16px; margin-bottom:20px; display:flex; align-items:center; gap:10px; font-size:0.85rem; color:#15803D; font-weight:600;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    Hostinger production credentials auto-filled for <strong>harmitethnic.com</strong>
+                    Hostinger production credentials auto-filled for <strong>yourdomain.com</strong>
                 </div>
                 <?php endif; ?>
 
@@ -1156,8 +1157,8 @@ $stepLabels = ['Requirements Check', 'Database Setup', 'Admin Account', 'Site Co
                 
                 <div class="form-group">
                     <label class="form-label" for="site_domain">Domain Name <span style="color:var(--error);">*</span></label>
-                    <input type="text" id="site_domain" name="site_domain" class="form-input" placeholder="jaihanumantex.in" required>
-                    <div class="form-hint">Enter without http:// or www. (e.g., jaihanumantex.in)</div>
+                    <input type="text" id="site_domain" name="site_domain" class="form-input" placeholder="yourdomain.com" required>
+                    <div class="form-hint">Enter without http:// or www. (e.g., yourdomain.com)</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="site_name">Store Name</label>

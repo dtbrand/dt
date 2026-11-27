@@ -440,10 +440,10 @@ class PaymentManager
                 'customer_id'    => 'CUST_' . preg_replace('/[^0-9]/', '', $customerPhone ?: '0000000000'),
                 'customer_name'  => $customerName ?: 'Customer',
                 'customer_phone' => preg_replace('/[^0-9]/', '', $customerPhone ?: '9999999999'),
-                'customer_email' => $customerEmail ?: 'guest@jaihanumantex.in'
+                'customer_email' => $customerEmail ?: 'guest@yourdomain.com'
             ],
             'order_meta' => [
-                'return_url' => 'https://jaihanumantex.in/checkout.php?status=success&order_id={order_id}'
+                'return_url' => 'https://yourdomain.com/checkout.php?status=success&order_id={order_id}'
             ]
         ];
 

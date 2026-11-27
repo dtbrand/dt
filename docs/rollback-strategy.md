@@ -16,4 +16,4 @@
    - If a non-backward-compatible migration occurred, restore the pre-migration snapshot via `scripts/restore-test.php`.
 3. **Post-Rollback Verification:**
    - Re-run `php scripts/smoke-test.php`.
-   - Verify health endpoint at `https://jaihanumantex.in/health.php`.
+   - Verify health endpoint at `https://yourdomain.com/health.php`.

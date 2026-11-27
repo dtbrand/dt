@@ -256,15 +256,15 @@ function pdp_relative_date(string $ts): string
 <meta name="csrf-token" content="<?= htmlspecialchars($pdpCsrf, ENT_QUOTES, 'UTF-8') ?>" />
 <title><?= htmlspecialchars($pName) ?> — DT Brand's | Ethnic Luxury</title>
 <meta name="description" content="<?= htmlspecialchars($pDescription !== '' ? mb_substr($pDescription, 0, 160) : trim($pName . ' — ' . $pCategory, ' —')) ?>" />
-<link rel="canonical" href="<?= htmlspecialchars('https://' . ($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in') . '/product/' . ($product['slug'] ?? $product['id'])) ?>" />
+<link rel="canonical" href="<?= htmlspecialchars('https://' . ($_SERVER['HTTP_HOST'] ?? 'yourdomain.com') . '/product/' . ($product['slug'] ?? $product['id'])) ?>" />
 
 <!-- ════════════ OPEN GRAPH & SOCIAL META TAGS (WHATSAPP PREVIEWS) ════════════ -->
 <meta property="og:type" content="product" />
 <meta property="og:site_name" content="DT Brand's &amp; Jai Hanuman Tex" />
 <meta property="og:title" content="<?= htmlspecialchars($pName) ?>" />
 <meta property="og:description" content="<?= htmlspecialchars($pDescription !== '' ? mb_substr($pDescription, 0, 200) : 'Luxury handcrafted ethnic saree from Surat direct mill.') ?>" />
-<meta property="og:image" content="<?= htmlspecialchars(strpos($pdpPoster, 'http') === 0 ? $pdpPoster : ('https://' . ($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in') . $pdpPoster)) ?>" />
-<meta property="og:url" content="<?= htmlspecialchars('https://' . ($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in') . '/product/' . ($product['slug'] ?? $product['id'])) ?>" />
+<meta property="og:image" content="<?= htmlspecialchars(strpos($pdpPoster, 'http') === 0 ? $pdpPoster : ('https://' . ($_SERVER['HTTP_HOST'] ?? 'yourdomain.com') . $pdpPoster)) ?>" />
+<meta property="og:url" content="<?= htmlspecialchars('https://' . ($_SERVER['HTTP_HOST'] ?? 'yourdomain.com') . '/product/' . ($product['slug'] ?? $product['id'])) ?>" />
 <meta property="product:price:amount" content="<?= number_format($pPrice, 2, '.', '') ?>" />
 <meta property="product:price:currency" content="INR" />
 <meta property="product:availability" content="<?= $pInStock ? 'in stock' : 'out of stock' ?>" />
@@ -275,7 +275,7 @@ function pdp_relative_date(string $ts): string
   "@context": "https://schema.org/",
   "@type": "Product",
   "name": <?= json_encode($pName, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>,
-  "image": <?= json_encode(strpos($pdpPoster, 'http') === 0 ? $pdpPoster : ('https://' . ($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in') . $pdpPoster), JSON_UNESCAPED_SLASHES) ?>,
+  "image": <?= json_encode(strpos($pdpPoster, 'http') === 0 ? $pdpPoster : ('https://' . ($_SERVER['HTTP_HOST'] ?? 'yourdomain.com') . $pdpPoster), JSON_UNESCAPED_SLASHES) ?>,
   "description": <?= json_encode($pDescription !== '' ? mb_substr($pDescription, 0, 300) : $pName, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>,
   "sku": <?= json_encode($pSku) ?>,
   "brand": {
@@ -287,7 +287,7 @@ function pdp_relative_date(string $ts): string
     "priceCurrency": "INR",
     "price": "<?= number_format($pPrice, 2, '.', '') ?>",
     "availability": "<?= $pInStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' ?>",
-    "url": <?= json_encode('https://' . ($_SERVER['HTTP_HOST'] ?? 'jaihanumantex.in') . '/product/' . ($product['slug'] ?? $product['id'])) ?>
+    "url": <?= json_encode('https://' . ($_SERVER['HTTP_HOST'] ?? 'yourdomain.com') . '/product/' . ($product['slug'] ?? $product['id'])) ?>
   }
 }
 </script>

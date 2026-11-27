@@ -7,7 +7,7 @@
 DT Brand's & Jai Hanuman Tex is a single-tree PHP 8.2+ / MySQL / Apache commerce platform that
 serves four sales channels (retail, wholesale, reseller, retailer), a WhatsApp hand-off flow,
 a 333-file admin console, and a REST API from one codebase. Deployment target is Hostinger
-Business hosting (`https://jaihanumantex.in/`).
+Business hosting (`https://yourdomain.com/`).
 
 ## Directory Topology
 

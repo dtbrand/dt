@@ -25,7 +25,7 @@ function getContactSetting(string $k, string $def, array $settings): string {
 $showroomAddress = getContactSetting('contact_showroom_address', 'Ring Road, Surat Textile Market, Surat, Gujarat 395002', $contactSettings);
 $whatsappHotline = getContactSetting('contact_whatsapp_hotline', '+91 70463 63528', $contactSettings);
 $wholesaleLine   = getContactSetting('contact_wholesale_line', '+91 70463 63528', $contactSettings);
-$supportEmail    = getContactSetting('contact_support_email', 'care@jaihanumantex.in', $contactSettings);
+$supportEmail    = getContactSetting('contact_support_email', 'care@yourdomain.com', $contactSettings);
 $businessHours   = getContactSetting('contact_business_hours', '10:00 AM – 8:00 PM IST (Mon–Sat)', $contactSettings);
 
 $cleanPhone = preg_replace('/[^0-9]/', '', $whatsappHotline);

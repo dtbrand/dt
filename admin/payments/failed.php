@@ -223,7 +223,7 @@ $rupeeSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke=
                                     $amtStr = number_format((float)$f['amount'], 2);
                                     
                                     // 1-Click WhatsApp Direct Deep Link
-                                    $waMsg = "Namaste {$custName}! We noticed that your payment of Rs {$amtStr} for Order #{$ordNo} at DT Brand's & Jai Hanuman Tex could not be completed. \n\nYou can easily complete your payment here: https://jaihanumantex.in/checkout.php?retry_order={$ordNo}\n\nIf you need any assistance, our mill concierge is here to help!";
+                                    $waMsg = "Namaste {$custName}! We noticed that your payment of Rs {$amtStr} for Order #{$ordNo} at DT Brand's & Jai Hanuman Tex could not be completed. \n\nYou can easily complete your payment here: https://yourdomain.com/checkout.php?retry_order={$ordNo}\n\nIf you need any assistance, our mill concierge is here to help!";
                                     $waUrl = "https://api.whatsapp.com/send?phone=91{$phone}&text=" . rawurlencode($waMsg);
                                     ?>
                                     <tr>

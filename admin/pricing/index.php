@@ -140,7 +140,7 @@ $allProducts = ProductCatalog::getAll(true);
                                 $resellerPrice = round($avgPrice * 0.88);
                                 $wholesalePrice = round($avgPrice * 0.72);
                                 $bulkPrice = round($avgPrice * 0.65);
-                                $margin = round((($avgPrice - $wholesalePrice) / $avgPrice) * 100, 1);
+                                $margin = ($avgPrice > 0) ? round((($avgPrice - $wholesalePrice) / $avgPrice) * 100, 1) : 0;
                                 ?>
                                 <tr>
                                     <td>

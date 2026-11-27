@@ -296,7 +296,7 @@ $page_title = "Financial Ledger — " . $customer_name;
     <div style="display:flex; justify-content:space-between; align-items:flex-end; border-top:1px solid #E2DFD7; padding-top:14px; font-size:10.5px; color:#64748B;">
         <div>
             This is a computer-generated B2B accounting statement from DT Brand's &amp; Jai Hanuman Tex Surat Central Depot.<br>
-            Direct Inquiries: accounts@jaihanumantex.in | Central Helpline: +91 70463 63528
+            Direct Inquiries: accounts@yourdomain.com | Central Helpline: +91 70463 63528
         </div>
         <div style="text-align:right; font-weight:700; color:#181512;">
             Authorized Accounting Signatory<br>

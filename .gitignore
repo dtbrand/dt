@@ -16,6 +16,8 @@ composer.phar
 .eslintcache
 .stylelintcache
 .lighthouseci/
+.wrangler/
+cloudflare/public/
 playwright-report/
 test-results/
 

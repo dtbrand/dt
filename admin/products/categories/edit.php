@@ -161,7 +161,7 @@ $catCount = ProductCatalog::categoryProductCount($cat_id);
                                 <label for="catSlug">URL Slug</label>
                                 <input type="text" id="catSlug" class="dt-form-input" value="<?php echo htmlspecialchars($catSlug); ?>" autocomplete="off">
                                 <div style="margin-top:4px; font-size:11px; color:#8A681F;">
-                                    <strong>Shop URL:</strong> <code>https://jaihanumantex.in/shop?category=<span id="catSlugLive"><?php echo htmlspecialchars($catSlug); ?></span></code>
+                                    <strong>Shop URL:</strong> <code>https://yourdomain.com/shop?category=<span id="catSlugLive"><?php echo htmlspecialchars($catSlug); ?></span></code>
                                 </div>
                             </div>
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">

@@ -1,0 +1,2741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Official Privacy Policy and Data Protection standards of DT Brand's & Jai Hanuman Tex Surat." />
+    <title>Privacy Policy — DT Brand&#039;s &amp; Jai Hanuman Tex</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+
+    <link rel="stylesheet" href="/assets/css/home.css?v=1795716299">
+    <link rel="stylesheet" href="/assets/css/policies.css?v=1795716299">
+</head>
+<body>
+
+<style>
+/* ── Shop Header ─────────────────────────────────────────── */
+.shop-header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #FFFFFF;
+    border-bottom: 1.5px solid var(--soft-platinum, #E5E3DE);
+    box-shadow: 0 2px 14px rgba(138,104,31,0.08);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    transition: box-shadow 0.25s ease;
+}
+.shop-header.scrolled {
+    box-shadow: 0 4px 20px rgba(138,104,31,0.14);
+}
+
+/* ── Normal Header Container ── */
+.header-normal-view {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 64px;
+    padding: 0 28px;
+    gap: 20px;
+}
+
+/* ── Amazon-Style Attached Sub-Navigation Bar (Royal Gold Luxury Gradient) ── */
+.header-attached-subnav {
+    width: 100%;
+    background: linear-gradient(90deg, #7A5B18 0%, #9C7724 50%, #7A5B18 100%);
+    border-top: 1px solid rgba(255, 235, 180, 0.35);
+    border-bottom: 1.5px solid #5C4310;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    box-shadow: 0 2px 8px rgba(122, 91, 24, 0.25);
+    position: relative;
+    z-index: 10;
+}
+
+.subnav-scroll-track {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    height: 100%;
+}
+.subnav-scroll-track::-webkit-scrollbar { display: none; }
+
+.subnav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 10px;
+    height: 22px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #FFF8EB;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: capitalize;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.subnav-item:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.2);
+}
+.subnav-item.active {
+    background: #FFFFFF;
+    color: #7A5B18;
+    border-color: #FFFFFF;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+.subnav-icon {
+    width: 13px; height: 13px;
+    stroke: currentColor; stroke-width: 2.2; fill: none;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   3D LUXURY ANIMATED REELS BUTTON & 3D REEL ICON
+   ═════════════════════════════════════════════════════════════════ */
+@keyframes reelIconSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes reelGlowPulse {
+    0%, 100% {
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                    inset 0 0 10px rgba(212, 175, 55, 0.35),
+                    0 0 12px rgba(212, 175, 55, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+                    inset 0 0 16px rgba(245, 208, 92, 0.6),
+                    0 0 20px rgba(245, 208, 92, 0.7);
+    }
+}
+
+@keyframes reelBadgeShimmer {
+    0% { background-position: -150% 0; }
+    100% { background-position: 250% 0; }
+}
+
+.subnav-reels-btn {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 12px 3px 10px;
+    height: 24px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #181512 0%, #2A241E 50%, #181512 100%);
+    border: 1.2px solid #D4AF37;
+    color: #FAF5E8;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.70rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    transform: perspective(400px) translateZ(0);
+    transform-style: preserve-3d;
+    animation: reelGlowPulse 2.8s ease-in-out infinite;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.subnav-reels-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.28) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: reelBadgeShimmer 3s infinite linear;
+    pointer-events: none;
+}
+
+.subnav-reels-btn:hover {
+    background: linear-gradient(135deg, #0A0908 0%, #3D3325 50%, #0A0908 100%);
+    border-color: #FFF2A8;
+    transform: perspective(400px) translateY(-1.5px) scale(1.06);
+    color: #FFFFFF;
+}
+
+.subnav-reels-btn:active {
+    transform: perspective(400px) translateY(1px) scale(0.98);
+}
+
+/* 3D Animated Film Reel Icon */
+.reel-3d-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    position: relative;
+    filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.6));
+}
+
+.reel-3d-svg {
+    width: 14px;
+    height: 14px;
+    animation: reelIconSpin 4s linear infinite;
+    display: block;
+}
+
+.subnav-reels-btn:hover .reel-3d-svg {
+    animation-duration: 1.5s;
+}
+
+.reel-live-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #E53935;
+    box-shadow: 0 0 6px #E53935;
+    animation: pulseDot 1.4s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { transform: scale(0.85); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* ── Mobile Animated Header Menu Trigger (Clean Transparent & Ultra-Clear Visibility) ── */
+.header-mobile-menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    z-index: 3;
+    -webkit-tap-highlight-color: transparent;
+    outline: none !important;
+}
+
+.header-mobile-menu-btn:hover,
+.header-mobile-menu-btn:focus {
+    background: transparent !important;
+    outline: none !important;
+    transform: scale(1.1);
+}
+
+.header-mobile-menu-btn:active {
+    transform: scale(0.92);
+}
+
+/* 3-Bar Pure Crisp Vector Animation (Obsidian #111827 with Heritage Gold #8A681F Highlight) */
+.mobile-menu-bars {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 22px;
+    height: 15px;
+    position: relative;
+}
+
+.mobile-menu-bars .bar {
+    display: block;
+    height: 2.5px;
+    background: #111827;
+    border-radius: 3px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: left center;
+}
+
+.mobile-menu-bars .bar-top {
+    width: 100%;
+    background: #111827;
+}
+
+.mobile-menu-bars .bar-mid {
+    width: 65%;
+    background: #8A681F;
+}
+
+.mobile-menu-bars .bar-bot {
+    width: 85%;
+    background: #111827;
+}
+
+.header-mobile-menu-btn:hover .mobile-menu-bars .bar,
+.header-mobile-menu-btn:focus .mobile-menu-bars .bar,
+.header-mobile-menu-btn:active .mobile-menu-bars .bar {
+    background: #8A681F;
+    width: 100%;
+}
+
+@media (max-width: 1024px) {
+    .header-mobile-menu-btn {
+        display: inline-flex !important;
+    }
+}
+
+/* ── Left Section: Stylish Plus Button + Brand Logo ── */
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-shrink: 0;
+}
+
+.shop-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--soft-platinum, #E5E3DE);
+    background: #FAF8F4;
+    color: var(--dark-text, #24211C);
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.shop-back-btn:hover {
+    border-color: var(--dark-gold, #8A681F);
+    background: #FFFFFF;
+    color: var(--dark-gold, #8A681F);
+    transform: translateX(-2px);
+    box-shadow: 0 2px 8px rgba(138,104,31,0.15);
+}
+.shop-back-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    fill: none;
+}
+
+.header-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding-left: 2px;
+}
+.header-brand-name {
+    font-family: var(--font-serif, 'Cinzel', serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark-gold, #8A681F);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.15;
+    margin: 0;
+}
+.header-brand-tagline {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--light-text, #9A9490);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+/* ── Center: Amazon-Style Always Open Search Bar (Desktop) ── */
+.search-amazon-bar {
+    display: flex;
+    align-items: center;
+    background: #FFFFFF;
+    border: 2px solid var(--dark-gold, #8A681F);
+    border-radius: 8px;
+    height: 44px;
+    flex: 1;
+    max-width: 600px;
+    margin: 0 24px;
+    box-shadow: 0 2px 10px rgba(138,104,31,0.06);
+    transition: all 0.25s ease;
+    position: relative;
+}
+.search-amazon-bar:focus-within {
+    box-shadow: 0 0 0 3px rgba(138,104,31,0.22), 0 6px 20px rgba(0,0,0,0.08);
+    border-color: var(--deep-gold, #6F5218);
+}
+
+/* Category select pill */
+.search-cat-dropdown-wrap {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    border-right: 1.5px solid var(--soft-platinum, #E5E3DE);
+    background: #FAF8F4;
+    border-radius: 6px 0 0 6px;
+    flex-shrink: 0;
+}
+.search-cat-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: none;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--dark-text, #24211C);
+    padding: 0 28px 0 12px;
+    height: 100%;
+    cursor: pointer;
+    outline: none;
+}
+.search-cat-arrow {
+    position: absolute;
+    right: 8px;
+    width: 14px; height: 14px;
+    stroke: var(--dark-gold, #8A681F);
+    stroke-width: 2.2;
+    fill: none;
+    pointer-events: none;
+}
+
+/* Center text input */
+.search-input-wrap {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+.search-input-amazon {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    padding: 0 34px 0 14px;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.88rem;
+    color: var(--dark-text, #24211C);
+    background: transparent;
+}
+.search-input-amazon::placeholder {
+    color: var(--light-text, #9A9490);
+    font-size: 0.82rem;
+}
+
+/* Clear 'x' button */
+.search-clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px; height: 22px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: rgba(0,0,0,0.08);
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--mid-text, #5A5348);
+    transition: all 0.2s;
+}
+.search-clear-btn:hover {
+    background: var(--dark-gold, #8A681F);
+    color: #FFFFFF;
+}
+.search-clear-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; }
+
+/* Right gold submit button */
+.search-submit-btn {
+    height: 100%;
+    width: 48px;
+    background: linear-gradient(135deg, var(--dark-gold, #8A681F) 0%, var(--deep-gold, #6F5218) 100%);
+    border: none;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    transition: background 0.2s, transform 0.15s;
+    flex-shrink: 0;
+}
+.search-submit-btn:hover {
+    background: var(--deep-gold, #6F5218);
+}
+.search-submit-btn svg {
+    width: 19px; height: 19px;
+    stroke: #FFFFFF;
+    stroke-width: 2.4;
+    fill: none;
+}
+
+/* ── Right Actions (Search Trigger, Wishlist & Cart Buttons) ── */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.header-icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-decoration: none;
+    color: #111827;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.header-icon-btn:hover,
+.header-icon-btn:focus {
+    background: transparent !important;
+    outline: none !important;
+    transform: scale(1.1);
+    color: #8A681F;
+}
+
+.header-icon-btn:active {
+    transform: scale(0.92);
+}
+
+.header-icon-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: #111827;
+    stroke-width: 2.2;
+    fill: none;
+    transition: stroke 0.22s ease, transform 0.22s ease;
+    display: block;
+}
+
+.header-icon-btn:hover svg,
+.header-icon-btn:focus svg,
+.header-icon-btn:active svg {
+    stroke: #8A681F;
+}
+
+/* Specific animated micro-interactions for Cart & Search */
+#cartBtn:hover svg,
+#cartBtn:active svg {
+    transform: rotate(-6deg);
+    stroke: #8A681F;
+}
+
+#mobileSearchTriggerBtn:hover svg,
+#mobileSearchTriggerBtn:active svg {
+    transform: scale(1.08) rotate(6deg);
+    stroke: #8A681F;
+}
+
+.mobile-search-trigger-btn {
+    display: none;
+}
+
+/* Luxury Gold Notification Badge with Animated Micro-Pulse */
+@keyframes badgePopPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.header-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    background: linear-gradient(135deg, #B8860B 0%, #8A681F 100%);
+    color: #FFFFFF;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.62rem;
+    font-weight: 800;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #FFFFFF;
+    box-shadow: 0 2px 6px rgba(138, 104, 31, 0.4);
+    animation: badgePopPulse 2.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+/* ── Header Account Dropdown (Desktop) ── */
+.header-account-wrap {
+    position: relative;
+    display: none;
+}
+@media (min-width: 768px) {
+    .header-account-wrap {
+        display: block;
+    }
+}
+.header-account-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    height: 38px;
+    border-radius: 20px;
+    border: 1.5px solid var(--soft-platinum, #E5E3DE);
+    background: #FFFFFF;
+    color: var(--dark-gold, #8A681F);
+    font-family: var(--font-sans);
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+.header-account-btn:hover {
+    border-color: var(--dark-gold);
+    background: #FAF8F4;
+    color: var(--deep-gold);
+    box-shadow: 0 2px 8px rgba(138,104,31,0.12);
+}
+.header-account-btn svg {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+.header-account-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 210px;
+    background: #FFFFFF;
+    border: 1.5px solid var(--dark-gold, #8A681F);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    padding: 6px 0;
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+    animation: acDropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.header-account-wrap:hover .header-account-dropdown,
+.header-account-wrap:focus-within .header-account-dropdown {
+    display: flex;
+}
+@keyframes acDropFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.ac-drop-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    color: var(--dark-text, #24211C);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.ac-drop-item:hover {
+    background: #FAF6ED;
+    color: var(--dark-gold, #8A681F);
+}
+.ac-drop-item svg {
+    width: 15px;
+    height: 15px;
+    stroke: var(--dark-gold, #8A681F);
+    stroke-width: 2;
+    fill: none;
+    flex-shrink: 0;
+}
+.ac-drop-divider {
+    height: 1px;
+    background: var(--soft-platinum, #E5E3DE);
+    margin: 4px 0;
+}
+
+/* ── Mobile In-Header Sticky Search Bar (<768px) ── */
+.mobile-full-search-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 38px;
+    padding: 0 8px;
+    gap: 8px;
+    background: #FFFFFF;
+    box-sizing: border-box;
+    position: relative !important;
+    z-index: 10000000 !important;
+}
+
+@media (max-width: 1024px) {
+    .shop-header.scrolled .header-normal-view,
+    .shop-header.mobile-search-active .header-normal-view {
+        display: none !important;
+    }
+    .shop-header.scrolled .mobile-full-search-bar,
+    .shop-header.mobile-search-active .mobile-full-search-bar {
+        display: flex !important;
+    }
+}
+
+.mobile-search-input-wrap {
+    flex: 1;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    background: #FAF8F4;
+    border: 1.5px solid var(--dark-gold, #8A681F);
+    border-radius: 14px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    box-shadow: 0 1px 4px rgba(138,104,31,0.08);
+    position: relative !important;
+    z-index: 10000001 !important;
+    pointer-events: auto !important;
+}
+.mobile-search-input-wrap:focus-within {
+    border-color: var(--deep-gold, #6F5218);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.3);
+}
+
+.mobile-search-input-field {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--dark-text, #24211C);
+    position: relative !important;
+    z-index: 10000002 !important;
+    pointer-events: auto !important;
+    cursor: text !important;
+}
+.mobile-search-input-field::placeholder {
+    color: var(--light-text, #9A9490);
+    font-size: 0.72rem;
+}
+
+.mobile-search-clear-btn {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.08);
+    color: var(--mid-text, #5A5348);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 2px;
+    position: relative !important;
+    z-index: 10000003 !important;
+    pointer-events: auto !important;
+}
+.mobile-search-clear-btn svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+
+.mobile-search-submit-icon-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--dark-gold, #8A681F);
+    position: relative !important;
+    z-index: 10000003 !important;
+    pointer-events: auto !important;
+}
+.mobile-search-submit-icon-btn svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2.4; fill: none; }
+
+.mobile-header-close-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--dark-gold, #8A681F);
+    background: #FAF8F4;
+    color: var(--dark-gold, #8A681F);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    padding: 0;
+    position: relative !important;
+    z-index: 10000003 !important;
+    pointer-events: auto !important;
+}
+.mobile-header-close-btn:hover {
+    background: #FEF2F2;
+    color: #DC2626;
+    border-color: #DC2626;
+}
+.mobile-header-close-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    fill: none;
+}
+
+/* ── Mobile Search Suggestions Dropdown (Opens below header on click/type) ── */
+.mobile-search-suggestions-dropdown {
+    display: none;
+    position: fixed !important;
+    top: 38px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 38px) !important;
+    height: calc(100dvh - 38px) !important;
+    background: #FFFFFF !important;
+    z-index: 9999998 !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    overscroll-behavior: contain !important;
+    animation: dtSuggFadeIn 0.2s ease;
+}
+
+body.mobile-search-open {
+    overflow: hidden !important;
+}
+
+body.mobile-search-open .mobile-search-suggestions-dropdown {
+    display: flex !important;
+}
+
+body.mobile-search-open .header-attached-subnav {
+    display: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   LUXURY PREDICTIVE AUTOCOMPLETE & PRODUCT SUGGESTIONS DROPDOWN
+   ══════════════════════════════════════════════════════════ */
+.dt-search-suggestions-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: #FFFFFF;
+    border: 1.5px solid var(--dark-gold, #8A681F);
+    border-radius: 10px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.18), 0 2px 10px rgba(184,134,11,0.15);
+    max-height: 480px;
+    overflow-y: auto;
+    z-index: 9999;
+    padding: 10px 0;
+    box-sizing: border-box;
+    animation: dtSuggFadeIn 0.2s ease;
+    font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+}
+@keyframes dtSuggFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dt-sugg-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 14px 4px 14px;
+    font-size: 0.70rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--dark-gold, #8A681F);
+    text-transform: uppercase;
+    background: #FAF8F4;
+    border-top: 1px solid #F1ECE1;
+    border-bottom: 1px solid #F1ECE1;
+    margin: 6px 0 4px 0;
+}
+.dt-sugg-section-header:first-child {
+    border-top: none;
+    margin-top: 0;
+}
+
+/* Trending Chips Container */
+.dt-sugg-trending-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 14px;
+}
+.dt-sugg-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: #FAF5E8;
+    border: 1px solid #D4AF37;
+    border-radius: 16px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #705114;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-decoration: none;
+}
+.dt-sugg-tag:hover {
+    background: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%);
+    color: #111827;
+    border-color: #8A681F;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(184,134,11,0.25);
+}
+
+/* Category Suggestions List */
+.dt-sugg-cat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: #1F2937;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+.dt-sugg-cat-item:hover {
+    background: #FAF6ED;
+    color: #8A681F;
+}
+
+/* Product Suggestions List */
+.dt-sugg-product-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    border-bottom: 1px solid #F7F5F0;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.dt-sugg-product-item:hover {
+    background: #FAF6ED;
+}
+.dt-sugg-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #F3F4F6;
+    border: 1px solid #E5E7EB;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+.dt-sugg-product-item:hover .dt-sugg-thumb {
+    transform: scale(1.06);
+    border-color: #D4AF37;
+}
+.dt-sugg-info {
+    flex: 1;
+    min-width: 0;
+}
+.dt-sugg-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dt-sugg-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    font-size: 0.72rem;
+    color: #6B7280;
+}
+.dt-sugg-badge {
+    background: #FAF5E8;
+    color: #8A681F;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 0.5px solid #D4AF37;
+}
+.dt-sugg-pricing {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+.dt-sugg-price {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #8A681F;
+}
+.dt-sugg-mrp {
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    text-decoration: line-through;
+}
+.dt-sugg-disc {
+    font-size: 0.68rem;
+    font-weight: 800;
+    background: #FEF3C7;
+    color: #92400E;
+    padding: 0 4px;
+    border-radius: 3px;
+}
+.dt-sugg-view-btn {
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 14px;
+    background: #FAF5E8;
+    border: 1px solid #D4AF37;
+    color: #705114;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+.dt-sugg-product-item:hover .dt-sugg-view-btn {
+    background: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%);
+    color: #111827;
+    border-color: #8A681F;
+}
+
+/* Master Bottom View All Button */
+.dt-sugg-footer-btn {
+    display: block;
+    margin: 8px 14px 4px 14px;
+    padding: 8px 14px;
+    text-align: center;
+    background: linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #E6CA65 100%);
+    border: 1px solid #8A681F;
+    border-radius: 6px;
+    font-size: 0.80rem;
+    font-weight: 800;
+    color: #111827;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 6px rgba(184,134,11,0.25);
+    transition: all 0.15s ease;
+}
+.dt-sugg-footer-btn:hover {
+    background: linear-gradient(135deg, #C59312 0%, #DFC04E 50%, #F0D77B 100%);
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 4px 10px rgba(184,134,11,0.35);
+}
+
+.dt-search-highlight {
+    background: #FEF08A;
+    color: #854D0E;
+    font-weight: 800;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE NEXT-LEVEL LUXURY SEARCH DRAWER (<768px)
+   ══════════════════════════════════════════════════════════ */
+/* Lock background page scrolling when search drawer is open */
+body.mobile-search-open {
+    overflow: hidden !important;
+}
+
+.mobile-sugg-content-body {
+    flex: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    padding: 10px 12px 100px 12px !important;
+    box-sizing: border-box !important;
+    background: #FFFFFF !important;
+}
+
+/* 1-Line Smooth Horizontal Scrolling for Trending Ethnic Wear on Mobile */
+.mobile-sugg-content-body .dt-sugg-trending-wrap {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 8px !important;
+    padding: 4px 12px 10px 12px !important;
+    margin: 0 -12px 8px -12px !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+}
+.mobile-sugg-content-body .dt-sugg-trending-wrap::-webkit-scrollbar {
+    display: none !important;
+}
+.mobile-sugg-content-body .dt-sugg-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 5px 12px !important;
+    background: #FAF8F4 !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 16px !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    color: #5A4210 !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    box-shadow: 0 1px 3px rgba(138,104,31,0.08) !important;
+    transition: all 0.15s ease !important;
+}
+.mobile-sugg-content-body .dt-sugg-tag:hover,
+.mobile-sugg-content-body .dt-sugg-tag:active {
+    background: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%) !important;
+    color: #111827 !important;
+    font-weight: 700 !important;
+    border-color: #8A681F !important;
+}
+
+/* Auto-hide mobile bottom navigation when search drawer is active */
+body.mobile-search-open .shop-smart-bottom-footer,
+body.mobile-search-open #shopSmartBottomFooter,
+body.mobile-search-open .home-smart-bottom-footer,
+body.mobile-search-open #homeSmartBottomFooter,
+body.mobile-search-open .dt-mobile-bottom-nav,
+body.mobile-search-open #dtMobileBottomNav,
+body.mobile-search-open .mobile-bottom-nav,
+body.mobile-search-open .mobile-nav-bar,
+body.mobile-search-open #mobileStickyNav,
+body.mobile-search-open #mobileBottomBar {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(100%) !important;
+}
+
+/* Mobile Suggestion Product Card */
+.mobile-sugg-product-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: #FFFFFF;
+    border: 1px solid #F1ECE1;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.15s ease;
+}
+.mobile-sugg-product-card:active {
+    background: #FAF6ED;
+    border-color: #D4AF37;
+}
+.mobile-sugg-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #F9FAFB;
+    border: 0.5px solid #E5E7EB;
+    flex-shrink: 0;
+}
+.mobile-sugg-details {
+    flex: 1;
+    min-width: 0;
+}
+.mobile-sugg-title {
+    font-size: 0.80rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.mobile-sugg-pricing {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+}
+.mobile-sugg-price {
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: #8A681F;
+}
+.mobile-sugg-mrp {
+    font-size: 0.70rem;
+    color: #9CA3AF;
+    text-decoration: line-through;
+}
+.mobile-sugg-disc {
+    font-size: 0.65rem;
+    font-weight: 800;
+    background: #FEF3C7;
+    color: #92400E;
+    padding: 0 4px;
+    border-radius: 3px;
+}
+
+/* ── Mobile Layout & Ultra-Compact Zero-Vibration Layout (<768px) ── */
+@media (max-width: 767px) {
+    .shop-header {
+        height: auto;
+        padding: 0;
+        gap: 0;
+        transition: box-shadow 0.25s ease;
+    }
+
+    /* Fixed Ultra-Compact 38px Slot for Normal View */
+    .header-normal-view {
+        height: 38px;
+        min-height: 38px;
+        max-height: 38px;
+        box-sizing: border-box;
+        position: relative;
+        padding: 0 10px;
+        gap: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .header-left-group {
+        position: static;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 2;
+    }
+    .header-brand-link {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        z-index: 1;
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .header-brand-real-logo {
+        height: 28px !important;
+        max-height: 28px !important;
+        width: auto !important;
+        max-width: 135px !important;
+        object-fit: contain;
+    }
+    .shop-back-btn {
+        padding: 4px 9px;
+        font-size: 0.70rem;
+        gap: 4px;
+        border-radius: 14px;
+        z-index: 2;
+    }
+    .shop-back-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+    .header-brand-name {
+        font-size: 0.92rem;
+    }
+    .header-brand-tagline {
+        font-size: 0.42rem;
+        letter-spacing: 0.14em;
+        margin-top: 1px;
+    }
+    .header-actions {
+        position: relative;
+        z-index: 2;
+        gap: 4px;
+    }
+    .header-icon-btn {
+        width: 34px !important;
+        height: 34px !important;
+    }
+    .header-icon-btn svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+    .header-badge {
+        min-width: 15px;
+        height: 15px;
+        font-size: 0.55rem;
+        top: -1px;
+        right: -1px;
+    }
+    .search-amazon-bar {
+        display: none !important; /* Hidden on mobile by default */
+    }
+    .mobile-search-trigger-btn {
+        display: inline-flex !important;
+    }
+    #wishlistBtn {
+        display: none !important;
+    }
+
+    /* Mobile In-Header Sticky Search Bar (<768px) */
+    .mobile-full-search-bar {
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        padding: 0 8px !important;
+        gap: 6px !important;
+        display: none !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        box-sizing: border-box !important;
+        background: #FFFFFF !important;
+    }
+    .shop-header.scrolled .mobile-full-search-bar,
+    .shop-header.mobile-search-active .mobile-full-search-bar {
+        display: flex !important;
+    }
+    .shop-header.scrolled .header-normal-view,
+    .shop-header.mobile-search-active .header-normal-view {
+        display: none !important;
+    }
+
+    /* Permanently Visible Ultra-Compact Category Subnav (Royal Gold Luxury Gradient) */
+    .header-attached-subnav {
+        height: 28px;
+        min-height: 28px;
+        max-height: 28px;
+        padding: 0 8px;
+        box-sizing: border-box;
+        background: linear-gradient(90deg, #7A5B18 0%, #9C7724 50%, #7A5B18 100%);
+        border-top: 1px solid rgba(255, 235, 180, 0.35);
+        border-bottom: 1.5px solid #5C4310;
+        box-shadow: 0 2px 8px rgba(122, 91, 24, 0.25);
+    }
+    .subnav-item {
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        height: 20px;
+        gap: 4px;
+        border-radius: 4px;
+    }
+    .subnav-icon {
+        width: 11px;
+        height: 11px;
+    }
+    .subnav-reels-btn {
+        height: 22px;
+        padding: 2px 8px;
+        font-size: 0.62rem;
+    }
+}
+</style>
+
+<header class="shop-header" id="shopHeader">
+
+    <!-- ═══ Normal Header Bar (shown on desktop, and mobile default) ═══ -->
+    <div class="header-normal-view" id="headerNormalView">
+        <!-- Left: Animated Mobile Menu Button (Home only), Back Button (Shop only) & Brand Logo -->
+        <div class="header-left-group">
+                        <a href="/" class="dt-btn dt-btn-pale shop-back-btn" id="shopBackBtn" aria-label="Back to Home">
+                <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span>Home</span>
+            </a>
+            
+            <a href="/" class="header-brand-link" style="display:inline-flex; align-items:center; text-decoration:none;">
+                <img src="/assets/images/logo.png" onerror="this.onerror=null; this.src='/assets/images/no-image.svg';" alt="DT Brand's Ethnic Luxury" class="header-brand-real-logo" style="height:34px; width:auto; max-width:160px; object-fit:contain;">
+            </a>
+        </div>
+
+        <!-- Center: Amazon-Style Always-Open Search Bar (Visible on Desktop) -->
+        <div class="search-amazon-bar" id="searchAmazonBar">
+            <div class="search-cat-dropdown-wrap">
+                                <select class="search-cat-select" id="searchCatSelect" aria-label="Select category">
+                    <option value="All">All Categories</option>
+                                        <option value="Saree" >Saree</option>
+                                        <option value="Lehenga" >Lehenga</option>
+                                        <option value="Gown" >Gown</option>
+                                        <option value="Kurti" >Kurti</option>
+                                    </select>
+                <svg class="search-cat-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+
+            <div class="search-input-wrap">
+                <input
+                    type="text"
+                    class="search-input-amazon"
+                    id="searchInput"
+                    placeholder="Search luxury silk sarees, designer kurtis, bridal lehengas..."
+                    autocomplete="off"
+                    aria-label="Search products"
+                />
+                <button class="search-clear-btn" id="searchClearBtn" aria-label="Clear search">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <button class="dt-btn dt-btn-gold search-submit-btn" id="searchSubmitBtn" aria-label="Search">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+
+            <!-- ═══ Luxury Predictive Autocomplete & Product Suggestions Dropdown (Desktop) ═══ -->
+            <div class="dt-search-suggestions-dropdown" id="searchSuggestionsDropdown" style="display:none;" role="listbox" aria-label="Search suggestions"></div>
+        </div>
+
+        <!-- Right Actions: Account, Wishlist, Cart -->
+        <div class="header-actions">
+            <!-- Desktop Account Dropdown Button -->
+            <div class="header-account-wrap" id="headerAccountWrap">
+                <a href="/account.php" class="header-account-btn" id="headerAccountBtn" aria-label="Account Access">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span id="headerAccountLabel">Account</span>
+                </a>
+                <div class="header-account-dropdown" id="headerAccountDropdown">
+                    <a href="/" class="ac-drop-item" style="color:var(--dark-gold, #8A681F); font-weight:800;">
+                        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        <span>Home Page</span>
+                    </a>
+                    <a href="/shop.php" class="ac-drop-item">
+                        <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                        <span>Shop All Catalog</span>
+                    </a>
+                    <a href="/account.php" class="ac-drop-item" id="acDropMyAccount">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span style="color:var(--dark-gold, #8A681F); font-weight:700;">My Account &amp; Orders</span>
+                    </a>
+                    <a href="/wholesale.php" class="ac-drop-item" id="acDropWholesaler" style="display:none; color:#8A681F; font-weight:800;">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>Wholesaler B2B Hub</span>
+                    </a>
+                    <a href="/account.php?tab=login" class="ac-drop-item" id="acDropLogin">
+                        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                        <span>Sign In / Login</span>
+                    </a>
+                    <a href="/account.php?tab=register" class="ac-drop-item" id="acDropRegister">
+                        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                        <span>Create Account</span>
+                    </a>
+                    <a href="/account.php?tab=forgot" class="ac-drop-item" id="acDropForgot">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <span>Forgot Password</span>
+                    </a>
+                    <div class="ac-drop-divider" id="acDropDivider" style="display:none;"></div>
+                    <a href="/logout.php" class="ac-drop-item" id="acDropLogout" style="display:none; color:#D32F2F;" onclick="localStorage.removeItem('dtbrands_user');">
+                        <svg viewBox="0 0 24 24" style="stroke:#D32F2F;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span>Log Out</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile Search Icon Trigger Button (Single Clean Search Trigger) -->
+            <button type="button" class="header-icon-btn mobile-search-trigger-btn" id="mobileSearchTriggerBtn" aria-label="Search items" onclick="if(typeof openMobileSearchDrawer==='function'){openMobileSearchDrawer();}">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+
+            <!-- Wishlist -->
+            <a href="javascript:void(0)" onclick="if(typeof window.openWishlistDrawer==='function'){window.openWishlistDrawer();}else if(typeof window.openWishlist==='function'){window.openWishlist();}" class="header-icon-btn" id="wishlistBtn" aria-label="Wishlist">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span class="header-badge" id="wishlistBadge" style="display:none;">0</span>
+            </a>
+
+            <!-- Cart -->
+            <a href="javascript:void(0)" onclick="if(typeof window.openCartDrawer==='function'){window.openCartDrawer();}else if(typeof window.openCart==='function'){window.openCart();}" class="header-icon-btn" id="cartBtn" aria-label="Shopping cart">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <span class="header-badge" id="cartBadge" style="display:none;">0</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ═══ Mobile In-Header Sticky Search Bar (Wide & Clean Full-Width, Replaces Normal View on Search/Scroll) ═══ -->
+    <div class="mobile-full-search-bar" id="mobileFullSearchBar">
+        <!-- Center: Full-Width Search Input Bar with Gold Search Icon & Clear Button -->
+        <div class="mobile-search-input-wrap">
+            <svg class="mobile-search-lead-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" style="color:var(--dark-gold, #8A681F); flex-shrink:0; margin-right:4px;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+                type="text"
+                class="mobile-search-input-field"
+                id="mobileSearchInput"
+                placeholder="Search sarees, lehengas, kurtis, gowns..."
+                autocomplete="off"
+                aria-label="Search ethnic wear"
+            />
+            <button type="button" class="mobile-search-clear-btn" id="mobileSearchClearBtn" aria-label="Clear search text">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <button type="button" class="dt-btn dt-btn-gold mobile-search-submit-icon-btn" id="mobileSearchSubmitIconBtn" aria-label="Search">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Right: Close Button (Replaces Cart Icon) -->
+        <div class="header-actions" style="gap:4px; flex-shrink:0;">
+            <button type="button" class="dt-btn dt-btn-pale mobile-header-close-btn" id="mobileSearchHeaderCloseBtn" aria-label="Close search">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══ Mobile Search Suggestions & Products Dropdown (Opens on click/type) ═══ -->
+    <div class="mobile-search-suggestions-dropdown" id="mobileSearchSuggestionsDropdown">
+        <!-- Dynamic Scrollable Suggestions & Products Body -->
+        <div class="mobile-sugg-content-body" id="mobileSuggContentBody"></div>
+    </div>
+
+    <!-- ═══ Amazon-Style Attached Sub-Navigation Bar ═══ -->
+            <nav class="header-attached-subnav" id="headerAttachedSubnav" aria-label="Attached categories navigation">
+        <div class="subnav-scroll-track" id="mainCatSliderTrack">
+            <button class="subnav-item main-cat-tab active" data-cat="All" aria-current="page" onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('All');}else{window.location.href='/shop.php?category=all';}">
+                <svg class="subnav-icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                <span>All Categories</span>
+            </button>
+                        <button class="subnav-item main-cat-tab " data-cat="Kanjivaram Silk"  onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('Kanjivaram Silk');}else{window.location.href='/shop.php?category=Kanjivaram+Silk';}">Kanjivaram Silk</button>
+                        <button class="subnav-item main-cat-tab " data-cat="Banarasi Silk"  onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('Banarasi Silk');}else{window.location.href='/shop.php?category=Banarasi+Silk';}">Banarasi Silk</button>
+                        <button class="subnav-item main-cat-tab " data-cat="Paithani"  onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('Paithani');}else{window.location.href='/shop.php?category=Paithani';}">Paithani</button>
+                        <button class="subnav-item main-cat-tab " data-cat="Designer Kurtis"  onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('Designer Kurtis');}else{window.location.href='/shop.php?category=Designer+Kurtis';}">Designer Kurtis</button>
+                        <button class="subnav-item main-cat-tab " data-cat="Organza Sarees"  onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('Organza Sarees');}else{window.location.href='/shop.php?category=Organza+Sarees';}">Organza Sarees</button>
+                        <button class="subnav-item main-cat-tab " data-cat="Georgette &amp; Chiffon"  onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('Georgette &amp; Chiffon');}else{window.location.href='/shop.php?category=Georgette+%26+Chiffon';}">Georgette &amp; Chiffon</button>
+                        <button class="subnav-item main-cat-tab " data-cat="Cotton"  onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('Cotton');}else{window.location.href='/shop.php?category=Cotton';}">Cotton</button>
+                        <button class="subnav-item main-cat-tab " data-cat="Saree"  onclick="if(typeof window.filterByBanner==='function'){window.filterByBanner('Saree');}else{window.location.href='/shop.php?category=Saree';}">Saree</button>
+                        <button class="subnav-item subnav-reels-btn" onclick="if(typeof window.openReelsModal==='function') window.openReelsModal(0);" aria-label="Watch Video Reels">
+                <span class="reel-3d-icon-wrap">
+                    <svg class="reel-3d-svg" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="3" fill="#D4AF37"></circle>
+                        <circle cx="12" cy="6" r="1.5" fill="#D4AF37"></circle>
+                        <circle cx="12" cy="18" r="1.5" fill="#D4AF37"></circle>
+                        <circle cx="6" cy="12" r="1.5" fill="#D4AF37"></circle>
+                        <circle cx="18" cy="12" r="1.5" fill="#D4AF37"></circle>
+                    </svg>
+                    <span class="reel-live-dot"></span>
+                </span>
+                <span>Reels</span>
+            </button>
+        </div>
+    </nav>
+    </header>
+
+<script>
+/* Global Cart & Wishlist Drawer Fallback Helpers (never clobber Shared drawer controllers) */
+if (typeof window.openCartDrawer !== 'function') {
+    window.openCartDrawer = function() {
+        var modal = document.getElementById('cartDrawerModal');
+        if (modal) {
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+}
+if (typeof window.closeCartDrawer !== 'function') {
+    window.closeCartDrawer = function() {
+        var modal = document.getElementById('cartDrawerModal');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+            if (typeof window.dtSyncBodyScrollLock === 'function') window.dtSyncBodyScrollLock();
+            else document.body.style.overflow = '';
+        }
+    };
+}
+if (typeof window.openWishlistDrawer !== 'function') {
+    window.openWishlistDrawer = function() {
+        var modal = document.getElementById('wishlistDrawerModal');
+        if (modal) {
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+}
+if (typeof window.closeWishlistDrawer !== 'function') {
+    window.closeWishlistDrawer = function() {
+        var modal = document.getElementById('wishlistDrawerModal');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+            if (typeof window.dtSyncBodyScrollLock === 'function') window.dtSyncBodyScrollLock();
+            else document.body.style.overflow = '';
+        }
+    };
+}
+
+(function () {
+    /* Sticky scroll shadow */
+    var header = document.getElementById('shopHeader');
+    window.addEventListener('scroll', function () {
+        if (header) header.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+
+    /* Desktop Search Elements */
+    var searchInput   = document.getElementById('searchInput');
+    var searchCat     = document.getElementById('searchCatSelect');
+    var searchClear   = document.getElementById('searchClearBtn');
+    var searchSubmit  = document.getElementById('searchSubmitBtn');
+    var suggDropdown  = document.getElementById('searchSuggestionsDropdown');
+
+    /* Mobile Search Elements */
+    var mobileSearchBtn    = document.getElementById('mobileSearchTriggerBtn');
+    var mobileSearchClose  = document.getElementById('mobileSearchHeaderCloseBtn');
+    var mobileSearchInput  = document.getElementById('mobileSearchInput');
+    var mobileSearchClear  = document.getElementById('mobileSearchClearBtn');
+    var mobileSearchSubmit = document.getElementById('mobileSearchSubmitIconBtn');
+    var mobileSuggDropdown = document.getElementById('mobileSearchSuggestionsDropdown');
+    var mobileSuggContent  = document.getElementById('mobileSuggContentBody');
+
+    var searchDebounceTimer = null;
+    var currentMobileCat = 'All';
+
+    function performSearch(source, isSubmit) {
+        var query = '';
+        if (source === 'mobile' && mobileSearchInput) {
+            query = mobileSearchInput.value.trim();
+            if (searchInput) searchInput.value = query;
+        } else if (searchInput) {
+            query = searchInput.value.trim();
+            if (mobileSearchInput) mobileSearchInput.value = query;
+        }
+
+        var cat = (searchCat ? searchCat.value : 'All');
+
+        /* Toggle Clear buttons */
+        if (searchClear) searchClear.style.display = query.length > 0 ? 'flex' : 'none';
+        if (mobileSearchClear) mobileSearchClear.style.display = query.length > 0 ? 'flex' : 'none';
+
+        if (typeof window.applyMasterFilters === 'function') {
+            if (!window.masterFilterState) {
+                window.masterFilterState = {
+                    category: 'All',
+                    colors: [],
+                    sizes: [],
+                    fabrics: [],
+                    minPrice: 500,
+                    maxPrice: 30000,
+                    minDiscount: 0,
+                    availability: [],
+                    sortBy: 'recommended',
+                    searchQuery: ''
+                };
+            }
+            if (cat && cat !== 'All') {
+                window.masterFilterState.category = cat;
+            } else if (cat === 'All' && isSubmit) {
+                window.masterFilterState.category = 'All';
+            }
+            window.masterFilterState.searchQuery = query;
+            window.applyMasterFilters();
+
+            if (isSubmit) {
+                var grid = document.getElementById('productsGrid') || document.querySelector('.products-section');
+                if (grid) {
+                    var offset = grid.getBoundingClientRect().top + window.pageYOffset - 110;
+                    window.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+                }
+            }
+        } else if (isSubmit) {
+            var targetUrl = '/shop.php?search=' + encodeURIComponent(query);
+            if (cat && cat !== 'All') {
+                targetUrl += '&category=' + encodeURIComponent(cat);
+            }
+            window.location.href = targetUrl;
+        }
+    }
+
+    /* Desktop Events */
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            var q = searchInput.value.trim();
+            performSearch('desktop', false);
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function () {
+                fetchSuggestions(q, (searchCat ? searchCat.value : 'All'), false);
+            }, 120);
+        });
+
+        searchInput.addEventListener('focus', function() {
+            var q = searchInput.value.trim();
+            fetchSuggestions(q, (searchCat ? searchCat.value : 'All'), false);
+        });
+
+        searchInput.addEventListener('click', function() {
+            var q = searchInput.value.trim();
+            fetchSuggestions(q, (searchCat ? searchCat.value : 'All'), false);
+        });
+
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                performSearch('desktop', true);
+                if (suggDropdown) suggDropdown.style.display = 'none';
+                searchInput.blur();
+            } else if (e.key === 'Escape') {
+                if (suggDropdown) suggDropdown.style.display = 'none';
+            }
+        });
+    }
+
+    if (searchCat) {
+        searchCat.addEventListener('change', function() {
+            performSearch('desktop', true);
+            var q = (searchInput ? searchInput.value.trim() : '');
+            fetchSuggestions(q, searchCat.value, false);
+        });
+    }
+
+    if (searchClear) {
+        searchClear.addEventListener('click', function() {
+            if (searchInput) searchInput.value = '';
+            if (mobileSearchInput) mobileSearchInput.value = '';
+            performSearch('desktop', false);
+            fetchSuggestions('', (searchCat ? searchCat.value : 'All'), false);
+            if (searchInput) searchInput.focus();
+        });
+    }
+
+    if (searchSubmit) {
+        searchSubmit.addEventListener('click', function(e) {
+            e.preventDefault();
+            performSearch('desktop', true);
+            if (suggDropdown) suggDropdown.style.display = 'none';
+        });
+    }
+
+    // Close desktop suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#searchAmazonBar') && suggDropdown) {
+            suggDropdown.style.display = 'none';
+        }
+    });
+
+    /* Mobile Search Open / Close Controllers */
+    function openMobileSearchDrawer() {
+        if (header) header.classList.add('mobile-search-active');
+        document.body.classList.add('mobile-search-open');
+
+        var q = (mobileSearchInput ? mobileSearchInput.value.trim() : '');
+        fetchSuggestions(q, currentMobileCat, true);
+        if (mobileSearchInput) {
+            mobileSearchInput.focus();
+        }
+    }
+
+    function closeMobileSearchDrawer(resetText) {
+        document.body.classList.remove('mobile-search-open');
+        var sy = window.scrollY || window.pageYOffset || 0;
+        if (sy < 45 && header) {
+            header.classList.remove('mobile-search-active');
+        }
+        if (resetText) {
+            if (mobileSearchInput) mobileSearchInput.value = '';
+            if (searchInput) searchInput.value = '';
+            performSearch('mobile', false);
+        }
+        if (typeof window.dtSyncBodyScrollLock === 'function') window.dtSyncBodyScrollLock();
+    }
+
+    if (mobileSuggDropdown) {
+        mobileSuggDropdown.addEventListener('click', function(e) {
+            if (e.target.closest('a[href]:not([href^="javascript:"])')) {
+                document.body.classList.remove('mobile-search-open');
+                if (typeof window.dtSyncBodyScrollLock === 'function') window.dtSyncBodyScrollLock();
+            }
+        });
+    }
+
+    if (mobileSearchBtn) {
+        mobileSearchBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openMobileSearchDrawer();
+        });
+    }
+
+    if (mobileSearchClose) {
+        mobileSearchClose.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeMobileSearchDrawer(false);
+        });
+    }
+
+    if (mobileSearchSubmit) {
+        mobileSearchSubmit.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            performSearch('mobile', true);
+            closeMobileSearchDrawer(false);
+            if (mobileSearchInput) mobileSearchInput.blur();
+        });
+    }
+
+    if (mobileSearchInput) {
+        mobileSearchInput.addEventListener('input', function() {
+            var q = mobileSearchInput.value.trim();
+            if (header) header.classList.add('mobile-search-active');
+            document.body.classList.add('mobile-search-open');
+            performSearch('mobile', false);
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function () {
+                fetchSuggestions(q, currentMobileCat, true);
+            }, 100);
+        });
+
+        mobileSearchInput.addEventListener('focus', function() {
+            if (header) header.classList.add('mobile-search-active');
+            document.body.classList.add('mobile-search-open');
+            var q = mobileSearchInput.value.trim();
+            fetchSuggestions(q, currentMobileCat, true);
+        });
+
+        mobileSearchInput.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (header) header.classList.add('mobile-search-active');
+            document.body.classList.add('mobile-search-open');
+            var q = mobileSearchInput.value.trim();
+            fetchSuggestions(q, currentMobileCat, true);
+        });
+
+        mobileSearchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                performSearch('mobile', true);
+                closeMobileSearchDrawer(false);
+                mobileSearchInput.blur();
+            } else if (e.key === 'Escape') {
+                closeMobileSearchDrawer(false);
+            }
+        });
+    }
+
+    // Close suggestions dropdown on outside click
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#mobileFullSearchBar') && 
+            !e.target.closest('#mobileSearchSuggestionsDropdown') && 
+            !e.target.closest('#mobileSearchTriggerBtn') &&
+            !e.target.closest('#searchAmazonBar')) {
+            if (document.body.classList.contains('mobile-search-open')) {
+                closeMobileSearchDrawer(false);
+            }
+        }
+    });
+
+    if (mobileSearchClear) {
+        mobileSearchClear.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (mobileSearchInput) {
+                mobileSearchInput.value = '';
+                mobileSearchInput.focus();
+            }
+            if (searchInput) searchInput.value = '';
+            performSearch('mobile', false);
+            fetchSuggestions('', currentMobileCat, true);
+        });
+    }
+
+
+    /* ══════════════════════════════════════════════════════════
+       PREDICTIVE SEARCH & SUGGESTIONS ENGINE (DESKTOP & MOBILE)
+       ══════════════════════════════════════════════════════════ */
+
+    function highlightKeywords(text, q) {
+        if (!q || !text) return text;
+        var rawQ = q.toLowerCase().trim();
+        rawQ = rawQ.replace(/\b(sarees|lehengas|gowns|kurtis)\b/g, function(m){ return m.slice(0,-1); });
+        var words = rawQ.split(/[\s,\-\+]+/).filter(function(w){ return w.length > 1; });
+        if (words.length === 0) return text;
+
+        var regex = new RegExp('(' + words.map(function(w){
+            return w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }).join('|') + ')', 'gi');
+
+        return text.replace(regex, '<mark class="dt-search-highlight">$1</mark>');
+    }
+
+    function renderSuggestionsHTML(data, query, isMobile) {
+        var html = '';
+        var q = (query || '').trim().toLowerCase();
+
+        // 1. Trending searches
+        if (data.trending && data.trending.length > 0) {
+            html += '<div class="dt-sugg-section-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:5px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg>Trending in Ethnic Wear</div>';
+            html += '<div class="dt-sugg-trending-wrap">';
+            data.trending.forEach(function (tag) {
+                html += '<a href="javascript:void(0)" class="dt-sugg-tag" data-tag="' + tag + '">' +
+                        '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:#8A681F;fill:none;stroke-width:2.2;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' +
+                        tag + '</a>';
+            });
+            html += '</div>';
+        }
+
+        // 2. Matching Categories
+        if (data.categories && data.categories.length > 0) {
+            html += '<div class="dt-sugg-section-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A681F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:5px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>Matching Categories</div>';
+            data.categories.forEach(function (c) {
+                var cName = c.name;
+                var highlightedName = highlightKeywords(cName, q);
+                html += '<a href="/shop.php?category=' + encodeURIComponent(c.name) + '" class="dt-sugg-cat-item">' +
+                        '<div style="display:flex;align-items:center;gap:8px;">' +
+                        '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#8A681F;fill:none;stroke-width:2.2;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+                        '<span>' + highlightedName + '</span>' +
+                        '</div>' +
+                        '<span style="font-size:0.70rem;color:#8A681F;font-weight:700;display:inline-flex;align-items:center;gap:3px;">Explore Category <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>' +
+                        '</a>';
+            });
+        }
+
+        // 3. Matching Live Products
+        if (data.products && data.products.length > 0) {
+            html += '<div class="dt-sugg-section-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:5px;"><path d="M6 3h12l4 6-10 12L2 9z"></path><path d="M2 9h20"></path></svg>' + (q ? 'Matching Ensembles (' + (data.total || data.products.length) + ')' : 'Popular Handpicked Ensembles') + '</div>';
+
+            if (isMobile) {
+                data.products.forEach(function (p) {
+                    var pTitle = p.title || p.name;
+                    var highlightedTitle = highlightKeywords(pTitle, q);
+                    html += '<a href="' + p.url + '" class="mobile-sugg-product-card">' +
+                            '<img src="' + p.image + '" class="mobile-sugg-thumb" alt="' + pTitle + '" loading="lazy" onerror="this.src=\'/assets/images/product1.png\';" />' +
+                            '<div class="mobile-sugg-details">' +
+                            '<div class="mobile-sugg-title">' + highlightedTitle + '</div>' +
+                            '<div style="display:flex;gap:4px;margin-top:3px;align-items:center;">' +
+                            '<span style="font-size:0.68rem;color:#8A681F;font-weight:700;background:#FAF5E8;padding:1px 5px;border-radius:3px;border:0.5px solid #D4AF37;">' + p.category + '</span>' +
+                            (p.fabric ? '<span style="font-size:0.68rem;color:#6B7280;">• ' + p.fabric + '</span>' : '') +
+                            '</div>' +
+                            '<div class="mobile-sugg-pricing">' +
+                            '<span class="mobile-sugg-price">₹' + Number(p.price).toLocaleString('en-IN') + '</span>' +
+                            (p.old_price > p.price ? '<span class="mobile-sugg-mrp">₹' + Number(p.old_price).toLocaleString('en-IN') + '</span>' : '') +
+                            (p.discount_pct > 0 ? '<span class="mobile-sugg-disc">' + p.discount_pct + '% OFF</span>' : '') +
+                            '</div>' +
+                            '</div>' +
+                            '<div style="font-size:0.70rem;color:#8A681F;font-weight:800;padding:4px 8px;background:#FAF5E8;border:1px solid #D4AF37;border-radius:12px;flex-shrink:0;display:inline-flex;align-items:center;gap:3px;">View <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>' +
+                            '</a>';
+                });
+            } else {
+                data.products.forEach(function (p) {
+                    var pTitle = p.title || p.name;
+                    var highlightedTitle = highlightKeywords(pTitle, q);
+                    html += '<a href="' + p.url + '" class="dt-sugg-product-item">' +
+                            '<img src="' + p.image + '" class="dt-sugg-thumb" alt="' + pTitle + '" loading="lazy" onerror="this.src=\'/assets/images/product1.png\';" />' +
+                            '<div class="dt-sugg-info">' +
+                            '<div class="dt-sugg-title">' + highlightedTitle + '</div>' +
+                            '<div class="dt-sugg-meta">' +
+                            '<span class="dt-sugg-badge">' + p.category + '</span>' +
+                            (p.fabric ? '<span>' + p.fabric + '</span>' : '') +
+                            (p.sku ? '<span style="font-family:monospace;font-size:0.68rem;color:#9CA3AF;">' + p.sku + '</span>' : '') +
+                            '</div>' +
+                            '<div class="dt-sugg-pricing">' +
+                            '<span class="dt-sugg-price">₹' + Number(p.price).toLocaleString('en-IN') + '</span>' +
+                            (p.old_price > p.price ? '<span class="dt-sugg-mrp">₹' + Number(p.old_price).toLocaleString('en-IN') + '</span>' : '') +
+                            (p.discount_pct > 0 ? '<span class="dt-sugg-disc">' + p.discount_pct + '% OFF</span>' : '') +
+                            '</div>' +
+                            '</div>' +
+                            '<span class="dt-sugg-view-btn">View Product <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:-1px;margin-left:3px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>' +
+                            '</a>';
+                });
+            }
+
+            // Master Bottom View All Button
+            html += '<a href="javascript:void(0)" class="dt-sugg-footer-btn" onclick="if(typeof performSearch===\'function\'){performSearch(\'' + (isMobile ? 'mobile' : 'desktop') + '\', true);}" style="display:flex;align-items:center;justify-content:center;gap:6px;">' +
+                    '<span>Explore All ' + (data.total || data.products.length) + ' Results ' + (query ? 'for &ldquo;' + query + '&rdquo;' : '') + '</span>' +
+                    '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>' +
+                    '</a>';
+        } else if (q) {
+            html += '<div style="padding:24px 16px;text-align:center;color:#6B7280;font-size:0.82rem;">' +
+                    '<div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px;color:#8A681F;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>' +
+                    '<div style="font-weight:700;color:#111827;margin-bottom:4px;">No matching ethnic wear found for &ldquo;' + query + '&rdquo;</div>' +
+                    '<div>Try searching for <strong>Silk Sarees</strong>, <strong>Bridal Lehengas</strong>, or <strong>Kurtis</strong></div>' +
+                    '</div>';
+        }
+
+        return html;
+    }
+
+    function fetchSuggestions(query, cat, isMobile) {
+        var targetContainer = isMobile ? mobileSuggContent : suggDropdown;
+        if (!targetContainer) return;
+
+        var url = '/api/search.php?q=' + encodeURIComponent(query || '') + '&cat=' + encodeURIComponent(cat || 'All');
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                var data = (res.data || res.results || {});
+                var html = renderSuggestionsHTML(data, query, isMobile);
+                targetContainer.innerHTML = html;
+                if (!isMobile && suggDropdown) {
+                    suggDropdown.style.display = 'block';
+                }
+
+                // Bind click event on trending tags
+                targetContainer.querySelectorAll('.dt-sugg-tag').forEach(function (tagEl) {
+                    tagEl.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        var tagVal = this.dataset.tag;
+                        if (isMobile && mobileSearchInput) {
+                            mobileSearchInput.value = tagVal;
+                            if (searchInput) searchInput.value = tagVal;
+                            performSearch('mobile', false);
+                            fetchSuggestions(tagVal, currentMobileCat, true);
+                        } else if (searchInput) {
+                            searchInput.value = tagVal;
+                            if (mobileSearchInput) mobileSearchInput.value = tagVal;
+                            performSearch('desktop', false);
+                            fetchSuggestions(tagVal, (searchCat ? searchCat.value : 'All'), false);
+                        }
+                    });
+                });
+            })
+            .catch(function (err) {
+                console.error('Search suggestions error:', err);
+            });
+    }
+
+    /* Sync Desktop Account Button with Logged In User State */
+    function syncHeaderAccountState() {
+        var userRaw = localStorage.getItem('dtbrands_user');
+        var label = document.getElementById('headerAccountLabel');
+        var dropLogin = document.getElementById('acDropLogin');
+        var dropRegister = document.getElementById('acDropRegister');
+        var dropForgot = document.getElementById('acDropForgot');
+        var dropWholesaler = document.getElementById('acDropWholesaler');
+        var dropDivider = document.getElementById('acDropDivider');
+        var dropLogout = document.getElementById('acDropLogout');
+
+        if (userRaw && label) {
+            var user = JSON.parse(userRaw);
+            var firstName = (user.name || 'Member').split(' ')[0];
+            var role = (user.role || '').toLowerCase();
+            label.textContent = firstName;
+            if (dropWholesaler) {
+                if (role === 'wholesaler') {
+                    dropWholesaler.style.display = 'flex';
+                    dropWholesaler.href = '/wholesale.php';
+                    var span = dropWholesaler.querySelector('span');
+                    if (span) span.textContent = 'Wholesaler B2B Hub';
+                } else if (role === 'retailer') {
+                    dropWholesaler.style.display = 'flex';
+                    dropWholesaler.href = '/retailer.php';
+                    var span = dropWholesaler.querySelector('span');
+                    if (span) span.textContent = 'Retailer B2B Hub';
+                } else if (role === 'reseller') {
+                    dropWholesaler.style.display = 'flex';
+                    dropWholesaler.href = '/reseller.php';
+                    var span = dropWholesaler.querySelector('span');
+                    if (span) span.textContent = 'Reseller B2B Hub';
+                } else {
+                    dropWholesaler.style.display = 'none';
+                }
+            }
+            if (dropLogin) dropLogin.style.display = 'none';
+            if (dropRegister) dropRegister.style.display = 'none';
+            if (dropForgot) dropForgot.style.display = 'none';
+            if (dropDivider) dropDivider.style.display = 'block';
+            if (dropLogout) dropLogout.style.display = 'flex';
+        } else if (label) {
+            label.textContent = 'Account';
+            if (dropWholesaler) dropWholesaler.style.display = 'none';
+            if (dropLogin) dropLogin.style.display = 'flex';
+            if (dropRegister) dropRegister.style.display = 'flex';
+            if (dropForgot) dropForgot.style.display = 'flex';
+            if (dropDivider) dropDivider.style.display = 'none';
+            if (dropLogout) dropLogout.style.display = 'none';
+        }
+    }
+
+
+
+    /* Smooth Zero-Jitter Scroll Engine */
+    var isShopHeaderScrolled = false;
+
+    function handleShopHeaderScroll() {
+        var sy = window.scrollY || window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || (document.body ? document.body.scrollTop : 0) || 0;
+        if (!header) return;
+        var isMobile = (window.innerWidth <= 1024 || window.matchMedia('(max-width: 1024px)').matches || (mobileSearchBtn && window.getComputedStyle(mobileSearchBtn).display !== 'none'));
+
+        if (sy > 10) {
+            if (!isShopHeaderScrolled) {
+                isShopHeaderScrolled = true;
+                header.classList.add('scrolled');
+            }
+            if (isMobile && !header.classList.contains('mobile-search-active')) {
+                header.classList.add('mobile-search-active');
+            }
+        } else {
+            if (isShopHeaderScrolled) {
+                isShopHeaderScrolled = false;
+                header.classList.remove('scrolled');
+            }
+            if (isMobile && !document.body.classList.contains('mobile-search-open') && (!mobileSearchInput || !mobileSearchInput.value.trim())) {
+                header.classList.remove('mobile-search-active');
+            }
+        }
+    }
+
+    window.addEventListener('scroll', handleShopHeaderScroll, { passive: true });
+    document.addEventListener('scroll', handleShopHeaderScroll, { passive: true });
+    window.addEventListener('touchmove', handleShopHeaderScroll, { passive: true });
+    window.addEventListener('resize', handleShopHeaderScroll, { passive: true });
+    handleShopHeaderScroll();
+
+    syncHeaderAccountState();
+    window.addEventListener('storage', syncHeaderAccountState);
+})();
+</script>
+
+<main class="dt-policy-wrapper">
+    <!-- ════════════ MASTER LUXURY HERO BANNER ════════════ -->
+    <section class="dt-policy-hero">
+        <div class="dt-policy-hero-inner">
+            <div class="dt-policy-breadcrumb">
+                <a href="/">Home</a>
+                <span class="sep"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                <span>Legal &amp; Compliance</span>
+                <span class="sep"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                <span style="color:#FAF5E8;">Privacy Policy</span>
+            </div>
+
+            <div class="dt-policy-badge">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>Enterprise Data Safeguards</span>
+            </div>
+
+            <h1 class="dt-policy-title">Privacy <span class="gold">Policy</span></h1>
+            <p class="dt-policy-subtitle">Transparent data governance, encrypted trade communications, and confidentiality commitments for our nationwide retail and wholesale partners.</p>
+
+            <div class="dt-policy-meta-strip">
+                <div class="dt-policy-meta-item">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Effective: <strong>August 2026</strong></span>
+                </div>
+                <div class="dt-policy-meta-item">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span>Verified: <strong>DT Brand's Legal Compliance</strong></span>
+                </div>
+                <div class="dt-policy-meta-item">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span>Surat, Gujarat, India</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════ MAIN POLICY LAYOUT ════════════ -->
+    <div class="dt-policy-main-wrap">
+        <div class="dt-policy-layout">
+            
+            <!-- Sidebar Quick Jump -->
+            <aside class="dt-policy-sidebar">
+                <div class="dt-sidebar-heading">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    <span>Table of Contents</span>
+                </div>
+                <ul class="dt-sidebar-nav">
+                    <li><a href="#section-1" class="active"><span>1. Information We Collect</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></a></li>
+                    <li><a href="#section-2"><span>2. Use of Business Data</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></a></li>
+                    <li><a href="#section-3"><span>3. B2B Trade Confidentiality</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></a></li>
+                    <li><a href="#section-4"><span>4. 256-Bit SSL Encryption</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></a></li>
+                    <li><a href="#section-5"><span>5. WhatsApp &amp; SMS Alerts</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></a></li>
+                    <li><a href="#section-6"><span>6. Grievance &amp; Contact</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></a></li>
+                </ul>
+
+                <div class="dt-sidebar-concierge">
+                    <h4>Have Privacy Inquiries?</h4>
+                    <p>Our dedicated legal &amp; compliance desk in Surat is available to assist you.</p>
+                    <a href="https://wa.me/917046363528?text=Hello+DT+Brand+Compliance+Desk%2C+I+have+a+privacy+query." target="_blank" rel="noopener noreferrer" class="dt-btn-emerald" style="width:100%; box-sizing:border-box; font-size:0.75rem; padding:8px 12px; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        <span>WhatsApp Legal Desk</span>
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Main Content Cards -->
+            <div class="dt-policy-content">
+                
+                <!-- Card 1 -->
+                <article class="dt-policy-card" id="section-1">
+                    <div class="dt-card-head">
+                        <div class="dt-card-num-badge">01</div>
+                        <h2 class="dt-card-title">Information We Collect</h2>
+                    </div>
+                    <p>When you interact with <strong>DT Brand's &amp; Jai Hanuman Tex</strong> via our website, wholesale portal, reseller hub, or WhatsApp Concierge, we collect specific information necessary to provide seamless manufacturing and delivery services:</p>
+                    <ul>
+                        <li><strong>Personal &amp; Business Profile:</strong> Full name, firm/company trade name, contact phone number, official email, billing and dispatch addresses.</li>
+                        <li><strong>Commercial Tax Identifiers:</strong> Goods &amp; Services Tax (GSTIN) number, State Trade License, or Shop &amp; Establishment registration (for verified B2B wholesaler accounts).</li>
+                        <li><strong>Order &amp; Logistics Data:</strong> Catalogue SKU selections, bale quantity allocations, transport booking preferences, and transaction confirmation identifiers.</li>
+                        <li><strong>Communications Log:</strong> Direct customer care interactions and WhatsApp lot inquiries for order verification and dispute resolution.</li>
+                    </ul>
+
+                    <div class="dt-policy-callout">
+                        <div class="dt-callout-icon">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div class="dt-callout-text">
+                            <strong>Zero Financial Storage:</strong> We never store or retain full credit/debit card numbers or bank net banking credentials on our servers. All financial transactions are processed through RBI-authorized payment gateways.
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Card 2 -->
+                <article class="dt-policy-card" id="section-2">
+                    <div class="dt-card-head">
+                        <div class="dt-card-num-badge">02</div>
+                        <h2 class="dt-card-title">How We Use Your Business Data</h2>
+                    </div>
+                    <p>The information collected is used strictly for legitimate commercial operations and verified factory fulfillment:</p>
+                    <ul>
+                        <li>Generating official GST tax invoices, e-way bills, and transport delivery challans.</li>
+                        <li>Coordinating surface transport logistics (V-Trans, TCI, SafeExpress) and express air couriers.</li>
+                        <li>Managing B2B partner ledger accounts, volume slab rate approvals, and trade wallet credits.</li>
+                        <li>Providing live dispatch tracking, Lorry Receipt (LR) updates, and unboxing customer support.</li>
+                    </ul>
+                </article>
+
+                <!-- Card 3 -->
+                <article class="dt-policy-card" id="section-3">
+                    <div class="dt-card-head">
+                        <div class="dt-card-num-badge">03</div>
+                        <h2 class="dt-card-title">B2B Trade &amp; Reseller Confidentiality</h2>
+                    </div>
+                    <p>We respect the confidentiality of our boutique retailers, reselling entrepreneurs, and regional wholesalers:</p>
+                    <p><strong>Zero Third-Party Selling:</strong> Under no circumstances do we sell, rent, lease, or monetize partner contact lists or customer databases to external marketing aggregators.</p>
+                    <p><strong>White-Label Dispatch Safeguards:</strong> For authorized reseller drop-shipments, parcels are dispatched under your business name without manufacturer branding upon prior confirmation.</p>
+                </article>
+
+                <!-- Card 4 -->
+                <article class="dt-policy-card" id="section-4">
+                    <div class="dt-card-head">
+                        <div class="dt-card-num-badge">04</div>
+                        <h2 class="dt-card-title">256-Bit SSL Encryption &amp; Server Security</h2>
+                    </div>
+                    <p>We implement enterprise-grade security controls to safeguard every data transmission:</p>
+                    <ul>
+                        <li><strong>End-to-End Transport Layer Security (TLS 1.3):</strong> All browser interactions, login sessions, and checkout flows are secured with 256-bit encryption.</li>
+                        <li><strong>Hardened Infrastructure:</strong> Strict role-based database authentication, daily automated backups, and parameterized SQL prevention algorithms.</li>
+                        <li><strong>Restricted Internal Access:</strong> Only authorized atelier personnel have access to partner dispatch and invoicing records.</li>
+                    </ul>
+                </article>
+
+                <!-- Card 5 -->
+                <article class="dt-policy-card" id="section-5">
+                    <div class="dt-card-head">
+                        <div class="dt-card-num-badge">05</div>
+                        <h2 class="dt-card-title">WhatsApp &amp; Transactional Notifications</h2>
+                    </div>
+                    <p>By registering on our portal or placing an order, you agree to receive essential transactional communications:</p>
+                    <ul>
+                        <li>Order confirmations, dispatch notifications, and LR copies sent directly via WhatsApp or SMS.</li>
+                        <li>Seasonal catalog release announcements and new volume discounts (partners can opt-out at any time by messaging STOP).</li>
+                    </ul>
+                </article>
+
+                <!-- Card 6 -->
+                <article class="dt-policy-card" id="section-6">
+                    <div class="dt-card-head">
+                        <div class="dt-card-num-badge">06</div>
+                        <h2 class="dt-card-title">Grievance Redressal &amp; Contact Atelier</h2>
+                    </div>
+                    <p>If you have any questions, wish to review your registered business details, or seek data removal, please connect with our Grievance Officer:</p>
+                    <div class="dt-card-btn-row">
+                        <a href="tel:917046363528" class="dt-btn-pale">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>+91 70463 63528</span>
+                        </a>
+                        <a href="mailto:care@yourdomain.com" class="dt-btn-pale">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            <span>care@yourdomain.com</span>
+                        </a>
+                        <a href="https://wa.me/917046363528?text=Hello+DT+Brand+Team%2C+I+have+a+privacy+question." target="_blank" rel="noopener noreferrer" class="dt-btn-emerald">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <span>Instant WhatsApp Support</span>
+                        </a>
+                    </div>
+                </article>
+
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<link rel="stylesheet" href="/assets/css/footer.css?v=1795716299">
+<footer class="dt-master-footer" id="dtMasterFooter">
+    <!-- ════ TOP LUXURY TRUST USP RIBBON (1-Line Pure CSS Seamless Marquee) ════ -->
+    <div class="dt-footer-perks-ribbon">
+        <div class="dt-footer-perks-marquee">
+            <!-- Group 1 -->
+            <div class="dt-footer-perks-group">
+                <div class="dt-footer-perk-card">
+                    <div class="dt-perk-icon-wrap">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8"></path>
+                        </svg>
+                    </div>
+                    <div class="dt-perk-text">
+                        <h4 class="dt-perk-title">Direct Surat Loom Pricing</h4>
+                        <p class="dt-perk-desc">Direct mill manufacturing rates</p>
+                    </div>
+                </div>
+
+                <div class="dt-footer-perk-card">
+                    <div class="dt-perk-icon-wrap">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                    <div class="dt-perk-text">
+                        <h4 class="dt-perk-title">100% Certified Handlooms</h4>
+                        <p class="dt-perk-desc">Tested gold zari &amp; pure fabrics</p>
+                    </div>
+                </div>
+
+                <div class="dt-footer-perk-card">
+                    <div class="dt-perk-icon-wrap">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="3" width="15" height="13"></rect>
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                        </svg>
+                    </div>
+                    <div class="dt-perk-text">
+                        <h4 class="dt-perk-title">Pan-India Insured Dispatch</h4>
+                        <p class="dt-perk-desc">Express courier to all pin codes</p>
+                    </div>
+                </div>
+
+                <div class="dt-footer-perk-card">
+                    <div class="dt-perk-icon-wrap">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </svg>
+                    </div>
+                    <div class="dt-perk-text">
+                        <h4 class="dt-perk-title">VIP WhatsApp Concierge</h4>
+                        <p class="dt-perk-desc">Live styling advice &amp; custom quotes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group 2 (Clone for infinite seamless 60fps marquee loop) -->
+            <div class="dt-footer-perks-group" aria-hidden="true">
+                <div class="dt-footer-perk-card">
+                    <div class="dt-perk-icon-wrap">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8"></path>
+                        </svg>
+                    </div>
+                    <div class="dt-perk-text">
+                        <h4 class="dt-perk-title">Direct Surat Loom Pricing</h4>
+                        <p class="dt-perk-desc">Direct mill manufacturing rates</p>
+                    </div>
+                </div>
+
+                <div class="dt-footer-perk-card">
+                    <div class="dt-perk-icon-wrap">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                    <div class="dt-perk-text">
+                        <h4 class="dt-perk-title">100% Certified Handlooms</h4>
+                        <p class="dt-perk-desc">Tested gold zari &amp; pure fabrics</p>
+                    </div>
+                </div>
+
+                <div class="dt-footer-perk-card">
+                    <div class="dt-perk-icon-wrap">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="3" width="15" height="13"></rect>
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                        </svg>
+                    </div>
+                    <div class="dt-perk-text">
+                        <h4 class="dt-perk-title">Pan-India Insured Dispatch</h4>
+                        <p class="dt-perk-desc">Express courier to all pin codes</p>
+                    </div>
+                </div>
+
+                <div class="dt-footer-perk-card">
+                    <div class="dt-perk-icon-wrap">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </svg>
+                    </div>
+                    <div class="dt-perk-text">
+                        <h4 class="dt-perk-title">VIP WhatsApp Concierge</h4>
+                        <p class="dt-perk-desc">Live styling advice &amp; custom quotes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════ MAIN 4-COLUMN BRAND GRID ════ -->
+    <div class="dt-footer-container">
+        <div class="dt-footer-grid">
+            <!-- Col 1: Brand Heritage & Atelier -->
+            <div class="dt-footer-col brand-col">
+                <div class="dt-footer-brand-wrap">
+                    <a href="/" class="dt-footer-logo-link">
+                        <span class="dt-footer-logo-main">DT BRAND'S</span>
+                        <span class="dt-footer-logo-sub">JAI HANUMAN TEX &bull; SURAT</span>
+                    </a>
+                    <p class="dt-footer-desc">
+                        Surat's foremost ethnic manufacturing atelier. Weaving timeless royal Banarasi, Kanjivaram, and Paithani handlooms alongside contemporary designer kurti sets and bridal ensembles with authentic tested zari.
+                    </p>
+                </div>
+                
+                <div class="dt-footer-trust-badges">
+                    <span class="dt-trust-tag">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"></path></svg>
+                        <span>Silk Mark Certified</span>
+                    </span>
+                    <span class="dt-trust-tag">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4"></path></svg>
+                        <span>Surat Mill Direct</span>
+                    </span>
+                </div>
+
+                <!-- Social Follow Icons -->
+                <div class="dt-footer-socials">
+                    <a href="https://wa.me/917046363528" target="_blank" rel="noopener noreferrer" class="dt-social-link wa" aria-label="Official WhatsApp">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.95.56 3.77 1.53 5.31L2 22l4.82-1.5C8.32 21.46 10.1 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.42 14.19c-.23.64-1.32 1.25-1.84 1.32-.48.06-1.1.1-3.23-.78-2.56-1.06-4.22-3.66-4.35-3.83-.13-.17-1.04-1.38-1.04-2.63 0-1.25.66-1.86.89-2.12.23-.26.51-.32.68-.32.17 0 .34 0 .49.01.16.01.37-.06.58.44.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.14.29-.27.45-.13.16-.28.36-.4.48-.13.13-.26.28-.11.54.15.26.67 1.11 1.44 1.79.99.88 1.82 1.16 2.08 1.29.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.58-.13.24.09 1.52.72 1.78.85.26.13.43.19.49.3.06.11.06.66-.17 1.3z"/></svg>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="dt-social-link ig" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </a>
+                    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="dt-social-link fb" aria-label="Facebook">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="dt-social-link yt" aria-label="YouTube">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="#181512"></polygon></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Col 2: Royal Collections (Real Category & Sub-Category Mapping) -->
+                        <div class="dt-footer-col dt-footer-accordion">
+                <button type="button" class="dt-footer-acc-head" onclick="toggleDtFooterAcc(this)" aria-expanded="false">
+                    <span class="dt-footer-title-text">
+                        <span class="dt-acc-title-main">Royal Collections</span>
+                        <span class="dt-footer-title-line"></span>
+                    </span>
+                    <svg class="dt-acc-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="dt-footer-acc-body">
+                    <ul class="dt-footer-links">
+                                                <li>
+                            <a href="/shop.php?category=Kanjivaram+Silk">
+                                <span class="dt-sub-label">
+                                    <span class="dt-sub-dot"></span>
+                                    <span class="dt-cat-name">Kanjivaram Silk</span>
+                                                                        <span class="dt-subcat-hint">• Authentic handwoven Kanjivaram silk sarees with tested gold zari.</span>
+                                                                    </span>
+                                                                <span class="dt-cat-badge">1</span>
+                                                            </a>
+                        </li>
+                                                <li>
+                            <a href="/shop.php?category=Banarasi+Silk">
+                                <span class="dt-sub-label">
+                                    <span class="dt-sub-dot"></span>
+                                    <span class="dt-cat-name">Banarasi Silk</span>
+                                                                        <span class="dt-subcat-hint">• Varanasi handloom kadwa meenakari pure katan silk sarees.</span>
+                                                                    </span>
+                                                                <span class="dt-cat-badge">1</span>
+                                                            </a>
+                        </li>
+                                                <li>
+                            <a href="/shop.php?category=Paithani">
+                                <span class="dt-sub-label">
+                                    <span class="dt-sub-dot"></span>
+                                    <span class="dt-cat-name">Paithani</span>
+                                                                        <span class="dt-subcat-hint">• Yeola handloom pure silk sarees with traditional peacock pallu.</span>
+                                                                    </span>
+                                                                <span class="dt-cat-badge">1</span>
+                                                            </a>
+                        </li>
+                                                <li>
+                            <a href="/shop.php?category=Designer+Kurtis">
+                                <span class="dt-sub-label">
+                                    <span class="dt-sub-dot"></span>
+                                    <span class="dt-cat-name">Designer Kurtis</span>
+                                                                        <span class="dt-subcat-hint">• Chanderi silk and georgette Anarkali kurti sets with embroidery.</span>
+                                                                    </span>
+                                                                <span class="dt-cat-badge">1</span>
+                                                            </a>
+                        </li>
+                                                <li>
+                            <a href="/shop.php?category=Organza+Sarees">
+                                <span class="dt-sub-label">
+                                    <span class="dt-sub-dot"></span>
+                                    <span class="dt-cat-name">Organza Sarees</span>
+                                                                        <span class="dt-subcat-hint">• Lightweight pure glass organza sarees with scalloped borders.</span>
+                                                                    </span>
+                                                                <span class="dt-cat-badge">1</span>
+                                                            </a>
+                        </li>
+                                                <li>
+                            <a href="/shop.php?category=Georgette+%26+Chiffon">
+                                <span class="dt-sub-label">
+                                    <span class="dt-sub-dot"></span>
+                                    <span class="dt-cat-name">Georgette &amp; Chiffon</span>
+                                                                        <span class="dt-subcat-hint">• Pure 60-gram georgette sarees with Bandhej dots and gota patti.</span>
+                                                                    </span>
+                                                                <span class="dt-cat-badge">1</span>
+                                                            </a>
+                        </li>
+                                                <li>
+                            <a href="/shop.php?category=Cotton">
+                                <span class="dt-sub-label">
+                                    <span class="dt-sub-dot"></span>
+                                    <span class="dt-cat-name">Cotton</span>
+                                                                        <span class="dt-subcat-hint">• Airy Bagru hand block printed pure mulmul cotton sarees.</span>
+                                                                    </span>
+                                                                <span class="dt-cat-badge">1</span>
+                                                            </a>
+                        </li>
+                                                <li>
+                            <a href="/shop.php" class="dt-view-all-link">
+                                <span class="dt-sub-label"><span class="dt-sub-dot gold"></span>Browse All 2026 Collections</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Col 3: Business, Reseller & Wholesale (Mobile Accordion) -->
+            <div class="dt-footer-col dt-footer-accordion">
+                <button type="button" class="dt-footer-acc-head" onclick="toggleDtFooterAcc(this)" aria-expanded="false">
+                    <span class="dt-footer-title-text">
+                        <span class="dt-acc-title-main">B2B &amp; Partner Desk</span>
+                        <span class="dt-footer-title-line"></span>
+                    </span>
+                    <svg class="dt-acc-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="dt-footer-acc-body">
+                    <ul class="dt-footer-links">
+                        <li>
+                            <a href="/wholesale.php">
+                                <span class="dt-sub-label"><span class="dt-sub-dot"></span>Wholesale B2B Catalog</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/reseller.php">
+                                <span class="dt-sub-label"><span class="dt-sub-dot"></span>Zero-Investment Reseller Hub</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/retailer.php">
+                                <span class="dt-sub-label"><span class="dt-sub-dot"></span>Boutique &amp; Retailer Portal</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/wholesale.php#bale-pricing">
+                                <span class="dt-sub-label"><span class="dt-sub-dot"></span>Bale Lot Volume Slab Rates</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/account.php">
+                                <span class="dt-sub-label"><span class="dt-sub-dot"></span>Partner Account Login</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/track.php">
+                                <span class="dt-sub-label"><span class="dt-sub-dot"></span>Live Order &amp; Dispatch Tracking</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/shipping.php">
+                                <span class="dt-sub-label"><span class="dt-sub-dot"></span>GST Billing &amp; Transport Logistics</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://wa.me/917046363528?text=Hello%20DT%20Brand%20Team,%20I%20want%20to%20register%20as%20a%20wholesale%20buyer." target="_blank" rel="noopener noreferrer" class="dt-view-all-link">
+                                <span class="dt-sub-label"><span class="dt-sub-dot gold"></span>Request Mill Dealership</span>
+                                <svg class="dt-sub-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Col 4: Atelier Concierge & Direct Contact (Mobile Accordion) -->
+            <div class="dt-footer-col contact-col dt-footer-accordion">
+                <button type="button" class="dt-footer-acc-head" onclick="toggleDtFooterAcc(this)" aria-expanded="false">
+                    <span class="dt-footer-title-text">
+                        <span class="dt-acc-title-main">Atelier Concierge</span>
+                        <span class="dt-footer-title-line"></span>
+                    </span>
+                    <svg class="dt-acc-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="dt-footer-acc-body">
+                    <div class="dt-footer-contact-list">
+                        <a href="https://maps.google.com/?q=Surat+Textile+Market+Ring+Road+Surat+Gujarat" target="_blank" rel="noopener noreferrer" class="dt-contact-card">
+                            <div class="dt-contact-icon-box">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D4AF37" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            </div>
+                            <div class="dt-contact-text">
+                                <strong class="dt-contact-label">Manufacturing Atelier</strong>
+                                <span class="dt-contact-val">Ring Road, Surat Textile Market, Surat, Gujarat 395002</span>
+                            </div>
+                            <svg class="dt-contact-arrow" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </a>
+
+                        <a href="tel:+917046363528" class="dt-contact-card">
+                            <div class="dt-contact-icon-box">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D4AF37" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            </div>
+                            <div class="dt-contact-text">
+                                <strong class="dt-contact-label">Helpline Desk</strong>
+                                <span class="dt-contact-val highlight">+91 70463 63528</span>
+                            </div>
+                            <span class="dt-call-badge">Call Now</span>
+                        </a>
+
+                        <a href="mailto:care@yourdomain.com" class="dt-contact-card">
+                            <div class="dt-contact-icon-box">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D4AF37" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            </div>
+                            <div class="dt-contact-text">
+                                <strong class="dt-contact-label">Official Email</strong>
+                                <span class="dt-contact-val">care@yourdomain.com</span>
+                            </div>
+                            <svg class="dt-contact-arrow" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </a>
+                    </div>
+
+                    <a href="https://wa.me/917046363528?text=Hello+DT+Brand+Stylist%2C+I+need+assistance+with+catalog+products." target="_blank" rel="noopener noreferrer" class="dt-btn dt-btn-emerald dt-footer-wa-btn">
+                        <div class="dt-wa-btn-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="#FFFFFF"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.95.56 3.77 1.53 5.31L2 22l4.82-1.5C8.32 21.46 10.1 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.42 14.19c-.23.64-1.32 1.25-1.84 1.32-.48.06-1.1.1-3.23-.78-2.56-1.06-4.22-3.66-4.35-3.83-.13-.17-1.04-1.38-1.04-2.63 0-1.25.66-1.86.89-2.12.23-.26.51-.32.68-.32.17 0 .34 0 .49.01.16.01.37-.06.58.44.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.14.29-.27.45-.13.16-.28.36-.4.48-.13.13-.26.28-.11.54.15.26.67 1.11 1.44 1.79.99.88 1.82 1.16 2.08 1.29.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.58-.13.24.09 1.52.72 1.78.85.26.13.43.19.49.3.06.11.06.66-.17 1.3z"/></svg>
+                        </div>
+                        <span class="dt-wa-btn-label">Chat with Master Stylist</span>
+                        <span class="dt-wa-live-pill"><span class="dt-wa-live-dot"></span> LIVE</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════ BOTTOM COPYRIGHT & PAYMENT STRIP ════ -->
+        <div class="dt-footer-bottom-strip">
+            <div class="dt-footer-bottom-flex">
+                <p class="dt-footer-copy">
+                    &copy; 2026 <strong>DT Brand's &bull; Jai Hanuman Tex</strong>. All rights reserved. Direct Surat Handloom Manufacturer.
+                </p>
+
+                <div class="dt-footer-bottom-links">
+                    <a href="/privacy.php">Privacy Policy</a>
+                    <span class="dt-sep">&bull;</span>
+                    <a href="/terms.php">Terms of Wholesale</a>
+                    <span class="dt-sep">&bull;</span>
+                    <a href="/track.php">Track Order</a>
+                    <span class="dt-sep">&bull;</span>
+                    <a href="/shipping.php">Shipping &amp; Logistics</a>
+                    <span class="dt-sep">&bull;</span>
+                    <a href="/contact.php">Contact Atelier</a>
+                </div>
+
+                <div class="dt-footer-pay-badges">
+                    <span class="dt-pay-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:3px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>256-bit SSL</span>
+                    <span class="dt-pay-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:3px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>UPI</span>
+                    <span class="dt-pay-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:3px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Cards</span>
+                    <span class="dt-pay-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:3px;"><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="2" x2="2" y2="7"></line><line x1="12" y1="2" x2="22" y2="7"></line><line x1="2" y1="7" x2="22" y2="7"></line><line x1="6" y1="10" x2="6" y2="17"></line><line x1="10" y1="10" x2="10" y2="17"></line><line x1="14" y1="10" x2="14" y2="17"></line><line x1="18" y1="10" x2="18" y2="17"></line></svg>NetBanking</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════ MOBILE ACCORDION INTERACTION ENGINE ════ -->
+    <script>
+    function toggleDtFooterAcc(btn) {
+        if (window.innerWidth > 1024) return;
+        var col = btn.closest('.dt-footer-accordion');
+        if (!col) return;
+        var isOpen = col.classList.contains('is-open');
+        
+        // Optional: close other accordions for sleek single-open behavior on mobile
+        var allAccs = document.querySelectorAll('.dt-footer-accordion');
+        allAccs.forEach(function(item) {
+            if (item !== col) {
+                item.classList.remove('is-open');
+                var h = item.querySelector('.dt-footer-acc-head');
+                if (h) h.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        col.classList.toggle('is-open', !isOpen);
+        btn.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+    }
+    </script>
+</footer>
+
+</body>
+</html>

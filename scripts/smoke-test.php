@@ -4,7 +4,7 @@
  * DT Brand's & Jai Hanuman Tex — Modern Clean URLs
  */
 
-$baseUrl = getenv('BASE_URL') ?: 'https://jaihanumantex.in';
+$baseUrl = getenv('BASE_URL') ?: 'https://yourdomain.com';
 
 // Discover active sample product ID
 $sampleProductId = 13;

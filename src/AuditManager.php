@@ -376,7 +376,7 @@ class AuditManager
                 'entity_type' => self::CATEGORY_SETTING,
                 'entity_id' => 'store_general',
                 'old_values' => ['store_name' => 'DT Brand', 'support_email' => 'help@dtbrand.com'],
-                'new_values' => ['store_name' => "DT Brand's & Jai Hanuman Tex", 'support_email' => 'orders@jaihanumantex.in'],
+                'new_values' => ['store_name' => "DT Brand's & Jai Hanuman Tex", 'support_email' => 'orders@yourdomain.com'],
                 'status' => 'success',
                 'details' => 'Updated store primary branding title and official customer contact mailbox',
                 'ip_address' => '147.93.99.134',

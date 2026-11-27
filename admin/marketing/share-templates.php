@@ -77,8 +77,8 @@ $sampleVars = [
     'mrp' => '4,999',
     'reseller_price' => '2,450',
     'reseller_margin' => '2,549',
-    'shop_url' => 'https://jaihanumantex.in/shop/pure-paithani-silk',
-    'order_link' => 'https://jaihanumantex.in/checkout?direct=1',
+    'shop_url' => 'https://yourdomain.com/shop/pure-paithani-silk',
+    'order_link' => 'https://yourdomain.com/checkout?direct=1',
     'phone' => '+91 70463 63528'
 ];
 ?>

@@ -2,14 +2,14 @@
 
 ## 1. Staging Environment (`staging`)
 
-- **Host:** `staging.jaihanumantex.in`
+- **Host:** `staging.yourdomain.com`
 - **Database:** `u602484543_arniya_staging`
 - **Purpose:** Pre-production regression testing, UX verification, automated E2E test runs.
 - **Protection Rules:** Auto-deployed from `main` after CI passes.
 
 ## 2. Production Environment (`production`)
 
-- **Host:** `jaihanumantex.in` (147.93.99.134)
+- **Host:** `yourdomain.com` (147.93.99.134)
 - **Database:** `u602484543_arniya`
 - **Purpose:** Live customer, wholesale partner, and reseller traffic.
 - **Protection Rules:**

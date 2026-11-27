@@ -7,18 +7,18 @@
  * consistent CORS policy and security headers.
  */
 
-$allowedOrigins = [
-    'https://harmitethnic.com',
-    'https://www.harmitethnic.com',
-    'https://jaihanumantex.in',
-    'https://www.jaihanumantex.in',
+$appUrlOrigin = rtrim((string)(getenv('APP_URL') ?: ''), '/');
+$allowedOrigins = array_values(array_unique(array_filter([
+    $appUrlOrigin,
+    'https://yourdomain.com',
+    'https://www.yourdomain.com',
     'http://localhost',
     'http://localhost:3000',
     'http://localhost:8000',
     'http://localhost:8080',
     'http://127.0.0.1',
     'http://127.0.0.1:8080'
-];
+])));
 
 function dt_send_header(string $header): void
 {
@@ -33,14 +33,29 @@ function cors_get_sent_headers(): array
     return $GLOBALS['__dt_sent_headers'] ?? [];
 }
 
+function dt_is_allowed_origin(string $origin, array $origins): bool
+{
+    if ($origin === '') {
+        return false;
+    }
+    if (in_array($origin, $origins, true)) {
+        return true;
+    }
+    $originHost = strtolower((string)(parse_url($origin, PHP_URL_HOST) ?: ''));
+    $originScheme = strtolower((string)(parse_url($origin, PHP_URL_SCHEME) ?: ''));
+    $currentHost = strtolower(explode(':', (string)($_SERVER['HTTP_HOST'] ?? ''))[0]);
+    if ($originHost !== '' && $currentHost !== '' && $originHost === $currentHost) {
+        return true;
+    }
+    return $originScheme === 'https' && str_ends_with($originHost, '.workers.dev');
+}
+
 function cors_headers(): void
 {
     global $allowedOrigins;
     $origins = is_array($allowedOrigins) ? $allowedOrigins : [
-        'https://harmitethnic.com',
-        'https://www.harmitethnic.com',
-        'https://jaihanumantex.in',
-        'https://www.jaihanumantex.in',
+        'https://yourdomain.com',
+        'https://www.yourdomain.com',
         'http://localhost',
         'http://localhost:3000',
         'http://localhost:8000',
@@ -49,17 +64,18 @@ function cors_headers(): void
         'http://127.0.0.1:8080'
     ];
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    
-    if (in_array($origin, $origins, true)) {
+
+    if (dt_is_allowed_origin($origin, $origins)) {
         dt_send_header('Access-Control-Allow-Origin: ' . $origin);
     } else {
         $host = $_SERVER['HTTP_HOST'] ?? '';
         $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $selfOrigin = rtrim($proto . $host, '/');
-        if ($host !== '' && in_array($selfOrigin, $origins, true)) {
+        if ($host !== '') {
             dt_send_header('Access-Control-Allow-Origin: ' . $selfOrigin);
         } else {
-            dt_send_header('Access-Control-Allow-Origin: https://jaihanumantex.in');
+            $fallback = rtrim((string)(getenv('APP_URL') ?: 'https://yourdomain.com'), '/');
+            dt_send_header('Access-Control-Allow-Origin: ' . $fallback);
         }
     }
 

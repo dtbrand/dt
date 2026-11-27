@@ -13,6 +13,6 @@ Every code change or feature modification must execute all 3 steps:
 3. **Hostinger Live FTP**: Deploy modified files to /public_html/ on Hostinger server (147.93.99.134:21).
 
 ## 2. Production Details
-- **FTP**: 147.93.99.134:21 (User: u602484543.jaihanumantex.in)
+- **FTP**: 147.93.99.134:21 (User: u602484543.yourdomain.com)
 - **Database**: u602484543_demodt121 on localhost:3306
-- **Website URL**: https://jaihanumantex.in/
+- **Website URL**: https://yourdomain.com/

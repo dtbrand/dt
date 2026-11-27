@@ -5,7 +5,7 @@
  */
 $footerShowroom = 'Ring Road, Surat Textile Market, Surat, Gujarat 395002';
 $footerPhone = '+91 70463 63528';
-$footerEmail = 'care@jaihanumantex.in';
+$footerEmail = 'care@yourdomain.com';
 
 if (class_exists('\DTBrand\Database')) {
     try {

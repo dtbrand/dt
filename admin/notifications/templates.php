@@ -441,7 +441,7 @@ function handleExecuteTestSend(e) {
         amount: document.getElementById('testVarAmount').value,
         courier: document.getElementById('testVarCourier').value,
         tracking_no: 'DL98234112',
-        tracking_url: 'https://jaihanumantex.in/track'
+        tracking_url: 'https://yourdomain.com/track'
     };
 
     window.DTNotifications.sendTest(ch, rec, key, vars, { recipient_name: vars.customer_name }, btn)

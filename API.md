@@ -103,7 +103,7 @@ Endpoints that genuinely cannot complete log to the issues file and return **501
 ## Example: Create an Order
 
 ```bash
-curl -X POST https://jaihanumantex.in/api/orders.php \
+curl -X POST https://yourdomain.com/api/orders.php \
   -H "Content-Type: application/json" \
   -b "PHPSESSID=<session>" \
   -d '{

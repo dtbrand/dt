@@ -407,7 +407,7 @@
         // generic marketing sentence about silk sarees, so an empty SEO
         // description looked filled in.
         if (gTitle) { gTitle.textContent = title ? title + " | DT Brand's" : 'Product title not set'; }
-        if (gUrl) { gUrl.textContent = 'https://jaihanumantex.in/product/' + (slug || '...'); }
+        if (gUrl) { gUrl.textContent = 'https://yourdomain.com/product/' + (slug || '...'); }
         if (gDesc) { gDesc.textContent = desc ? desc.slice(0, 160) : 'No description yet — Google will pick its own snippet.'; }
     };
 

@@ -5,11 +5,11 @@
  */
 
 $endpoints = [
-    'Homepage' => 'https://jaihanumantex.in/index.php',
-    'Shop Catalog' => 'https://jaihanumantex.in/shop.php',
-    'Single Saree' => 'https://jaihanumantex.in/product.php',
-    'Admin Portal' => 'https://jaihanumantex.in/admin/login/',
-    'Health Check' => 'https://jaihanumantex.in/health.php',
+    'Homepage' => 'https://yourdomain.com/index.php',
+    'Shop Catalog' => 'https://yourdomain.com/shop.php',
+    'Single Saree' => 'https://yourdomain.com/product.php',
+    'Admin Portal' => 'https://yourdomain.com/admin/login/',
+    'Health Check' => 'https://yourdomain.com/health.php',
 ];
 
 $failed = [];

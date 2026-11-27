@@ -39,7 +39,7 @@
 | **Project Name** | Arniya (DT Brand's & Jai Hanuman Tex) |
 | **Type** | PHP Monolith — E-Commerce + WhatsApp CRM + Multi-Portal |
 | **Stack** | PHP 8+, MySQL, Apache, Hostinger Business Hosting |
-| **Live URL** | `https://jaihanumantex.in/` |
+| **Live URL** | `https://yourdomain.com/` |
 | **GitHub Repo** | `https://github.com/dtbrand/arniya.git` |
 | **Branch** | `main` |
 | **Total Commits** | 339 |
@@ -160,7 +160,7 @@ arniya/                              ← Root (public_html on Hostinger)
 | **Live Server IP** | `147.93.99.134` — exposed publicly |
 | **DB Password** | `Gautam@9006` — exposed publicly |
 | **FTP Password** | `Gautam@9006` — exposed publicly |
-| **Admin Default Creds** | `admin@jaihanumantex.in / DtBrand@Admin2026` — exposed publicly |
+| **Admin Default Creds** | `admin@yourdomain.com / DtBrand@Admin2026` — exposed publicly |
 | **Action Required** | 🔴 IMMEDIATE: Rotate all credentials. Remove GEMINI.md from public repo or move to `.gitignore`d secrets file |
 
 ---
@@ -584,13 +584,13 @@ Developer's Machine (Local)
            ▼
     Hostinger Live FTP
     Host: 147.93.99.134 (Port 21)
-    User: u602484543.jaihanumantex.in
+    User: u602484543.yourdomain.com
     Remote: /public_html
     - Auto-upload via Python ftplib script
     - Targets only modified files
            │
            ▼
-    LIVE: https://jaihanumantex.in/
+    LIVE: https://yourdomain.com/
 ```
 
 ### Deployment Configuration
@@ -598,11 +598,11 @@ Developer's Machine (Local)
 | Item | Value |
 |---|---|
 | FTP Host | `147.93.99.134` Port `21` |
-| FTP Username | `u602484543.jaihanumantex.in` |
+| FTP Username | `u602484543.yourdomain.com` |
 | Remote Root | `/public_html` |
 | DB Host | `localhost` Port `3306` |
 | DB Name | `u602484543_demodt121` |
-| Live URL | `https://jaihanumantex.in/` |
+| Live URL | `https://yourdomain.com/` |
 | GitHub Repo | `https://github.com/dtbrand/arniya.git` |
 
 ### ⚠️ Deployment Issues
@@ -718,7 +718,7 @@ Developer's Machine (Local)
 |---|---|---|---|
 | M1 | 4 Google Font families = large page weight | `index.php` | Subset to needed weights, preconnect tags already good |
 | M2 | FTP (plain) for deployment | GEMINI.md | Switch to SFTP |
-| M3 | No staging environment | Deployment | Create `staging.jaihanumantex.in` |
+| M3 | No staging environment | Deployment | Create `staging.yourdomain.com` |
 | M4 | No automated tests | Repo | Add PHPUnit for core classes |
 | M5 | No error logging / alerting | All PHP | Add Monolog or native error log to file |
 | M6 | `Recommended For You` duplicates products array | `index.php` | Use real recommendation engine or shuffle |
@@ -793,7 +793,7 @@ Developer's Machine (Local)
    DB_USER=u602484543_demodt121
    DB_PASS=<new-secure-password>
    FTP_HOST=147.93.99.134
-   FTP_USER=u602484543.jaihanumantex.in
+   FTP_USER=u602484543.yourdomain.com
    FTP_PASS=<new-secure-password>
 
 4. Add .env to .gitignore
@@ -846,7 +846,7 @@ Developer's Machine (Local)
 2. Implement real recommendation engine (view/purchase history)
 3. DB-controlled deal countdown (set end time from admin)
 4. Switch deployment to GitHub Actions (remove manual FTP)
-5. Set up staging.jaihanumantex.in
+5. Set up staging.yourdomain.com
 6. Add PHPUnit tests for all /src/ classes
 7. Add error logging (Monolog → file/email)
 8. Add schema.org JSON-LD to product pages

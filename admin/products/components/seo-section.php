@@ -33,7 +33,7 @@
         <div style="margin-top:16px;">
             <label class="adm-form-label" style="margin-bottom:6px; display:block;">Google Search Snippet Preview</label>
             <div class="dt-google-snippet">
-                <div class="dt-google-url" id="dtGoogleUrlPreview">https://jaihanumantex.in/product/kanjivaram-pure-silk-saree</div>
+                <div class="dt-google-url" id="dtGoogleUrlPreview">https://yourdomain.com/product/kanjivaram-pure-silk-saree</div>
                 <div class="dt-google-title" id="dtGoogleTitlePreview">Kanjivaram Pure Silk Gold Zari Saree | DT Brand's Luxury Ethnic</div>
                 <div class="dt-google-desc" id="dtGoogleDescPreview">Handcrafted pure silk sarees woven with authentic zari border. Order wholesale lots or single pieces directly from Surat mills.</div>
             </div>

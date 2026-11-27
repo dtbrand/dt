@@ -6,7 +6,7 @@ import time
 
 ctx = ssl._create_unverified_context()
 
-for domain in ['harmitethnic.com', 'jaihanumantex.in']:
+for domain in ['yourdomain.com', 'yourdomain.com']:
     print(f"\n{'='*70}")
     print(f"=== TESTING VARIANT ID PERSISTENCE & ORDER PIPELINE ON {domain} ===")
     print(f"{'='*70}")
