@@ -10,6 +10,10 @@ import {
     ADMIN_COOKIE,
     SID_COOKIE,
     buildCookieHeader,
+    checkRateLimit,
+    clearRateLimit,
+    ensureRuntimeSchema,
+    escapeHtml,
     getSessionContext,
     getSigningSecret,
     jsonResponse,
@@ -61,7 +65,6 @@ const ADMIN_REDIRECTS = {
     '/admin/products/categories.php': '/admin/products/categories/',
     '/admin/products/attributes/add.php': '/admin/products/attributes/index.php?action=new_attribute',
     '/admin/products/attributes/edit.php': '/admin/products/attributes/index.php',
-    '/admin/products/attributes/values.php': '/admin/products/attributes/',
     '/admin/products/duplicate.php': '/admin/products/',
     '/admin/products/exports/history.php': '/admin/products/exports/index.php?tab=history',
     '/admin/products/imports/errors.php': '/admin/products/imports/index.php?tab=errors',
@@ -78,14 +81,6 @@ const ADMIN_REDIRECTS = {
 };
 
 const ADMIN_STATIC_EXT_RE = /\.(css|js|png|jpg|jpeg|webp|svg|gif|woff2?|json)$/i;
-
-function escapeHtml(str) {
-    return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
 
 function safeJsonInline(data) {
     return JSON.stringify(data).replace(/</g, '\\u003c');
@@ -189,12 +184,18 @@ async function handleAdminRoutes(request, url, env, session) {
                 .trim()
                 .toLowerCase();
             const password = String(body.password || '');
+            const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+            const rl = await checkRateLimit(env, `admin_login:${ip}:${email}`, 5, 300);
+            if (rl.limited) {
+                return Response.redirect(new URL('/admin/login/?error=rate_limited', url.origin).toString(), 302);
+            }
             const userRow = await env.DB.prepare(
                 "SELECT * FROM users WHERE LOWER(email) = ? AND status = 'active' LIMIT 1"
             )
                 .bind(email)
                 .first();
             if (userRow && (await verifyPassword(password, userRow.password_hash))) {
+                await clearRateLimit(env, `admin_login:${ip}:${email}`);
                 const secret = await getSigningSecret(env);
                 const token = await signToken({ aid: Number(userRow.id), exp: Date.now() + 86400000 * 3 }, secret);
                 return new Response(null, {
@@ -278,8 +279,14 @@ async function handleAdminRoutes(request, url, env, session) {
             () => `window.DT_AVAILABLE_CATEGORIES = ${catsJson};`
         );
 
-    const bridgeTag = `<script>window.DT_ADMIN_USER=${safeJsonInline(session.admin)};window.DT_ADMIN_CSRF_TOKEN=${csrfJson};window.DT_DASH=window.DT_DASH||${dashJson};</script><script src="/admin/assets/js/admin-edge-bridge.js?v=cf"></script>`;
-    html = html.includes('</body>') ? html.replace('</body>', `${bridgeTag}\n</body>`) : `${html}\n${bridgeTag}`;
+    const bridgeHeadScript = `<script>window.DT_ADMIN_USER=${safeJsonInline(session.admin)};window.DT_ADMIN_CSRF_TOKEN=${csrfJson};window.DT_DASH=window.DT_DASH||${dashJson};(function(){var f=window.fetch;if(!f||f.__dtCsrfPatched)return;var w=function(u,o){var s=typeof u==="string"?u:(u&&u.url)||"";var m=((o&&o.method)||"GET").toUpperCase();if(s.indexOf("/api/")!==-1&&m!=="GET"&&m!=="HEAD"){o=Object.assign({},o||{});var h=new Headers(o.headers||{});if(!h.has("X-CSRF-Token")&&window.DT_ADMIN_CSRF_TOKEN)h.set("X-CSRF-Token",window.DT_ADMIN_CSRF_TOKEN);o.headers=h;if(!o.credentials)o.credentials="same-origin";}return f.call(this,u,o);};w.__dtCsrfPatched=true;window.fetch=w;})();</script>`;
+    if (html.includes('</head>')) {
+        html = html.replace('</head>', `${bridgeHeadScript}\n</head>`);
+    }
+    const bridgeTag = `<script src="/admin/assets/js/admin-edge-bridge.js?v=cf"></script>`;
+    html = html.includes('</body>')
+        ? html.replace('</body>', `${bridgeTag}\n</body>`)
+        : `${bridgeHeadScript}\n${html}\n${bridgeTag}`;
 
     return new Response(html, {
         status: 200,
@@ -506,6 +513,7 @@ export default {
                 return env.ASSETS.fetch(request);
             }
 
+            await ensureRuntimeSchema(env);
             const session = await getSessionContext(request, env);
 
             // 5. Complete REST & Legacy API Mapping (/api & /api/*)

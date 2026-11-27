@@ -2454,7 +2454,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '52b99f914ff6f2a8020291392593fb522c0417a1ec0e7f75dc28e1229f0cbadc';
+window.DT_ADMIN_CSRF_TOKEN = '4644c2791aaf280842fd5e648ee159d30d543e3a0c7859e941335de08ef9c09b';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -3011,9 +3011,9 @@ window.showToast = window.showToast || function(msg, type) {
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                             </div>
                         </div>
-                        <div class="dt-cust-kpi-val" style="color:#8A681F;">0</div>
+                        <div class="dt-cust-kpi-val" style="color:#8A681F;">1</div>
                         <div class="dt-cust-kpi-bot">
-                            <span class="dt-cust-kpi-delta">0 trade &middot; 0 retail</span>
+                            <span class="dt-cust-kpi-delta">1 trade &middot; 0 retail</span>
                             <span style="color:#78716C;">customers table</span>
                         </div>
                     </div>
@@ -3123,16 +3123,16 @@ window.showToast = window.showToast || function(msg, type) {
                         <div>
                             <label style="font-size:0.78rem; font-weight:800; color:#181512; display:block; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:8px;">2. Audience Scope &amp; Target Cohort</label>
                             <select id="dtExportAudienceScope" class="dt-cust-select" onchange="updateExportEstimate()" style="width:100%; height:40px; font-size:0.82rem; font-weight:700; background:#FFFFFF; border:1.2px solid #EAE5D9; border-radius:8px;">
-                                                                    <option value="all" selected>All Registered Customers (0)</option>
+                                                                    <option value="all" selected>All Registered Customers (1)</option>
                                                                     <option value="vip">VIP / High-Value (VIP tier or LTV ≥ ₹25,000) (0)</option>
                                                                     <option value="frequent">Repeat Buyers (3+ orders) (0)</option>
-                                                                    <option value="gujarat">Gujarat Buyers (0)</option>
-                                                                    <option value="wholesale">Wholesale Accounts (0)</option>
+                                                                    <option value="gujarat">Gujarat Buyers (1)</option>
+                                                                    <option value="wholesale">Wholesale Accounts (1)</option>
                                                                     <option value="reseller">Reseller Accounts (0)</option>
                                                                     <option value="retailer">Retailers & Boutiques (0)</option>
                                                                     <option value="retail">Retail Shoppers (0)</option>
                                                                     <option value="pending">Awaiting Approval (0)</option>
-                                                                    <option value="dormant">No Order in 60+ Days (includes never ordered) (0)</option>
+                                                                    <option value="dormant">No Order in 60+ Days (includes never ordered) (1)</option>
                                                             </select>
                         </div>
 
@@ -3281,7 +3281,7 @@ let currentFormat = 'csv';
  * JSON_HEX_TAG matters: a customer registers their own name, and without it a
  * name containing a closing script tag would break out of this block.
  */
-const exportRows = [];
+const exportRows = [{"id":1,"name":"Radhika Sarees Emporium","phone":"9876543210","email":"radhika@example.com","type":"wholesale","tier":"Standard","gstin":"","spend":0,"orders":0,"aov":"","last_order":"","joined":"2026-11-27 18:21:59","city":"Surat","state":"Gujarat","pincode":"395002","credit":0,"balance":0,"status":"active"}];
 
 // Labels shared by all three generators, so a column cannot be titled one thing
 // in the CSV and another in the workbook.

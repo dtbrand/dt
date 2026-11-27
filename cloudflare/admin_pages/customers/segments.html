@@ -2398,7 +2398,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = 'ce3565b2efe39fc3038ed75b024dc5a91e574b0959defed4e3c5143a82994d84';
+window.DT_ADMIN_CSRF_TOKEN = '0c0f4bf8d56625ce1206467f6f151440d1c995189234040e8dfa41f5b5de333b';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2928,7 +2928,7 @@ window.showToast = window.showToast || function(msg, type) {
                     <div class="dt-cust-title-group">
                         <h1 class="dt-cust-title">
                             <span>Live Cohort Builder</span>
-                            <span class="dt-cust-badge gold">0 Customers</span>
+                            <span class="dt-cust-badge gold">1 Customer</span>
                         </h1>
                         <p class="dt-cust-subtitle">Match criteria against the live customers table, see exactly who qualifies, then export the cohort or copy its phone numbers.</p>
                     </div>
@@ -2957,7 +2957,7 @@ window.showToast = window.showToast || function(msg, type) {
                     This database has no segments table, so a saved segment would be a name with nothing behind it.
                     Build the cohort here instead: the count updates as you change the criteria, the preview lists the
                     real customers who qualify, and Export CSV writes exactly those rows.
-                    Criteria are matched against 0 customers loaded from the live table.
+                    Criteria are matched against 1 customer loaded from the live table.
                 </p>
             </div>
         </div>
@@ -2985,7 +2985,7 @@ window.showToast = window.showToast || function(msg, type) {
                             <div class="dt-segment-count" style="color:#A8A29E;">0</div>
                             <small style="color:#78716C; font-size:0.68rem; font-weight:700;">
                                 Matches now
-                                                            </small>
+                                &middot; 0.0%                            </small>
                         </div>
                         <span class="dt-btn dt-btn-pale dt-btn-sm" style="padding:3px 10px; font-size:0.72rem;">Load</span>
                     </div>
@@ -3007,7 +3007,7 @@ window.showToast = window.showToast || function(msg, type) {
                             <div class="dt-segment-count" style="color:#A8A29E;">0</div>
                             <small style="color:#78716C; font-size:0.68rem; font-weight:700;">
                                 Matches now
-                                                            </small>
+                                &middot; 0.0%                            </small>
                         </div>
                         <span class="dt-btn dt-btn-pale dt-btn-sm" style="padding:3px 10px; font-size:0.72rem;">Load</span>
                     </div>
@@ -3026,10 +3026,10 @@ window.showToast = window.showToast || function(msg, type) {
                     </div>
                     <div class="dt-segment-stats">
                         <div>
-                            <div class="dt-segment-count" style="color:#A8A29E;">0</div>
+                            <div class="dt-segment-count" style="color:#181512;">1</div>
                             <small style="color:#78716C; font-size:0.68rem; font-weight:700;">
-                                Matches now
-                                                            </small>
+                                Match now
+                                &middot; 100.0%                            </small>
                         </div>
                         <span class="dt-btn dt-btn-pale dt-btn-sm" style="padding:3px 10px; font-size:0.72rem;">Load</span>
                     </div>
@@ -3048,10 +3048,10 @@ window.showToast = window.showToast || function(msg, type) {
                     </div>
                     <div class="dt-segment-stats">
                         <div>
-                            <div class="dt-segment-count" style="color:#A8A29E;">0</div>
+                            <div class="dt-segment-count" style="color:#181512;">1</div>
                             <small style="color:#78716C; font-size:0.68rem; font-weight:700;">
-                                Matches now
-                                                            </small>
+                                Match now
+                                &middot; 100.0%                            </small>
                         </div>
                         <span class="dt-btn dt-btn-pale dt-btn-sm" style="padding:3px 10px; font-size:0.72rem;">Load</span>
                     </div>
@@ -3070,10 +3070,10 @@ window.showToast = window.showToast || function(msg, type) {
                     </div>
                     <div class="dt-segment-stats">
                         <div>
-                            <div class="dt-segment-count" style="color:#A8A29E;">0</div>
+                            <div class="dt-segment-count" style="color:#181512;">1</div>
                             <small style="color:#78716C; font-size:0.68rem; font-weight:700;">
-                                Matches now
-                                                            </small>
+                                Match now
+                                &middot; 100.0%                            </small>
                         </div>
                         <span class="dt-btn dt-btn-pale dt-btn-sm" style="padding:3px 10px; font-size:0.72rem;">Load</span>
                     </div>
@@ -3092,10 +3092,10 @@ window.showToast = window.showToast || function(msg, type) {
                     </div>
                     <div class="dt-segment-stats">
                         <div>
-                            <div class="dt-segment-count" style="color:#A8A29E;">0</div>
+                            <div class="dt-segment-count" style="color:#181512;">1</div>
                             <small style="color:#78716C; font-size:0.68rem; font-weight:700;">
-                                Matches now
-                                                            </small>
+                                Match now
+                                &middot; 100.0%                            </small>
                         </div>
                         <span class="dt-btn dt-btn-pale dt-btn-sm" style="padding:3px 10px; font-size:0.72rem;">Load</span>
                     </div>
@@ -3140,8 +3140,8 @@ window.showToast = window.showToast || function(msg, type) {
                 <label style="display:block; font-size:0.73rem; font-weight:800; color:#181512; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:5px;" for="dtSegState">State</label>
                 <select id="dtSegState" class="dt-cust-select" style="width:100%; height:38px; box-sizing:border-box; background:#FFFFFF; border:1.2px solid #EAE5D9; border-radius:8px; padding:0 10px; font-size:0.8rem; font-weight:600; color:#181512;" onchange="runSegmentMatch()">
                     <option value="">Any state</option>
+                                            <option value="GUJARAT">Gujarat</option>
                                     </select>
-                                    <div style="font-size:0.68rem; color:#A8A29E; margin-top:4px;">No customer has a state recorded yet.</div>
                             </div>
 
             <div>
@@ -3149,6 +3149,7 @@ window.showToast = window.showToast || function(msg, type) {
                 <select id="dtSegTier" class="dt-cust-select" style="width:100%; height:38px; box-sizing:border-box; background:#FFFFFF; border:1.2px solid #EAE5D9; border-radius:8px; padding:0 10px; font-size:0.8rem; font-weight:600; color:#181512;" onchange="runSegmentMatch()">
                     <option value="">Any tier</option>
                     <option value="__none__">(no tier set)</option>
+                                            <option value="standard">Standard</option>
                                     </select>
             </div>
 
@@ -3195,8 +3196,8 @@ window.showToast = window.showToast || function(msg, type) {
             <div>
                 <div style="font-size:0.72rem; font-weight:800; color:#78716C; text-transform:uppercase; letter-spacing:0.04em;">Matching Customers</div>
                 <div style="display:flex; align-items:baseline; gap:8px; margin-top:2px;">
-                    <span id="dtSegMatchCount" style="font-size:1.5rem; font-weight:900; color:#181512;">0</span>
-                    <span id="dtSegMatchPct" style="font-size:0.75rem; font-weight:700; color:#78716C;">of 0 &mdash; no criteria set</span>
+                    <span id="dtSegMatchCount" style="font-size:1.5rem; font-weight:900; color:#181512;">1</span>
+                    <span id="dtSegMatchPct" style="font-size:0.75rem; font-weight:700; color:#78716C;">of 1 &mdash; no criteria set</span>
                 </div>
             </div>
 
@@ -3309,7 +3310,7 @@ window.showToast = window.showToast || function(msg, type) {
 <script>
     // The whole cohort engine runs against these rows. They come from the
     // customers table plus one grouped orders query -- nothing is generated.
-    window.dtSegmentRows = [];
+    window.dtSegmentRows = [{"id":1,"name":"Radhika Sarees Emporium","phone":"9876543210","email":"radhika@example.com","city":"Surat","state":"Gujarat","type":"wholesale","tier":"Standard","status":"active","spend":0,"orders":0,"gstin":"","balance":0,"last":""}];
 </script>
 <script src="/admin/customers/assets/js/customers.js?v=cf"></script>
 <script src="/admin/customers/assets/js/customer-segments.js?v=cf"></script>

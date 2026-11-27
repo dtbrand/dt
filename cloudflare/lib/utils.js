@@ -154,6 +154,21 @@ export async function verifyPassword(password, storedHash) {
     return diff === 0;
 }
 
+export function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+export function csvCell(val) {
+    let s = String(val ?? '');
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return `"${s.replace(/"/g, '""')}"`;
+}
+
 export async function verifyHmacHex(payloadText, secret, signatureHex) {
     if (!secret || !signatureHex) return false;
     try {
@@ -177,6 +192,115 @@ export async function verifyHmacHex(payloadText, secret, signatureHex) {
         return diff === 0;
     } catch {
         return false;
+    }
+}
+
+export async function verifyHmacBase64(payloadText, secret, signatureB64) {
+    if (!secret || !signatureB64) return false;
+    try {
+        const key = await crypto.subtle.importKey(
+            'raw',
+            new TextEncoder().encode(secret),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['sign']
+        );
+        const sigBuf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payloadText));
+        const bytes = new Uint8Array(sigBuf);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        const actualB64 = btoa(bin);
+        const expected = String(signatureB64).trim();
+        if (actualB64.length !== expected.length) return false;
+        let diff = 0;
+        for (let i = 0; i < actualB64.length; i++) {
+            diff |= actualB64.charCodeAt(i) ^ expected.charCodeAt(i);
+        }
+        return diff === 0;
+    } catch {
+        return false;
+    }
+}
+
+const memRateLimit = new Map();
+
+export async function checkRateLimit(env, key, maxAttempts = 5, windowSec = 300) {
+    const cleanKey = `rl:${String(key)}`;
+    const now = Math.floor(Date.now() / 1000);
+    if (env.KV) {
+        try {
+            const raw = await env.KV.get(cleanKey);
+            const cur = raw ? JSON.parse(raw) : { count: 0, resetAt: now + windowSec };
+            if (cur.resetAt <= now) {
+                cur.count = 0;
+                cur.resetAt = now + windowSec;
+            }
+            if (cur.count >= maxAttempts) {
+                return { limited: true, remaining: 0, retryAfter: Math.max(1, cur.resetAt - now) };
+            }
+            cur.count += 1;
+            await env.KV.put(cleanKey, JSON.stringify(cur), { expirationTtl: Math.max(60, cur.resetAt - now) });
+            return { limited: false, remaining: maxAttempts - cur.count, retryAfter: 0 };
+        } catch {
+            // Fall through to memory fallback
+        }
+    }
+    const cur = memRateLimit.get(cleanKey) || { count: 0, resetAt: now + windowSec };
+    if (cur.resetAt <= now) {
+        cur.count = 0;
+        cur.resetAt = now + windowSec;
+    }
+    if (cur.count >= maxAttempts) {
+        return { limited: true, remaining: 0, retryAfter: Math.max(1, cur.resetAt - now) };
+    }
+    cur.count += 1;
+    memRateLimit.set(cleanKey, cur);
+    return { limited: false, remaining: maxAttempts - cur.count, retryAfter: 0 };
+}
+
+export async function clearRateLimit(env, key) {
+    const cleanKey = `rl:${String(key)}`;
+    memRateLimit.delete(cleanKey);
+    if (env.KV) {
+        try {
+            await env.KV.delete(cleanKey);
+        } catch {
+            // Non-blocking
+        }
+    }
+}
+
+let runtimeSchemaSynced = false;
+
+export async function ensureRuntimeSchema(env) {
+    if (runtimeSchemaSynced || !env?.DB) return;
+    runtimeSchemaSynced = true;
+    const alterStmts = [
+        "CREATE TABLE IF NOT EXISTS homepage_sections (id INTEGER PRIMARY KEY AUTOINCREMENT, section_key TEXT NOT NULL UNIQUE, title TEXT NOT NULL, subtitle TEXT DEFAULT '', display_order INTEGER DEFAULT 1, is_active INTEGER DEFAULT 1)",
+        "CREATE TABLE IF NOT EXISTS social_channels (id INTEGER PRIMARY KEY AUTOINCREMENT, platform TEXT DEFAULT 'whatsapp', title TEXT NOT NULL, handle TEXT DEFAULT '', url TEXT NOT NULL, display_order INTEGER DEFAULT 1, status TEXT DEFAULT 'active')",
+        "ALTER TABLE categories ADD COLUMN subcategories_json TEXT DEFAULT '[]'",
+        "ALTER TABLE brands ADD COLUMN description TEXT DEFAULT ''",
+        "ALTER TABLE brands ADD COLUMN tier TEXT DEFAULT 'Primary Flagship'",
+        "ALTER TABLE attributes ADD COLUMN type TEXT DEFAULT 'Text Badge / Pill'",
+        "ALTER TABLE banners ADD COLUMN image_mobile_url TEXT DEFAULT ''",
+        "ALTER TABLE announcements ADD COLUMN title TEXT DEFAULT ''",
+        "ALTER TABLE announcements ADD COLUMN placement TEXT DEFAULT 'top_bar'",
+        "ALTER TABLE customers ADD COLUMN business_name TEXT DEFAULT ''",
+        'ALTER TABLE customers ADD COLUMN total_orders INTEGER DEFAULT 0',
+        'ALTER TABLE customers ADD COLUMN lifetime_spend REAL DEFAULT 0',
+        'ALTER TABLE customers ADD COLUMN gst_verified INTEGER DEFAULT 0',
+        "ALTER TABLE customers ADD COLUMN kyc_status TEXT DEFAULT 'pending'",
+        "ALTER TABLE reviews ADD COLUMN admin_reply TEXT DEFAULT ''",
+        "ALTER TABLE reviews ADD COLUMN rejection_reason TEXT DEFAULT ''",
+        "ALTER TABLE reviews ADD COLUMN customer_email TEXT DEFAULT ''",
+        "ALTER TABLE reviews ADD COLUMN customer_phone TEXT DEFAULT ''",
+    ];
+    for (const sql of alterStmts) {
+        try {
+            await env.DB.prepare(sql).run();
+        } catch {
+            // Column/table already exists
+        }
     }
 }
 

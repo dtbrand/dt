@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS categories (
     description TEXT DEFAULT '',
     image TEXT DEFAULT '/assets/images/product1.png',
     banner_image TEXT DEFAULT '/assets/images/product2.png',
+    subcategories_json TEXT DEFAULT '[]',
     products_count INTEGER DEFAULT 0,
     display_order INTEGER DEFAULT 1,
     status TEXT DEFAULT 'active',
@@ -35,6 +36,8 @@ CREATE TABLE IF NOT EXISTS brands (
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
     tagline TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    tier TEXT DEFAULT 'Primary Flagship',
     logo_url TEXT DEFAULT '/assets/images/logo.png',
     status TEXT DEFAULT 'active',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -44,6 +47,7 @@ CREATE TABLE IF NOT EXISTS attributes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
+    type TEXT DEFAULT 'Text Badge / Pill',
     values_json TEXT DEFAULT '[]',
     status TEXT DEFAULT 'active',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -136,6 +140,7 @@ CREATE TABLE IF NOT EXISTS banners (
     cta_text TEXT DEFAULT 'Shop Wholesale Now',
     cta_link TEXT DEFAULT '/shop',
     image_url TEXT NOT NULL,
+    image_mobile_url TEXT DEFAULT '',
     placement TEXT DEFAULT 'hero',
     status TEXT DEFAULT 'active',
     display_order INTEGER DEFAULT 1
@@ -143,10 +148,12 @@ CREATE TABLE IF NOT EXISTS banners (
 
 CREATE TABLE IF NOT EXISTS announcements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT DEFAULT '',
     message TEXT NOT NULL,
     link_url TEXT DEFAULT '/shop',
     bg_color TEXT DEFAULT '#181512',
     text_color TEXT DEFAULT '#FAF5E8',
+    placement TEXT DEFAULT 'top_bar',
     status TEXT DEFAULT 'active',
     display_order INTEGER DEFAULT 1
 );
@@ -160,6 +167,25 @@ CREATE TABLE IF NOT EXISTS curated_collections (
     image_url TEXT DEFAULT '/assets/images/product1.png',
     status TEXT DEFAULT 'active',
     display_order INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS homepage_sections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    section_key TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
+    subtitle TEXT DEFAULT '',
+    display_order INTEGER DEFAULT 1,
+    is_active INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS social_channels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    platform TEXT DEFAULT 'whatsapp',
+    title TEXT NOT NULL,
+    handle TEXT DEFAULT '',
+    url TEXT NOT NULL,
+    display_order INTEGER DEFAULT 1,
+    status TEXT DEFAULT 'active'
 );
 
 CREATE TABLE IF NOT EXISTS seo_metadata (
@@ -187,6 +213,7 @@ CREATE TABLE IF NOT EXISTS share_templates (
 CREATE TABLE IF NOT EXISTS customers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    business_name TEXT DEFAULT '',
     phone TEXT NOT NULL UNIQUE,
     email TEXT DEFAULT '',
     password_hash TEXT NOT NULL,
@@ -196,9 +223,13 @@ CREATE TABLE IF NOT EXISTS customers (
     tier TEXT DEFAULT 'Standard',
     credit_limit REAL DEFAULT 0,
     outstanding_balance REAL DEFAULT 0,
+    total_orders INTEGER DEFAULT 0,
+    lifetime_spend REAL DEFAULT 0,
     commission_rate REAL DEFAULT 15,
     gstin TEXT DEFAULT '',
+    gst_verified INTEGER DEFAULT 0,
     pan TEXT DEFAULT '',
+    kyc_status TEXT DEFAULT 'pending',
     status TEXT DEFAULT 'active',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -315,9 +346,13 @@ CREATE TABLE IF NOT EXISTS reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_id INTEGER NOT NULL,
     customer_name TEXT NOT NULL,
+    customer_email TEXT DEFAULT '',
+    customer_phone TEXT DEFAULT '',
     rating INTEGER NOT NULL DEFAULT 5,
     review_title TEXT DEFAULT '',
     review_text TEXT NOT NULL,
+    admin_reply TEXT DEFAULT '',
+    rejection_reason TEXT DEFAULT '',
     verified_buyer INTEGER DEFAULT 1,
     status TEXT DEFAULT 'approved',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP

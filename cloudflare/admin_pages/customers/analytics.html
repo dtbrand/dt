@@ -2398,7 +2398,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '0766375b3126964802d69144e4163e8536dd6892c83386082a75874ae2ec9d25';
+window.DT_ADMIN_CSRF_TOKEN = 'db475f048e2637de55e159b7cc3b9676d5162ca09ae342789f018b41d3257241';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2929,7 +2929,7 @@ window.showToast = window.showToast || function(msg, type) {
                     <div class="dt-cust-title-group">
                         <h1 class="dt-cust-title">
                             <span>Customer Analytics</span>
-                            <span class="dt-cust-badge gold">0 Customers &middot; 2 Orders</span>
+                            <span class="dt-cust-badge gold">1 Customer &middot; 2 Orders</span>
                         </h1>
                         <p class="dt-cust-subtitle">Computed at page load from the customers table and every non-cancelled order. Nothing here is a stored or estimated figure.</p>
                     </div>
@@ -2969,7 +2969,7 @@ window.showToast = window.showToast || function(msg, type) {
                         <div class="dt-cust-kpi-val" style="color:#8A681F;">&mdash;</div>
                         <div class="dt-cust-kpi-bot">
                             <span class="dt-cust-kpi-delta">&#8377;0 from 0 buyers</span>
-                            <span style="color:#78716C;">no customers yet</span>
+                            <span style="color:#78716C;">&#8377;0 per signup</span>
                         </div>
                     </div>
 
@@ -2983,7 +2983,7 @@ window.showToast = window.showToast || function(msg, type) {
                         <div class="dt-cust-kpi-val" style="color:#A8A29E;">&mdash;</div>
                         <div class="dt-cust-kpi-bot">
                             <span class="dt-cust-kpi-delta">0 of 0 bought twice or more</span>
-                            <span style="color:#78716C;">0 never ordered</span>
+                            <span style="color:#78716C;">1 never ordered</span>
                         </div>
                     </div>
 
@@ -3033,7 +3033,7 @@ window.showToast = window.showToast || function(msg, type) {
                             <div class="dt-analytics-legend">
                                 <div style="display:flex; align-items:center; gap:6px;">
                                     <span class="dt-analytics-dot" style="background:#8A681F;"></span>
-                                    <span>New signups (0 in 12 months)</span>
+                                    <span>New signups (1 in 12 months)</span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:6px;">
                                     <span class="dt-analytics-dot" style="background:#15803D;"></span>
@@ -3053,8 +3053,27 @@ window.showToast = window.showToast || function(msg, type) {
                             </div>
                         </div>
 
-                                                    <div style="padding:34px 16px; text-align:center; color:#78716C; font-size:0.82rem;">
-                                No customer has a usable registration date, so no cohort can be formed.
+                                                    <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                                <table class="dt-cohort-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Signup Month</th>
+                                            <th>Customers</th>
+                                            <th>M0</th><th>M1</th><th>M2</th><th>M3</th><th>M4</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                                                            <tr>
+                                            <td style="font-weight:800; color:#181512; text-align:left; padding-left:8px;">Nov 2026</td>
+                                            <td style="font-weight:700; color:#78716C;">1</td>
+                                                                                                                                                <td class="dt-cohort-cell" style="background:#F5F5F4; color:#78716C;" title="0 of 1 ordered">0.0%</td>
+                                                                                                                                                                                                <td style="color:#9CA3AF;" title="This month has not elapsed for this cohort">&mdash;</td>
+                                                                                                                                                                                                <td style="color:#9CA3AF;" title="This month has not elapsed for this cohort">&mdash;</td>
+                                                                                                                                                                                                <td style="color:#9CA3AF;" title="This month has not elapsed for this cohort">&mdash;</td>
+                                                                                                                                                                                                <td style="color:#9CA3AF;" title="This month has not elapsed for this cohort">&mdash;</td>
+                                                                                                                                    </tr>
+                                                                        </tbody>
+                                </table>
                             </div>
                                             </div>
                 </div>
@@ -3160,7 +3179,7 @@ window.showToast = window.showToast || function(msg, type) {
                                                             <div class="dt-rfm-tier-card" style="border-left:3px solid #D4AF37;">
                                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
                                         <span style="font-size:0.68rem; font-weight:800; color:#8A681F; text-transform:uppercase;">Champions</span>
-                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0%</span>
+                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0.0%</span>
                                     </div>
                                     <div style="font-size:1.15rem; font-weight:900; color:#A8A29E;">0</div>
                                     <div style="font-size:0.65rem; color:#78716C; line-height:1.45;">Spend &ge; &#8377;50,000 and 2+ orders, ordered in the last 60 days</div>
@@ -3168,7 +3187,7 @@ window.showToast = window.showToast || function(msg, type) {
                                                             <div class="dt-rfm-tier-card" style="border-left:3px solid #15803D;">
                                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
                                         <span style="font-size:0.68rem; font-weight:800; color:#15803D; text-transform:uppercase;">Loyalists</span>
-                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0%</span>
+                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0.0%</span>
                                     </div>
                                     <div style="font-size:1.15rem; font-weight:900; color:#A8A29E;">0</div>
                                     <div style="font-size:0.65rem; color:#78716C; line-height:1.45;">3+ orders, ordered in the last 60 days</div>
@@ -3176,7 +3195,7 @@ window.showToast = window.showToast || function(msg, type) {
                                                             <div class="dt-rfm-tier-card" style="border-left:3px solid #1D4ED8;">
                                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
                                         <span style="font-size:0.68rem; font-weight:800; color:#1D4ED8; text-transform:uppercase;">Potential</span>
-                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0%</span>
+                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0.0%</span>
                                     </div>
                                     <div style="font-size:1.15rem; font-weight:900; color:#A8A29E;">0</div>
                                     <div style="font-size:0.65rem; color:#78716C; line-height:1.45;">1 or 2 orders, ordered in the last 60 days</div>
@@ -3184,7 +3203,7 @@ window.showToast = window.showToast || function(msg, type) {
                                                             <div class="dt-rfm-tier-card" style="border-left:3px solid #B45309;">
                                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
                                         <span style="font-size:0.68rem; font-weight:800; color:#B45309; text-transform:uppercase;">At Risk</span>
-                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0%</span>
+                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0.0%</span>
                                     </div>
                                     <div style="font-size:1.15rem; font-weight:900; color:#A8A29E;">0</div>
                                     <div style="font-size:0.65rem; color:#78716C; line-height:1.45;">Last order 61 to 120 days ago</div>
@@ -3192,7 +3211,7 @@ window.showToast = window.showToast || function(msg, type) {
                                                             <div class="dt-rfm-tier-card" style="border-left:3px solid #DC2626;">
                                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
                                         <span style="font-size:0.68rem; font-weight:800; color:#DC2626; text-transform:uppercase;">Dormant</span>
-                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0%</span>
+                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0.0%</span>
                                     </div>
                                     <div style="font-size:1.15rem; font-weight:900; color:#A8A29E;">0</div>
                                     <div style="font-size:0.65rem; color:#78716C; line-height:1.45;">Last order more than 120 days ago</div>
@@ -3200,16 +3219,16 @@ window.showToast = window.showToast || function(msg, type) {
                                                             <div class="dt-rfm-tier-card" style="border-left:3px solid #78716C;">
                                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
                                         <span style="font-size:0.68rem; font-weight:800; color:#57534E; text-transform:uppercase;">Never Ordered</span>
-                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">0%</span>
+                                        <span style="font-size:0.62rem; font-weight:700; color:#78716C;">100.0%</span>
                                     </div>
-                                    <div style="font-size:1.15rem; font-weight:900; color:#A8A29E;">0</div>
+                                    <div style="font-size:1.15rem; font-weight:900; color:#181512;">1</div>
                                     <div style="font-size:0.65rem; color:#78716C; line-height:1.45;">Registered with no order on record</div>
                                 </div>
                                                     </div>
 
                         <p style="font-size:0.7rem; color:#78716C; margin:12px 0 0;">
-                            0 customers placed across six buckets
-                                                            &mdash; matching the 0 in the directory.
+                            1 customer placed across six buckets
+                                                            &mdash; matching the 1 in the directory.
                                                         Recency is measured against the newest non-cancelled order, so a cancelled order does not keep a customer looking active.
                         </p>
                     </div>
@@ -3281,7 +3300,7 @@ window.showToast = window.showToast || function(msg, type) {
 <script>
     // The old chart hardcoded [420,580,610,540,690,720] against a fixed y-axis
     // of 800 and called it "Live Trajectory". These are the real monthly counts.
-    window.dtAnalytics = {"labels":["Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026","May 2026","Jun 2026","Jul 2026","Aug 2026","Sep 2026","Oct 2026","Nov 2026"],"signups":[0,0,0,0,0,0,0,0,0,0,0,0],"orders":[0,0,0,0,0,0,0,0,0,0,0,2],"repeat":[0,0,0,0,0,0,0,0,0,0,0,0]};
+    window.dtAnalytics = {"labels":["Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026","May 2026","Jun 2026","Jul 2026","Aug 2026","Sep 2026","Oct 2026","Nov 2026"],"signups":[0,0,0,0,0,0,0,0,0,0,0,1],"orders":[0,0,0,0,0,0,0,0,0,0,0,2],"repeat":[0,0,0,0,0,0,0,0,0,0,0,0]};
 </script>
 <script>
 (function () {

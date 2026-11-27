@@ -2398,7 +2398,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = 'd68df85a593df25d9adf5ae3d798f1e5e25ea5b792aaf70586d41cc4309868ec';
+window.DT_ADMIN_CSRF_TOKEN = 'b9eec0cce75392e93894b143174d680724957d34516ca34cca3ea9e3b672bb85';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2938,20 +2938,41 @@ window.showToast = window.showToast || function(msg, type) {
                 </div>
 
                 <div class="dt-card">
-                    <div class="dt-cust-empty-state" style="padding:44px 24px;">
-    <div class="dt-cust-empty-icon">
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>
-        </svg>
+                                            
+<!-- ══ INTERNAL STAFF NOTES & MEMO PANEL ══ -->
+<div class="dt-cust-notes-stream">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+        <h4 style="font-size:0.9rem; font-weight:800; color:#181512; margin:0;">Internal Staff Notes</h4>
+        <span style="font-size:0.7rem; color:#78716C;">Visible to Admin &amp; Support Staff only</span>
     </div>
-    <h4 class="dt-cust-empty-title">
-        Customer Not Found    </h4>
-    <p class="dt-cust-empty-sub">
-                    No account matches <strong>1</strong>.
+
+            <div style="background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; padding:12px 14px; margin-bottom:12px;">
+            <p style="font-size:0.72rem; color:#645D54; margin:0;">
+                The database is unavailable, so existing notes cannot be shown and new ones cannot be saved.
             </p>
-    <a href="/admin/customers/index.php" class="dt-btn dt-btn-pale">Browse Customers</a>
+        </div>
+    
+    <!-- Add Note Box -->
+    <form onsubmit="addCustomerQuickNote(event)" data-customer-id="1"
+          style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+        <textarea id="dtCustNewNoteText" class="dt-cust-search-input" style="height:64px; resize:none; padding-left:12px;" placeholder="Write an internal customer memo (e.g. prefers delivery 4-6 PM)..."></textarea>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.72rem; font-weight:700; color:#181512; cursor:pointer;">
+                <input type="checkbox" id="dtCustNoteImportantChk">
+                <span>Mark as Important Note</span>
+            </label>
+            <button type="submit" class="dt-btn dt-btn-gold dt-btn-sm">+ Save Staff Note</button>
+        </div>
+    </form>
+
+    <!-- Notes Stream -->
+    <div id="dtCustNotesStream" style="display:flex; flex-direction:column; gap:8px;">
+                    <p id="dtCustNotesEmpty" style="font-size:0.74rem; color:#8C8478; margin:4px 0 0 0;">
+                No internal notes on this customer yet.
+            </p>
+            </div>
 </div>
-                </div>
+                                    </div>
             </div>
 
         </main>

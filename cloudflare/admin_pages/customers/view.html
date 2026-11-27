@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Not Found — DT Brand's Admin</title>
+    <title>Customer 360° Dossier — Radhika Sarees Emporium — DT Brand's Admin</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#8A681F">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2401,7 +2401,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = 'fb91ddac66f6e450cad4c58b7d040afea47b7d1e86231f57dc8aa00d828adff6';
+window.DT_ADMIN_CSRF_TOKEN = '46a5e885616b09919bffc4341af0d85d6bacd80444039d664e42ea58946aa03d';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2932,13 +2932,15 @@ window.showToast = window.showToast || function(msg, type) {
                     <div class="dt-cust-title-group">
                         <h1 class="dt-cust-title">
                             <span>Customer 360° Dossier</span>
+                                                            <span class="dt-cust-badge gold">#1</span>
                                                     </h1>
                         <p class="dt-cust-subtitle">
-                                                            No customer matches this link.
+                                                            Lifetime orders, address book and account standing for Radhika Sarees Emporium.
                                                     </p>
                     </div>
                     <div class="dt-cust-actions">
                         <a href="/admin/customers/index.php" class="dt-btn dt-btn-pale"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:4px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Back to Customers</a>
+                                                    <a href="/admin/customers/edit.php?id=1" class="dt-btn dt-btn-gold">Edit Customer</a>
                                             </div>
                 </div>
 
@@ -2946,36 +2948,722 @@ window.showToast = window.showToast || function(msg, type) {
                 <div class="dt-cust-dossier-grid">
                     <!-- Left Column: Identity Card -->
                     
-<!-- ══ CUSTOMER NOT FOUND ══ -->
+
+<!-- ══ CUSTOMER IDENTITY CARD (LEFT DOSSIER COLUMN) ══ -->
 <div class="dt-cust-sidebar-card">
     <div class="dt-cust-dossier-hero">
-        <div class="dt-cust-dossier-avatar" style="background:#F3F1EC; color:#8C8478;">?</div>
+        <div class="dt-cust-dossier-avatar">RS</div>
         <div>
-            <h2 class="dt-cust-dossier-name">Customer not found</h2>
+            <h2 class="dt-cust-dossier-name">Radhika Sarees Emporium</h2>
+            <div class="dt-cust-dossier-meta">
+                                <span class="dt-status-pill active" style="font-size:0.65rem; display:inline-flex; align-items:center; gap:4px;">
+                    <svg width="6" height="6" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"></circle></svg>
+                    <span>Active</span>
+                </span>
+                <span class="dt-status-pill vip" style="font-size:0.65rem; display:inline-flex; align-items:center; gap:4px;">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    <span>Wholesale</span>
+                </span>
+            </div>
             <span class="dt-cust-id-badge" style="display:block; margin-top:4px;">
-                                    No account matches 1.
-                            </span>
+                #1 • Registered Nov 27, 2026            </span>
         </div>
     </div>
-    <p style="font-size:0.76rem; color:#645D54; line-height:1.5; margin:0;">
-        This account may have been deleted, or the link may be stale. Nothing on
-        this page refers to a real shopper.
-    </p>
-    <a href="/admin/customers/index.php" class="dt-btn dt-btn-pale" style="width:100%;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:4px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Back to Customers</a>
-</div>
+
+    <!-- Contact & Direct Communication Tools -->
+    <div class="dt-cust-contact-actions">
+                <div class="dt-cust-contact-item">
+            <span class="dt-cust-contact-val">9876543210</span>
+                        <div style="display:flex; gap:4px;">
+                <button type="button" class="dt-cust-contact-btn" onclick="copyToClipboard('9876543210', 'Phone Number')">Copy</button>
+                <a href="tel:9876543210" class="dt-cust-contact-btn">Call</a>
+            </div>
+                    </div>
+
+        <div class="dt-cust-contact-item">
+            <span class="dt-cust-contact-val">radhika@example.com</span>
+                        <div style="display:flex; gap:4px;">
+                <button type="button" class="dt-cust-contact-btn" onclick="copyToClipboard('radhika@example.com', 'Email')">Copy</button>
+                <a href="mailto:radhika%40example.com" class="dt-cust-contact-btn">Email</a>
+            </div>
+                    </div>
+
+                <a href="https://wa.me/919876543210?text=Hello%20Radhika%20Sarees%20Emporium%2C%20welcome%20to%20DT%20Brand%27s" target="_blank" rel="noopener" class="dt-btn dt-btn-emerald" style="width:100%;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FFFFFF" stroke-width="2.3">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+            <span>1-Click WhatsApp Connect</span>
+        </a>
+            </div>
+
+    <!-- Quick Action Pills -->
+    <div style="display:flex; flex-direction:column; gap:6px;">
+        <a href="/admin/customers/edit.php?id=1" class="dt-btn dt-btn-pale" style="width:100%;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            <span>Edit Profile Details</span>
+        </a>
+        <button type="button" class="dt-btn dt-btn-pale" style="width:100%;" onclick="openCustomerStatusModal('1', 'active')">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Adjust Account Standing</span>
+        </button>
+                        <button type="button" class="dt-btn dt-btn-pale" style="width:100%;"
+                onclick="sendCustomerResetLink('1', '919876543210', 'Radhika Sarees Emporium')">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span>Send Reset Link on WhatsApp</span>
+        </button>
+            </div>
+
+    <!-- Account Tier -->
+    <div>
+        <div style="font-size:0.72rem; font-weight:800; color:#78716C; text-transform:uppercase; margin-bottom:8px;">Account Tier</div>
+                <div class="dt-cust-tags-wrap" id="dtCustTagsContainer">
+                            <span class="dt-cust-tag-chip gold"><span>Standard</span></span>
+                    </div>
+    </div>
+
+            <div style="border-top:1.5px solid #F1ECE1; padding-top:12px; margin-top:4px;">
+        <div style="font-size:0.72rem; font-weight:800; color:#78716C; text-transform:uppercase; margin-bottom:8px;">Trade &amp; Compliance (Wholesale)</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <span style="font-size:0.72rem; color:#78716C; font-weight:600;">GSTIN</span>
+                                    <span style="font-size:0.7rem; color:#B45309; font-weight:700;">Not on file</span>
+                            </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <span style="font-size:0.72rem; color:#78716C; font-weight:600;">KYC Status</span>
+                                <span class="dt-status-pill vip" style="font-size:0.62rem;">Pending</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <span style="font-size:0.72rem; color:#78716C; font-weight:600;">Commission Rate</span>
+                <strong style="font-size:0.72rem; color:#181512;">15.00%</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <span style="font-size:0.72rem; color:#78716C; font-weight:600;">Credit Line</span>
+                                <strong style="font-size:0.72rem; color:#181512;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; display:inline-block;"><path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8"></path></svg>0 / <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; display:inline-block;"><path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8"></path></svg>0                </strong>
+            </div>
+        </div>
+                <div style="background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:8px 10px; margin-top:10px;">
+            <span style="font-size:0.68rem; color:#92400E; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <span>GSTIN missing — capture it before invoicing B2B orders.</span>
+            </span>
+        </div>
+            </div>
+    </div>
 
                     <!-- Right Column: Main Tabbed Content Area -->
                     <div class="dt-cust-main-pane">
-                                                    <div class="dt-cust-empty-state" style="padding:48px 24px;">
-                                <div class="dt-cust-empty-icon">
-                                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                </div>
-                                <h4 class="dt-cust-empty-title">Nothing to show</h4>
-                                <p class="dt-cust-empty-sub">
-                                                                            No account matches <strong>1</strong>. It may have been deleted.
-                                                                    </p>
-                                <a href="/admin/customers/index.php" class="dt-btn dt-btn-pale">Browse Customers</a>
+                                                <!-- Top Financial Strip -->
+                        
+<!-- ══ FINANCIAL 4-STAT STRIP ══ -->
+<div class="dt-cust-fin-strip">
+    <div class="dt-cust-fin-box">
+        <span class="dt-cust-fin-label">LIFETIME SPEND</span>
+        <span class="dt-cust-fin-val" style="color:#8A681F;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; display:inline-block;"><path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8"></path></svg>0</span>
+        <span style="font-size:0.65rem; color:#78716C; font-weight:600;">Paid &amp; credit orders</span>
+    </div>
+
+    <div class="dt-cust-fin-box">
+        <span class="dt-cust-fin-label">TOTAL ORDERS</span>
+        <span class="dt-cust-fin-val">0 Orders</span>
+        <span style="font-size:0.65rem; color:#78716C; font-weight:600;">
+                            No order rows on file
+                    </span>
+    </div>
+
+    <div class="dt-cust-fin-box">
+        <span class="dt-cust-fin-label">AVG ORDER VALUE</span>
+        <span class="dt-cust-fin-val"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; display:inline-block;"><path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8"></path></svg>0</span>
+        <span style="font-size:0.65rem; color:#78716C; font-weight:600;">
+            No orders yet        </span>
+    </div>
+
+    <div class="dt-cust-fin-box">
+                <span class="dt-cust-fin-label">OUTSTANDING</span>
+        <span class="dt-cust-fin-val" style="color:#15803D;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; display:inline-block;"><path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8"></path></svg>0</span>
+        <span style="font-size:0.65rem; color:#78716C; font-weight:600;">
+                            No credit limit set
+                    </span>
+    </div>
+</div>
+
+                        <!-- Interactive Tab Navigator -->
+                        <div class="dt-cust-tab-nav">
+                                                        <button type="button" class="dt-cust-tab-btn active" onclick="switchCustomerTab('orders', this)">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path></svg>
+                                <span>Order History</span>
+                                <span class="dt-cust-tab-badge">0</span>
+                            </button>
+
+                            <button type="button" class="dt-cust-tab-btn" onclick="switchCustomerTab('addresses', this)">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                <span>Saved Addresses</span>
+                                <span class="dt-cust-tab-badge">1</span>
+                            </button>
+
+                            <button type="button" class="dt-cust-tab-btn" onclick="switchCustomerTab('activity', this)">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                                <span>Audit Timeline</span>
+                            </button>
+
+                            <button type="button" class="dt-cust-tab-btn" onclick="switchCustomerTab('notes', this)">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                <span>Staff Notes</span>
+                            </button>
+                        </div>
+
+                        <!-- Tab Panes -->
+                        <div class="dt-cust-tab-content">
+                            <div id="dtCustTabPane-orders" class="dt-cust-tab-pane" style="display:block;">
+                                
+<!-- ══ CUSTOMER RECENT ORDERS SUB-TABLE ══ -->
+<div class="dt-cust-table-wrap" style="border:none; box-shadow:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <h4 style="font-size:0.9rem; font-weight:800; color:#181512; margin:0;">
+            Purchase History (0 Orders)
+        </h4>
+            </div>
+
+            <div class="dt-cust-empty-state" style="padding:32px 20px;">
+            <div class="dt-cust-empty-icon">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            </div>
+            <h4 class="dt-cust-empty-title">No Orders Yet</h4>
+            <p class="dt-cust-empty-sub">This customer has not placed an order. Orders appear here as soon as one is recorded.</p>
+        </div>
+    </div>
                             </div>
+
+                            <div id="dtCustTabPane-addresses" class="dt-cust-tab-pane" style="display:none;">
+                                
+<style>
+/* ── Admin Customer Address Book Luxury Styles ── */
+.dt-addr-card {
+    background: #FFFFFF;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    position: relative;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.dt-addr-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #CBD5E1;
+}
+.dt-addr-card.billing-card {
+    border-color: #D4AF37;
+    background: linear-gradient(135deg, #FFFDF9 0%, #FAF5E8 100%);
+    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.12);
+}
+.dt-addr-card.shipping-default-card {
+    border-color: #16A34A;
+    background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.1);
+}
+.dt-addr-card.warehouse-card {
+    border-color: #0284C7;
+    background: linear-gradient(135deg, #F0F9FF 0%, #FFFFFF 100%);
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.08);
+}
+.dt-addr-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #E2E8F0;
+}
+.dt-addr-card.billing-card .dt-addr-head {
+    border-bottom-color: rgba(212, 175, 55, 0.35);
+}
+.dt-addr-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+.dt-addr-badge.gold {
+    background: linear-gradient(135deg, #FAF5E8 0%, #F5ECCE 100%);
+    color: #8A681F;
+    border: 1px solid #D4AF37;
+}
+.dt-addr-badge.emerald {
+    background: #DCFCE7;
+    color: #15803D;
+    border: 1px solid #86EFAC;
+}
+.dt-addr-badge.cyan {
+    background: #E0F2FE;
+    color: #0369A1;
+    border: 1px solid #7DD3FC;
+}
+.dt-addr-badge.gray {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+}
+.dt-addr-body {
+    font-size: 0.8rem;
+    color: #1F2937;
+    line-height: 1.5;
+}
+.dt-addr-comp-name {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 4px;
+}
+.dt-addr-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px solid #F1F5F9;
+}
+.dt-addr-act-btn {
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+.dt-addr-act-btn.edit {
+    background: #FAF5E8;
+    color: #705114;
+    border-color: #D4AF37;
+}
+.dt-addr-act-btn.edit:hover {
+    background: #F5ECCE;
+    color: #5A4210;
+    transform: translateY(-1px);
+}
+.dt-addr-act-btn.ship-default {
+    background: #F0FDF4;
+    color: #15803D;
+    border-color: #86EFAC;
+}
+.dt-addr-act-btn.ship-default:hover {
+    background: #DCFCE7;
+    transform: translateY(-1px);
+}
+.dt-addr-act-btn.bill-default {
+    background: #FFFBEB;
+    color: #B45309;
+    border-color: #FCD34D;
+}
+.dt-addr-act-btn.bill-default:hover {
+    background: #FEF3C7;
+    transform: translateY(-1px);
+}
+.dt-addr-act-btn.del {
+    background: #FEF2F2;
+    color: #DC2626;
+    border-color: #FECACA;
+}
+.dt-addr-act-btn.del:hover {
+    background: #FEE2E2;
+    transform: translateY(-1px);
+}
+
+/* ── Admin Address Modal ── */
+.dt-adm-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+.dt-adm-modal-box {
+    background: #FFFFFF;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+    border: 1.5px solid #E2E8F0;
+    box-sizing: border-box;
+    animation: dtFadeInScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dtFadeInScale {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+.dt-adm-modal-header {
+    background: linear-gradient(135deg, #FFFDF9 0%, #FAF5E8 100%);
+    padding: 14px 20px;
+    border-bottom: 1.5px solid #EAE5D9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.dt-adm-modal-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dt-adm-modal-close {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748B;
+    transition: all 0.15s ease;
+}
+.dt-adm-modal-close:hover {
+    color: #111827;
+    background: #F1F5F9;
+    border-color: #CBD5E1;
+}
+.dt-adm-modal-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 135px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.dt-adm-modal-footer {
+    padding: 12px 20px;
+    background: #FAF8F4;
+    border-top: 1px solid #EAE5D9;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.dt-adm-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+@media (max-width: 520px) {
+    .dt-adm-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+.dt-adm-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.dt-adm-field-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.dt-adm-field-input, .dt-adm-field-select, .dt-adm-field-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.2px solid #CBD5E1;
+    font-size: 0.82rem;
+    color: #111827;
+    background: #FFFFFF;
+    font-family: inherit;
+    transition: border-color 0.15s ease;
+}
+.dt-adm-field-input:focus, .dt-adm-field-select:focus, .dt-adm-field-textarea:focus {
+    outline: none;
+    border-color: #D4AF37;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+</style>
+
+<!-- ══ CUSTOMER ADDRESS BOOK ══ -->
+<div id="dtCustAddressBookContainer">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+        <div>
+            <h4 style="font-size:0.95rem; font-weight:800; color:#111827; margin:0; display:flex; align-items:center; gap:8px;">
+                <span>Saved Addresses</span>
+                <span id="dtCustAddressCountBadge" class="dt-cust-tab-badge" style="background:#FAF5E8; color:#8A681F; border:1px solid #D4AF37; font-weight:800; font-size:0.7rem; padding:2px 8px;">
+                    1                </span>
+            </h4>
+            <p style="font-size:0.75rem; color:#64748B; margin:3px 0 0 0;">
+                Verified GST billing headquarters, default transport destinations, and warehouse hubs.
+            </p>
+        </div>
+
+        <button type="button" class="dt-btn dt-btn-gold" onclick="openAdminAddAddressModal(1)" style="padding:7px 15px; font-size:0.78rem; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>+ Add Address</span>
+        </button>
+    </div>
+
+        <div class="dt-cust-address-grid">
+                <div class="dt-addr-card shipping-default-card" id="dtAdminAddrCard-1">
+            <div>
+                <div class="dt-addr-head">
+                                            <span class="dt-addr-badge emerald">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                            <span>Default Shipping Address</span>
+                        </span>
+                        <span class="dt-status-pill active" style="font-size:0.62rem; font-weight:800;">Primary Dispatch</span>
+                                    </div>
+
+                <div class="dt-addr-body" style="margin-top:10px;">
+                    <div class="dt-addr-comp-name">Radhika Sarees Emporium</div>
+                    <div>Ring Road Textile Market</div>
+                                        <div style="font-weight:600; margin-top:2px;">
+                        Surat, Gujarat — 395002                    </div>
+                                            <div style="margin-top:4px; font-size:0.75rem; color:#475569; display:flex; align-items:center; gap:5px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>Phone: <strong>9876543210</strong></span>
+                        </div>
+                                                        </div>
+            </div>
+
+            <div class="dt-addr-actions">
+                <button type="button" class="dt-addr-act-btn edit" data-addr="{&quot;id&quot;:1,&quot;customer_id&quot;:1,&quot;recipient_name&quot;:&quot;Radhika Sarees Emporium&quot;,&quot;phone&quot;:&quot;9876543210&quot;,&quot;address_line1&quot;:&quot;Ring Road Textile Market&quot;,&quot;address_line2&quot;:&quot;&quot;,&quot;city&quot;:&quot;Surat&quot;,&quot;state&quot;:&quot;Gujarat&quot;,&quot;pincode&quot;:&quot;395002&quot;,&quot;address_type&quot;:&quot;home&quot;,&quot;is_default&quot;:1,&quot;gstin&quot;:&quot;&quot;}" onclick="openAdminEditAddressModal(this)">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    <span>Edit</span>
+                </button>
+
+                
+                                    <button type="button" class="dt-addr-act-btn bill-default" onclick="setCustomerDefaultBilling(1, 1)">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span>Set as Billing</span>
+                    </button>
+                
+                            </div>
+        </div>
+            </div>
+    </div>
+
+<!-- ══ LUXURY ADMIN ADDRESS MODAL ══ -->
+<div id="dtAdminAddressModal" class="dt-adm-modal-backdrop" onclick="if(event.target===this) closeAdminAddressModal();">
+    <div class="dt-adm-modal-box">
+        <div class="dt-adm-modal-header">
+            <h3 id="dtAdminAddressModalTitle" class="dt-adm-modal-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A681F" stroke-width="2.3"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span>Add Customer Address</span>
+            </h3>
+            <button type="button" class="dt-adm-modal-close" onclick="closeAdminAddressModal()" aria-label="Close modal">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <form id="dtAdminAddressForm" onsubmit="return handleAdminSaveAddress(event);">
+            <input type="hidden" id="dtAdminAddrId" value="">
+            <input type="hidden" id="dtAdminAddrCustId" value="1">
+
+            <div class="dt-adm-modal-body">
+                <div class="dt-adm-form-row">
+                    <div class="dt-adm-field-group">
+                        <label class="dt-adm-field-label" for="dtAdminAddrType">Address Classification *</label>
+                        <select id="dtAdminAddrType" class="dt-adm-field-select" required onchange="handleAdminAddrTypeChange(this.value)">
+                            <option value="billing">⭐ Registered GST Billing Address</option>
+                            <option value="shipping">🚚 Standard Shipping Destination</option>
+                            <option value="warehouse">🏭 Warehouse / Godown Hub</option>
+                            <option value="work">🏢 Commercial Office / Branch</option>
+                            <option value="home">🏠 Residential Premises</option>
+                        </select>
+                    </div>
+
+                    <div class="dt-adm-field-group">
+                        <label class="dt-adm-field-label" for="dtAdminAddrRecipient">Company / Recipient Name *</label>
+                        <input type="text" id="dtAdminAddrRecipient" class="dt-adm-field-input" placeholder="e.g. JNK Collection" required>
+                    </div>
+                </div>
+
+                <div class="dt-adm-form-row">
+                    <div class="dt-adm-field-group">
+                        <label class="dt-adm-field-label" for="dtAdminAddrPhone">Contact Phone Number *</label>
+                        <input type="tel" id="dtAdminAddrPhone" class="dt-adm-field-input" placeholder="e.g. 917046363528" required>
+                    </div>
+
+                    <div class="dt-adm-field-group">
+                        <label class="dt-adm-field-label" for="dtAdminAddrGst">GSTIN (Tax ID)</label>
+                        <input type="text" id="dtAdminAddrGst" class="dt-adm-field-input" placeholder="e.g. 24DADPD8939M1ZB" maxlength="15" style="text-transform:uppercase;">
+                    </div>
+                </div>
+
+                <div class="dt-adm-field-group">
+                    <label class="dt-adm-field-label" for="dtAdminAddrLine1">Street Address / Commercial Market Premises *</label>
+                    <textarea id="dtAdminAddrLine1" class="dt-adm-field-textarea" rows="2" placeholder="Building name, shop/office number, market name, street..." required></textarea>
+                </div>
+
+                <div class="dt-adm-field-group">
+                    <label class="dt-adm-field-label" for="dtAdminAddrLine2">Landmark / Transporter Hub / Area (Optional)</label>
+                    <input type="text" id="dtAdminAddrLine2" class="dt-adm-field-input" placeholder="e.g. Near Ring Road Flyover, DTDC Hub">
+                </div>
+
+                <div class="dt-adm-form-row">
+                    <div class="dt-adm-field-group">
+                        <label class="dt-adm-field-label" for="dtAdminAddrCity">City / District *</label>
+                        <input type="text" id="dtAdminAddrCity" class="dt-adm-field-input" placeholder="Surat" required>
+                    </div>
+
+                    <div class="dt-adm-field-group">
+                        <label class="dt-adm-field-label" for="dtAdminAddrState">State / Union Territory *</label>
+                        <select id="dtAdminAddrState" class="dt-adm-field-select" required>
+                            <option value="Gujarat">Gujarat (24)</option>
+                            <option value="Maharashtra">Maharashtra (27)</option>
+                            <option value="Delhi">Delhi (07)</option>
+                            <option value="Rajasthan">Rajasthan (08)</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh (09)</option>
+                            <option value="Karnataka">Karnataka (29)</option>
+                            <option value="Tamil Nadu">Tamil Nadu (33)</option>
+                            <option value="Telangana">Telangana (36)</option>
+                            <option value="West Bengal">West Bengal (19)</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh (23)</option>
+                            <option value="Haryana">Haryana (06)</option>
+                            <option value="Punjab">Punjab (03)</option>
+                            <option value="Kerala">Kerala (32)</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh (37)</option>
+                            <option value="Bihar">Bihar (10)</option>
+                            <option value="Assam">Assam (18)</option>
+                            <option value="Odisha">Odisha (21)</option>
+                            <option value="Jharkhand">Jharkhand (20)</option>
+                            <option value="Chhattisgarh">Chhattisgarh (22)</option>
+                            <option value="Uttarakhand">Uttarakhand (05)</option>
+                            <option value="Himachal Pradesh">Himachal Pradesh (02)</option>
+                            <option value="Goa">Goa (30)</option>
+                            <option value="Tripura">Tripura (16)</option>
+                            <option value="Manipur">Manipur (14)</option>
+                            <option value="Meghalaya">Meghalaya (17)</option>
+                            <option value="Nagaland">Nagaland (13)</option>
+                            <option value="Arunachal Pradesh">Arunachal Pradesh (12)</option>
+                            <option value="Mizoram">Mizoram (15)</option>
+                            <option value="Sikkim">Sikkim (11)</option>
+                            <option value="Jammu & Kashmir">Jammu & Kashmir (01)</option>
+                            <option value="Ladakh">Ladakh (38)</option>
+                            <option value="Chandigarh">Chandigarh (04)</option>
+                            <option value="Puducherry">Puducherry (34)</option>
+                            <option value="Dadra & Nagar Haveli and Daman & Diu">Dadra & Nagar Haveli (26)</option>
+                            <option value="Andaman & Nicobar">Andaman & Nicobar (35)</option>
+                            <option value="Lakshadweep">Lakshadweep (31)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="dt-adm-form-row">
+                    <div class="dt-adm-field-group">
+                        <label class="dt-adm-field-label" for="dtAdminAddrPin">6-Digit PIN Code *</label>
+                        <input type="text" id="dtAdminAddrPin" class="dt-adm-field-input" placeholder="395002" maxlength="6" pattern="[0-9]{6}" required>
+                    </div>
+
+                    <div class="dt-adm-field-group" style="justify-content:center; padding-top:16px;">
+                        <label style="display:flex; align-items:center; gap:8px; font-size:0.78rem; font-weight:700; color:#1F2937; cursor:pointer;">
+                            <input type="checkbox" id="dtAdminAddrDefault" style="width:16px; height:16px; accent-color:#D4AF37;">
+                            <span>Set as default for this address type</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dt-adm-modal-footer">
+                <button type="button" class="dt-btn dt-btn-pale" onclick="closeAdminAddressModal()" style="padding:8px 16px;">
+                    Cancel
+                </button>
+                <button type="submit" id="dtAdminAddrSaveBtn" class="dt-btn dt-btn-gold" style="padding:8px 20px; display:inline-flex; align-items:center; gap:6px;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#111827" stroke-width="2.3"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <span>Save Address</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+                            </div>
+
+                            <div id="dtCustTabPane-activity" class="dt-cust-tab-pane" style="display:none;">
+                                
+<!-- ══ CUSTOMER ACTIVITY TIMELINE ══ -->
+<div>
+    <h4 style="font-size:0.9rem; font-weight:800; color:#181512; margin:0 0 6px 0;">Account Activity</h4>
+    <p style="font-size:0.7rem; color:#8C8478; margin:0 0 16px 0;">
+        Derived from recorded timestamps. Page views, logins before the most recent one, and cart activity are not logged.
+    </p>
+
+        <div class="dt-cust-timeline">
+                <div class="dt-cust-timeline-item">
+            <div class="dt-cust-timeline-dot green"></div>
+            <div class="dt-cust-timeline-title">Account created</div>
+            <div class="dt-cust-timeline-meta">
+                <span>27 Nov 2026 at 06:22 PM</span>
+                                    <span>• Wholesale account</span>
+                                    <span>• Surat</span>
+                            </div>
+        </div>
+            </div>
+    </div>
+                            </div>
+
+                            <div id="dtCustTabPane-notes" class="dt-cust-tab-pane" style="display:none;">
+                                
+<!-- ══ INTERNAL STAFF NOTES & MEMO PANEL ══ -->
+<div class="dt-cust-notes-stream">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+        <h4 style="font-size:0.9rem; font-weight:800; color:#181512; margin:0;">Internal Staff Notes</h4>
+        <span style="font-size:0.7rem; color:#78716C;">Visible to Admin &amp; Support Staff only</span>
+    </div>
+
+            <div style="background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; padding:12px 14px; margin-bottom:12px;">
+            <p style="font-size:0.72rem; color:#645D54; margin:0;">
+                The database is unavailable, so existing notes cannot be shown and new ones cannot be saved.
+            </p>
+        </div>
+    
+    <!-- Add Note Box -->
+    <form onsubmit="addCustomerQuickNote(event)" data-customer-id="1"
+          style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+        <textarea id="dtCustNewNoteText" class="dt-cust-search-input" style="height:64px; resize:none; padding-left:12px;" placeholder="Write an internal customer memo (e.g. prefers delivery 4-6 PM)..."></textarea>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.72rem; font-weight:700; color:#181512; cursor:pointer;">
+                <input type="checkbox" id="dtCustNoteImportantChk">
+                <span>Mark as Important Note</span>
+            </label>
+            <button type="submit" class="dt-btn dt-btn-gold dt-btn-sm">+ Save Staff Note</button>
+        </div>
+    </form>
+
+    <!-- Notes Stream -->
+    <div id="dtCustNotesStream" style="display:flex; flex-direction:column; gap:8px;">
+                    <p id="dtCustNotesEmpty" style="font-size:0.74rem; color:#8C8478; margin:4px 0 0 0;">
+                No internal notes on this customer yet.
+            </p>
+            </div>
+</div>
+                            </div>
+                        </div>
                                             </div>
                 </div>
             </div>

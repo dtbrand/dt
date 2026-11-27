@@ -31,7 +31,7 @@ foreach ($it as $f) {
     if (
         !str_ends_with($rel, '.php') ||
         str_contains($rel, 'includes/') ||
-        str_contains($rel, 'components/') ||
+        str_contains($rel, '/components/') ||
         str_starts_with($rel, '_') ||
         str_contains($rel, '/_') ||
         $rel === 'adminguard.php'
@@ -53,12 +53,12 @@ $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 $pdo->exec(file_get_contents($root . '/cloudflare/schema.sql'));
 $pdo->exec("
-    CREATE TABLE IF NOT EXISTS product_brands (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, slug TEXT, tagline TEXT, status TEXT DEFAULT 'active');
+    CREATE TABLE IF NOT EXISTS product_brands (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, slug TEXT, tagline TEXT, description TEXT DEFAULT '', tier TEXT DEFAULT 'Primary Flagship', logo_url TEXT DEFAULT '', status TEXT DEFAULT 'active');
     INSERT OR IGNORE INTO product_brands (id, name, slug, tagline, status) VALUES (1, 'DT Brand''s', 'dt-brands', 'Direct Surat Handloom', 'active');
     CREATE TABLE IF NOT EXISTS product_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, slug TEXT, status TEXT DEFAULT 'active');
     INSERT OR IGNORE INTO product_categories (id, name, slug, status) VALUES (1, 'Kanjivaram Silk', 'kanjivaram-silk', 'active');
-    CREATE TABLE IF NOT EXISTS product_attributes (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, slug TEXT, values_json TEXT DEFAULT '[]', status TEXT DEFAULT 'active');
-    INSERT OR IGNORE INTO product_attributes (id, name, slug, values_json) VALUES (1, 'Fabric', 'fabric', '[\"Pure Mulberry Silk\"]');
+    CREATE TABLE IF NOT EXISTS product_attributes (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, slug TEXT, type TEXT DEFAULT 'Text Badge / Pill', values_json TEXT DEFAULT '[]', status TEXT DEFAULT 'active');
+    INSERT OR IGNORE INTO product_attributes (id, name, slug, type, values_json) VALUES (1, 'Fabric', 'fabric', 'Text Badge / Pill', '[{\"name\":\"Pure Mulberry Silk\",\"hex\":null}]');
     CREATE TABLE IF NOT EXISTS notification_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, channel TEXT, recipient TEXT, template_key TEXT, subject TEXT, content TEXT, status TEXT DEFAULT 'sent', created_at TEXT DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS system_settings (key_name TEXT PRIMARY KEY, value TEXT);
     CREATE TABLE IF NOT EXISTS courier_configs (id INTEGER PRIMARY KEY AUTOINCREMENT, carrier TEXT, status TEXT DEFAULT 'active');

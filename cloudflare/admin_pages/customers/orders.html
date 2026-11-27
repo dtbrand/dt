@@ -2397,7 +2397,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = 'cb3be9cf7b34736715b18936bea0bf25513b95114ec7fd9ba439e7fc015af13d';
+window.DT_ADMIN_CSRF_TOKEN = 'a461c7a50c2182e939d1b6165c0db6605cc7fb31f19e81a84ab42b7078e7d213';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2938,20 +2938,24 @@ window.showToast = window.showToast || function(msg, type) {
 
                 <!-- Sub Table Component -->
                 <div class="dt-card">
-                    <div class="dt-cust-empty-state" style="padding:44px 24px;">
-    <div class="dt-cust-empty-icon">
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>
-        </svg>
+                                            
+<!-- ══ CUSTOMER RECENT ORDERS SUB-TABLE ══ -->
+<div class="dt-cust-table-wrap" style="border:none; box-shadow:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <h4 style="font-size:0.9rem; font-weight:800; color:#181512; margin:0;">
+            Purchase History (0 Orders)
+        </h4>
+            </div>
+
+            <div class="dt-cust-empty-state" style="padding:32px 20px;">
+            <div class="dt-cust-empty-icon">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            </div>
+            <h4 class="dt-cust-empty-title">No Orders Yet</h4>
+            <p class="dt-cust-empty-sub">This customer has not placed an order. Orders appear here as soon as one is recorded.</p>
+        </div>
     </div>
-    <h4 class="dt-cust-empty-title">
-        Customer Not Found    </h4>
-    <p class="dt-cust-empty-sub">
-                    No account matches <strong>1</strong>.
-            </p>
-    <a href="/admin/customers/index.php" class="dt-btn dt-btn-pale">Browse Customers</a>
-</div>
-                </div>
+                                    </div>
             </div>
 
         </main>

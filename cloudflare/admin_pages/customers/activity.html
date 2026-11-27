@@ -2398,7 +2398,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '4c7d39b1e66044f66f323c102fb9ccffeea217edea308eff1a1281d9d88b4b4d';
+window.DT_ADMIN_CSRF_TOKEN = 'f35911ab630d16c767bd1dca77ccf207249d1724108344aa9ea48d392236ab6e';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2938,20 +2938,27 @@ window.showToast = window.showToast || function(msg, type) {
                 </div>
 
                 <div class="dt-card">
-                    <div class="dt-cust-empty-state" style="padding:44px 24px;">
-    <div class="dt-cust-empty-icon">
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>
-        </svg>
+                                            
+<!-- ══ CUSTOMER ACTIVITY TIMELINE ══ -->
+<div>
+    <h4 style="font-size:0.9rem; font-weight:800; color:#181512; margin:0 0 6px 0;">Account Activity</h4>
+    <p style="font-size:0.7rem; color:#8C8478; margin:0 0 16px 0;">
+        Derived from recorded timestamps. Page views, logins before the most recent one, and cart activity are not logged.
+    </p>
+
+        <div class="dt-cust-timeline">
+                <div class="dt-cust-timeline-item">
+            <div class="dt-cust-timeline-dot green"></div>
+            <div class="dt-cust-timeline-title">Account created</div>
+            <div class="dt-cust-timeline-meta">
+                <span>27 Nov 2026 at 06:21 PM</span>
+                                    <span>• Wholesale account</span>
+                                    <span>• Surat</span>
+                            </div>
+        </div>
+            </div>
     </div>
-    <h4 class="dt-cust-empty-title">
-        Customer Not Found    </h4>
-    <p class="dt-cust-empty-sub">
-                    No account matches <strong>1</strong>.
-            </p>
-    <a href="/admin/customers/index.php" class="dt-btn dt-btn-pale">Browse Customers</a>
-</div>
-                </div>
+                                    </div>
             </div>
 
         </main>
