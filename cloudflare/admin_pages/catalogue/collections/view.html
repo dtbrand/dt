@@ -2399,7 +2399,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '34acb055a7d91c97aab9fd43a75acd71752606792b08ae7d27fe26062fdd90b1';
+window.DT_ADMIN_CSRF_TOKEN = '58e1be12a540d9ee88594a86da6c9364b58c36bd52987869acd1223d55c5051c';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2989,9 +2989,34 @@ window.showToast = window.showToast || function(msg, type) {
                 <option value="5" >Category: Banarasi Brocades (185 SKUs)</option>
                 <option value="6" >Category: Festive Dupattas (95 SKUs)</option>
             </select>
-            <button type="button" class="dt-btn-action-sm gold" onclick="if(window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Merchandising order saved live!')" style="height:28px; padding:0 12px; font-size:11px;">Save Merchandising</button>
+            <button type="button" class="dt-btn-action-sm gold" onclick="window.dtSaveMerchandising('Surat Heritage Silk Festival')" style="height:28px; padding:0 12px; font-size:11px;">Save Merchandising</button>
         </div>
     </div>
+<script>
+window.dtSaveMerchandising = function(catName) {
+    var items = Array.from(document.querySelectorAll('.dt-merch-item')).map(function(card, idx) {
+        var posSel = card.querySelector('.dt-merch-pos-select');
+        return {
+            id: card.id,
+            title: (card.querySelector('strong')?.textContent || '').trim(),
+            position: posSel ? Number(posSel.value) : (idx + 1),
+            pinned: card.classList.contains('is-pinned'),
+            hidden: card.classList.contains('is-hidden')
+        };
+    });
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_merchandising', category: catName || 'default', items: items })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'Merchandising order saved!');
+    })
+    .catch(function() { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving merchandising.'); });
+};
+</script>
 
     <div style="padding:16px;">
         <div class="dt-merch-grid">
@@ -3182,7 +3207,7 @@ window.showToast = window.showToast || function(msg, type) {
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#8A681F" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 <span>AI Generate SEO</span>
             </button>
-            <button type="button" class="dt-btn-action-sm gold" onclick="if(window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('SEO Meta tags updated live!')" style="height:28px; padding:0 12px; font-size:11px;">Save SEO Settings</button>
+            <button type="button" class="dt-btn-action-sm gold" onclick="window.dtSaveSeoSettings('/shop/surat-heritage-silk')" style="height:28px; padding:0 12px; font-size:11px;">Save SEO Settings</button>
         </div>
     </div>
 
@@ -3210,8 +3235,30 @@ window.showToast = window.showToast || function(msg, type) {
 
                 <div class="dt-form-group">
                     <label class="dt-form-label">Focus SEO Keywords</label>
-                    <input type="text" class="dt-form-input" value="surat heritage silk festival wholesale, surat textile depot, bulk lot price, dt brands surat">
+                    <input type="text" id="seoKeywordsInput" class="dt-form-input" value="surat heritage silk festival wholesale, surat textile depot, bulk lot price, dt brands surat">
                 </div>
+<script>
+window.dtSaveSeoSettings = function(routeSlug) {
+    var payload = {
+        action: 'save_seo',
+        page_route: routeSlug || '/',
+        meta_title: (document.getElementById('seoTitleInput')?.value || '').trim(),
+        meta_description: (document.getElementById('seoDescInput')?.value || '').trim(),
+        meta_keywords: (document.getElementById('seoKeywordsInput')?.value || '').trim()
+    };
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'SEO settings saved!');
+    })
+    .catch(function() { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving SEO settings.'); });
+};
+</script>
             </div>
 
             <!-- Google SERP Live Snippet Box -->

@@ -2407,7 +2407,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '68f03e0396ff50a833f7788667cc0bf5e6dea8faefec159006b2c1f3535d8cc4';
+window.DT_ADMIN_CSRF_TOKEN = 'e944edd50736519451a7f7a964969df95b130e7884facf7abed311a5ec1d800c';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2962,38 +2962,38 @@ window.showToast = window.showToast || function(msg, type) {
                         <span>Published Live</span>
                     </span>
                 </div>
-                <form onsubmit="event.preventDefault(); window.showToast('About Us story updated and published live!');" style="padding:18px 20px;">
+                <form id="admAboutForm" onsubmit="return window.saveAboutCms(event);" style="padding:18px 20px;">
                     <div style="display:flex; flex-direction:column; gap:16px;">
                         <div>
                             <label style="font-size:0.75rem; font-weight:700; color:#181512; display:block; margin-bottom:4px;">Main Heritage Headline *</label>
-                            <input type="text" value="3 Decades of Handloom Mastery &amp; Surat Weaving Heritage" required style="width:100%; height:38px; border:1.5px solid #EAE5D9; border-radius:8px; padding:0 12px; font-weight:700; box-sizing:border-box;">
+                            <input type="text" id="aboutHeadline" name="about_headline" value="Direct Mill Craftsmanship &amp; Pure Silk Heritage" required style="width:100%; height:38px; border:1.5px solid #EAE5D9; border-radius:8px; padding:0 12px; font-weight:700; box-sizing:border-box;">
                         </div>
 
                         <div>
                             <label style="font-size:0.75rem; font-weight:700; color:#181512; display:block; margin-bottom:4px;">Brand Narrative &amp; Mission Statement *</label>
-                            <textarea rows="5" required style="width:100%; border:1.5px solid #EAE5D9; border-radius:8px; padding:12px; font-weight:600; font-size:12.5px; line-height:1.5; box-sizing:border-box; resize:vertical;">DT Brand's (Jai Hanuman Tex) is a premier textile manufacturing and direct-to-retail/wholesale powerhouse based in Surat, Gujarat. We specialize in authentic handcrafted Pure Silk Sarees, Royal Banarasi Kadwa Brocades, Kanjivaram Bridal Silks, and Designer Festive Lehengas. Our mission is to deliver authentic handloom grandeur directly from our Surat powerlooms to boutiques and homes worldwide.</textarea>
+                            <textarea id="aboutNarrative" name="about_narrative" rows="5" required style="width:100%; border:1.5px solid #EAE5D9; border-radius:8px; padding:12px; font-weight:600; font-size:12.5px; line-height:1.5; box-sizing:border-box; resize:vertical;">DT Brand&#039;s (Jai Hanuman Tex) is a premier textile manufacturing and direct-to-retail/wholesale powerhouse based in Surat, Gujarat. We specialize in authentic handcrafted Pure Silk Sarees, Royal Banarasi Kadwa Brocades, Kanjivaram Bridal Silks, and Designer Festive Lehengas. Our mission is to deliver authentic handloom grandeur directly from our Surat powerlooms to boutiques and homes worldwide.</textarea>
                         </div>
 
                         <div class="dt-cms-grid">
                             <div>
-                                <label style="font-size:0.75rem; font-weight:700; color:#181512; display:block; margin-bottom:4px;">Powerlooms &amp; Artisans Stat Badge</label>
-                                <input type="text" value="120+ Active Looms | 450 Master Artisans" style="width:100%; height:38px; border:1.5px solid #EAE5D9; border-radius:8px; padding:0 12px; font-weight:600; box-sizing:border-box;">
+                                <label style="font-size:0.75rem; font-weight:700; color:#181512; display:block; margin-bottom:4px;">Loom Capacity Badge</label>
+                                <input type="text" id="aboutLoomsStat" name="about_looms_stat" value="120+ Active Looms" style="width:100%; height:38px; border:1.5px solid #EAE5D9; border-radius:8px; padding:0 12px; font-weight:600; box-sizing:border-box;">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem; font-weight:700; color:#181512; display:block; margin-bottom:4px;">Wholesale Footprint Badge</label>
-                                <input type="text" value="1,200+ Wholesale Boutiques Worldwide" style="width:100%; height:38px; border:1.5px solid #EAE5D9; border-radius:8px; padding:0 12px; font-weight:600; box-sizing:border-box;">
+                                <label style="font-size:0.75rem; font-weight:700; color:#181512; display:block; margin-bottom:4px;">Established / Heritage Badge</label>
+                                <input type="text" id="aboutWholesaleStat" name="about_wholesale_stat" value="1994 (Surat, Gujarat)" style="width:100%; height:38px; border:1.5px solid #EAE5D9; border-radius:8px; padding:0 12px; font-weight:600; box-sizing:border-box;">
                             </div>
                         </div>
 
                         <div>
                             <label style="font-size:0.75rem; font-weight:700; color:#181512; display:block; margin-bottom:4px;">SEO Meta Description</label>
-                            <input type="text" value="Explore the royal heritage of DT Brand's &amp; Jai Hanuman Tex — Surat's leading manufacturer of handcrafted Pure Silk &amp; Banarasi Sarees." style="width:100%; height:38px; border:1.5px solid #EAE5D9; border-radius:8px; padding:0 12px; font-weight:600; box-sizing:border-box;">
+                            <input type="text" id="aboutMetaDesc" name="about_meta_desc" value="Explore the royal heritage of DT Brand&#039;s &amp; Jai Hanuman Tex — Surat&#039;s leading manufacturer of handcrafted Pure Silk &amp; Banarasi Sarees." style="width:100%; height:38px; border:1.5px solid #EAE5D9; border-radius:8px; padding:0 12px; font-weight:600; box-sizing:border-box;">
                         </div>
                     </div>
 
                     <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
                         <a href="/admin/cms/" class="dt-btn dt-btn-pale" style="text-decoration:none;">Cancel</a>
-                        <button type="submit" class="dt-btn dt-btn-gold" style="display:inline-flex; align-items:center; gap:6px;">
+                        <button type="submit" id="saveAboutBtn" class="dt-btn dt-btn-gold" style="display:inline-flex; align-items:center; gap:6px;">
                             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#111827" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             <span>Save &amp; Publish Changes</span>
                         </button>
@@ -3059,5 +3059,39 @@ window.showToast = window.showToast || function(msg, type) {
     </div>
 </div>
 <script src="/admin/assets/js/admin.js?v=cf"></script>
+<script>
+window.saveAboutCms = function(e) {
+    if (e) e.preventDefault();
+    var btn = document.getElementById('saveAboutBtn');
+    if (btn) btn.disabled = true;
+    var settings = {
+        about_headline: document.getElementById('aboutHeadline').value.trim(),
+        about_narrative: document.getElementById('aboutNarrative').value.trim(),
+        about_looms_stat: document.getElementById('aboutLoomsStat').value.trim(),
+        about_wholesale_stat: document.getElementById('aboutWholesaleStat').value.trim(),
+        about_meta_desc: document.getElementById('aboutMetaDesc').value.trim()
+    };
+    fetch('/api/settings.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', settings: settings })
+    })
+    .then(function(r) { return r.json().catch(function(){return {};}).then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+        if (btn) btn.disabled = false;
+        if (!res.ok || !res.d || !res.d.success) {
+            if (typeof window.showToast === 'function') window.showToast((res.d && res.d.message) || 'Failed to save About Us story.');
+            return;
+        }
+        if (typeof window.showToast === 'function') window.showToast('About Us story saved to database and published live!');
+    })
+    .catch(function() {
+        if (btn) btn.disabled = false;
+        if (typeof window.showToast === 'function') window.showToast('Network error saving About Us content.');
+    });
+    return false;
+};
+</script>
 </body>
 </html>

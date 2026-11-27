@@ -2395,7 +2395,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '9fd1425d513f96f8e4206b07868c968cc43ae09384474d1b7a8f31337f0af167';
+window.DT_ADMIN_CSRF_TOKEN = '6b59517b7e69fc6300593e0b00ebd59e6e2bfeba19c1d2f26ca8b45034e075b3';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2991,7 +2991,7 @@ window.showToast = window.showToast || function(msg, type) {
             <div class="adm-card">
                 <div class="adm-card-head" style="display:flex; justify-content:space-between; align-items:center;">
                     <h3 class="adm-card-title"><span>Static &amp; Policy Content Pages</span></h3>
-                    <button type="button" class="dt-btn dt-btn-gold" style="font-weight:800; font-size:12px; height:32px; padding:0 14px;" onclick="window.showToast('All CMS policy pages synchronized and published live!');">
+                    <button type="button" class="dt-btn dt-btn-gold" style="font-weight:800; font-size:12px; height:32px; padding:0 14px;" onclick="window.publishAllCmsPages(this)">
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#111827" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         <span>Publish All Changes</span>
                     </button>
@@ -3013,12 +3013,17 @@ window.showToast = window.showToast || function(msg, type) {
                                     <td><strong>About DT Brand&#039;s &amp; Jai Hanuman Tex</strong></td>
                                     <td><code style="font-size:11.5px; background:#FAF5E8; padding:2px 6px; border-radius:4px; color:#8A681F; font-weight:700; border:1px solid #D4AF37;">/about-us</code></td>
                                     <td><span class="adm-badge gold">Brand Story</span></td>
-                                    <td><small style="color:#7A7266;">22 Nov 2026</small></td>
-                                    <td><span class="adm-badge success">Published &amp; Live</span></td>
+                                    <td><small style="color:#7A7266;"></small></td>
+                                    <td><span class="adm-badge success"></span></td>
                                     <td>
                                         <div style="display:flex; gap:6px;">
                                             <a href="/about-us" target="_blank" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px; text-decoration:none;">View</a>
-                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;" onclick="window.showToast('CMS Editor ready for About DT Brand&#039;s &amp; Jai Hanuman Tex');">Edit</button>
+                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;"
+                                                data-slug="/about-us"
+                                                data-title="About DT Brand&#039;s &amp; Jai Hanuman Tex"
+                                                data-content="DT Brand&#039;s &amp; Jai Hanuman Tex heritage manufacturer of Surat pure silk &amp; wedding bridal wear."
+                                                data-status="published"
+                                                onclick="window.openCmsPageModal(this)">Edit</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -3026,12 +3031,17 @@ window.showToast = window.showToast || function(msg, type) {
                                     <td><strong>Wholesale B2B Terms &amp; MOQ Bale Policy</strong></td>
                                     <td><code style="font-size:11.5px; background:#FAF5E8; padding:2px 6px; border-radius:4px; color:#8A681F; font-weight:700; border:1px solid #D4AF37;">/wholesale-policy</code></td>
                                     <td><span class="adm-badge gold">B2B Policy</span></td>
-                                    <td><small style="color:#7A7266;">25 Nov 2026</small></td>
-                                    <td><span class="adm-badge success">Published &amp; Live</span></td>
+                                    <td><small style="color:#7A7266;"></small></td>
+                                    <td><span class="adm-badge success"></span></td>
                                     <td>
                                         <div style="display:flex; gap:6px;">
                                             <a href="/wholesale-policy" target="_blank" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px; text-decoration:none;">View</a>
-                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;" onclick="window.showToast('CMS Editor ready for Wholesale B2B Terms &amp; MOQ Bale Policy');">Edit</button>
+                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;"
+                                                data-slug="/wholesale-policy"
+                                                data-title="Wholesale B2B Terms &amp; MOQ Bale Policy"
+                                                data-content="Direct Surat Mill B2B MOQ rules, bale billing, and GST invoicing policy."
+                                                data-status="published"
+                                                onclick="window.openCmsPageModal(this)">Edit</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -3039,12 +3049,17 @@ window.showToast = window.showToast || function(msg, type) {
                                     <td><strong>Return, Exchange &amp; Damage Replacement</strong></td>
                                     <td><code style="font-size:11.5px; background:#FAF5E8; padding:2px 6px; border-radius:4px; color:#8A681F; font-weight:700; border:1px solid #D4AF37;">/return-policy</code></td>
                                     <td><span class="adm-badge gold">Customer Policy</span></td>
-                                    <td><small style="color:#7A7266;">20 Nov 2026</small></td>
-                                    <td><span class="adm-badge success">Published &amp; Live</span></td>
+                                    <td><small style="color:#7A7266;"></small></td>
+                                    <td><span class="adm-badge success"></span></td>
                                     <td>
                                         <div style="display:flex; gap:6px;">
                                             <a href="/return-policy" target="_blank" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px; text-decoration:none;">View</a>
-                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;" onclick="window.showToast('CMS Editor ready for Return, Exchange &amp; Damage Replacement');">Edit</button>
+                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;"
+                                                data-slug="/return-policy"
+                                                data-title="Return, Exchange &amp; Damage Replacement"
+                                                data-content="7-day transit damage and manufacturing defect replacement policy."
+                                                data-status="published"
+                                                onclick="window.openCmsPageModal(this)">Edit</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -3052,12 +3067,17 @@ window.showToast = window.showToast || function(msg, type) {
                                     <td><strong>Privacy Policy &amp; Data Security</strong></td>
                                     <td><code style="font-size:11.5px; background:#FAF5E8; padding:2px 6px; border-radius:4px; color:#8A681F; font-weight:700; border:1px solid #D4AF37;">/privacy-policy</code></td>
                                     <td><span class="adm-badge gold">Compliance</span></td>
-                                    <td><small style="color:#7A7266;">15 Nov 2026</small></td>
-                                    <td><span class="adm-badge success">Published &amp; Live</span></td>
+                                    <td><small style="color:#7A7266;"></small></td>
+                                    <td><span class="adm-badge success"></span></td>
                                     <td>
                                         <div style="display:flex; gap:6px;">
                                             <a href="/privacy-policy" target="_blank" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px; text-decoration:none;">View</a>
-                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;" onclick="window.showToast('CMS Editor ready for Privacy Policy &amp; Data Security');">Edit</button>
+                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;"
+                                                data-slug="/privacy-policy"
+                                                data-title="Privacy Policy &amp; Data Security"
+                                                data-content="Customer personal information protection and payment encryption standards."
+                                                data-status="published"
+                                                onclick="window.openCmsPageModal(this)">Edit</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -3065,12 +3085,17 @@ window.showToast = window.showToast || function(msg, type) {
                                     <td><strong>Shipping &amp; Delhivery Courier SLAs</strong></td>
                                     <td><code style="font-size:11.5px; background:#FAF5E8; padding:2px 6px; border-radius:4px; color:#8A681F; font-weight:700; border:1px solid #D4AF37;">/shipping-policy</code></td>
                                     <td><span class="adm-badge gold">Logistics</span></td>
-                                    <td><small style="color:#7A7266;">24 Nov 2026</small></td>
-                                    <td><span class="adm-badge success">Published &amp; Live</span></td>
+                                    <td><small style="color:#7A7266;"></small></td>
+                                    <td><span class="adm-badge success"></span></td>
                                     <td>
                                         <div style="display:flex; gap:6px;">
                                             <a href="/shipping-policy" target="_blank" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px; text-decoration:none;">View</a>
-                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;" onclick="window.showToast('CMS Editor ready for Shipping &amp; Delhivery Courier SLAs');">Edit</button>
+                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;"
+                                                data-slug="/shipping-policy"
+                                                data-title="Shipping &amp; Delhivery Courier SLAs"
+                                                data-content="24-48h dispatch and pan-India courier delivery SLAs."
+                                                data-status="published"
+                                                onclick="window.openCmsPageModal(this)">Edit</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -3136,6 +3161,89 @@ window.showToast = window.showToast || function(msg, type) {
 </nav>
     </div>
 </div>
+<div id="cmsPageEditorModal" style="display:none; position:fixed; inset:0; background:rgba(17,24,39,0.55); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:12px; max-width:560px; width:100%; border:1.5px solid #D4AF37; overflow:hidden; box-shadow:0 24px 50px rgba(0,0,0,0.3);">
+        <div style="padding:14px 18px; background:#181512; color:#D4AF37; display:flex; justify-content:space-between; align-items:center;">
+            <strong style="font-size:14px;">Edit CMS Page</strong>
+            <button type="button" onclick="document.getElementById('cmsPageEditorModal').style.display='none'" style="background:none;border:none;color:#FAF5E8;font-size:20px;cursor:pointer;">&times;</button>
+        </div>
+        <form onsubmit="return window.saveCmsPageModal(event)" style="padding:18px; display:flex; flex-direction:column; gap:12px;">
+            <input type="hidden" id="cmsEditSlug">
+            <div>
+                <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Page Title</label>
+                <input type="text" id="cmsEditTitle" class="adm-form-input" required>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Content Body</label>
+                <textarea id="cmsEditContent" class="adm-form-textarea" rows="5"></textarea>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Status</label>
+                <select id="cmsEditStatus" class="adm-form-select">
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                    <option value="archived">Archived</option>
+                </select>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">
+                <button type="button" class="dt-btn dt-btn-pale" onclick="document.getElementById('cmsPageEditorModal').style.display='none'">Cancel</button>
+                <button type="submit" class="dt-btn dt-btn-gold">Save CMS Page</button>
+            </div>
+        </form>
+    </div>
+</div>
 <script src="/admin/assets/js/admin.js?v=cf"></script>
+<script>
+window.openCmsPageModal = function(btn) {
+    document.getElementById('cmsEditSlug').value = btn.dataset.slug || '';
+    document.getElementById('cmsEditTitle').value = btn.dataset.title || '';
+    document.getElementById('cmsEditContent').value = btn.dataset.content || '';
+    var st = (btn.dataset.status || 'published').toLowerCase();
+    document.getElementById('cmsEditStatus').value = (st === 'draft' || st === 'archived') ? st : 'published';
+    document.getElementById('cmsPageEditorModal').style.display = 'flex';
+};
+window.saveCmsPageModal = function(e) {
+    if (e) e.preventDefault();
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'save_cms_page',
+            slug: document.getElementById('cmsEditSlug').value,
+            title: document.getElementById('cmsEditTitle').value.trim(),
+            content: document.getElementById('cmsEditContent').value,
+            status: document.getElementById('cmsEditStatus').value
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (!res || !res.success) {
+            if (typeof window.showToast === 'function') window.showToast((res && res.message) || 'Failed to save CMS page.');
+            return;
+        }
+        document.getElementById('cmsPageEditorModal').style.display = 'none';
+        if (typeof window.showToast === 'function') window.showToast(res.message || 'CMS page saved.');
+        setTimeout(function() { window.location.reload(); }, 500);
+    })
+    .catch(function() { if (typeof window.showToast === 'function') window.showToast('Network error saving CMS page.'); });
+    return false;
+};
+window.publishAllCmsPages = function(btn) {
+    if (btn) btn.disabled = true;
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'publish_all_cms' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (btn) btn.disabled = false;
+        if (typeof window.showToast === 'function') window.showToast((res && res.message) || 'Published all CMS pages.');
+    })
+    .catch(function() { if (btn) btn.disabled = false; if (typeof window.showToast === 'function') window.showToast('Network error publishing CMS pages.'); });
+};
+</script>
 </body>
 </html>

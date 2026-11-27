@@ -2398,7 +2398,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '9ebd29d16efca358490768ada682d85502f5d70f7f159b31b3846e02fb8d5303';
+window.DT_ADMIN_CSRF_TOKEN = '10f4c40c8a44623ae91ce3781f0ae2d089706be96e46fff3278dafe35b2625ac';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2931,6 +2931,7 @@ window.showToast = window.showToast || function(msg, type) {
             </div>
 
             <form onsubmit="return window.DT_CATEGORIES.saveCategoryForm(event)" class="dt-form-grid">
+    <input type="hidden" id="catId" value="0">
     <!-- Left 2-Col Main Section -->
     <div>
         <div class="dt-form-card">
@@ -2989,7 +2990,7 @@ window.showToast = window.showToast || function(msg, type) {
                 <div class="dt-form-group">
                     <label class="dt-form-label">Category Thumbnail (1:1 Ratio)</label>
                     <div class="dt-upload-zone" onclick="document.getElementById('catThumbUpload').click()">
-                        <img id="catThumbPreview" src="/assets/images/product1.png" class="dt-preview-thumb" style="margin:0 auto 8px auto; display:block;">
+                        <img id="catThumbPreview" src="/assets/images/no-image.svg" class="dt-preview-thumb" style="margin:0 auto 8px auto; display:block;">
                         <input type="file" id="catThumbUpload" style="display:none;" onchange="window.DT_CATALOGUE.previewImage(this, 'catThumbPreview')">
                         <span style="font-size:11px; font-weight:700; color:#8A681F;">Click to Upload Thumbnail</span>
                     </div>
@@ -3018,7 +3019,7 @@ window.showToast = window.showToast || function(msg, type) {
 
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">
-                    <input type="checkbox" checked style="width:15px; height:15px;">
+                    <input type="checkbox" id="catActiveChk" checked style="width:15px; height:15px;">
                     <span>Active Status (Live on Store)</span>
                 </label>
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">

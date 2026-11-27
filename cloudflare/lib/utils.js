@@ -278,6 +278,10 @@ export async function ensureRuntimeSchema(env) {
     const alterStmts = [
         "CREATE TABLE IF NOT EXISTS homepage_sections (id INTEGER PRIMARY KEY AUTOINCREMENT, section_key TEXT NOT NULL UNIQUE, title TEXT NOT NULL, subtitle TEXT DEFAULT '', display_order INTEGER DEFAULT 1, is_active INTEGER DEFAULT 1)",
         "CREATE TABLE IF NOT EXISTS social_channels (id INTEGER PRIMARY KEY AUTOINCREMENT, platform TEXT DEFAULT 'whatsapp', title TEXT NOT NULL, handle TEXT DEFAULT '', url TEXT NOT NULL, display_order INTEGER DEFAULT 1, status TEXT DEFAULT 'active')",
+        "CREATE TABLE IF NOT EXISTS cms_pages (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, content TEXT DEFAULT '', status TEXT DEFAULT 'published', created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)",
+        "ALTER TABLE orders ADD COLUMN notes TEXT DEFAULT ''",
+        'ALTER TABLE cart_items ADD COLUMN variant_id INTEGER DEFAULT NULL',
+        "ALTER TABLE cart_items ADD COLUMN lot_type TEXT DEFAULT 'single'",
         "ALTER TABLE categories ADD COLUMN subcategories_json TEXT DEFAULT '[]'",
         "ALTER TABLE brands ADD COLUMN description TEXT DEFAULT ''",
         "ALTER TABLE brands ADD COLUMN tier TEXT DEFAULT 'Primary Flagship'",

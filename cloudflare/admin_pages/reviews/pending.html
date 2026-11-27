@@ -2402,7 +2402,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '29b76dc31553e16a7697e66d6f2eaf24dae83204a6dcc5029af89a464dbc7466';
+window.DT_ADMIN_CSRF_TOKEN = '5f758584d5dcf2d9625d7b8541843fbb456ef4c2a7cb3a88dea7de3a8e462d16';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -3004,7 +3004,7 @@ window.showToast = window.showToast || function(msg, type) {
                                                 </span>
                                                                                     </div>
                                         <div style="font-size:11px; color:#64748B; margin-top:2px;">
-                                            Kolkata, WB &bull; 27 Nov 2026, 06:22 AM                                        </div>
+                                            Kolkata, WB &bull; 27 Nov 2026, 06:40 AM                                        </div>
                                     </td>
                                     <td>
                                         <div style="font-weight:600; color:#1F2937; font-size:12.5px;">
@@ -3063,7 +3063,7 @@ window.showToast = window.showToast || function(msg, type) {
                                                 </span>
                                                                                     </div>
                                         <div style="font-size:11px; color:#64748B; margin-top:2px;">
-                                            London, UK &bull; 26 Nov 2026, 06:22 PM                                        </div>
+                                            London, UK &bull; 26 Nov 2026, 06:40 PM                                        </div>
                                     </td>
                                     <td>
                                         <div style="font-weight:600; color:#1F2937; font-size:12.5px;">
@@ -3221,30 +3221,28 @@ function executeBatchAction(action) {
 
     const ids = Array.from(checkedBoxes).map(cb => parseInt(cb.value, 10));
     const verb = action === 'batch_approve' ? 'approve and publish' : 'reject';
-    if (!confirm(`Are you sure you want to ${verb} ${ids.length} selected review(s)?`)) {
-        return;
-    }
-
-    fetch('/api/reviews.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: action, ids: ids })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (!data || !data.success) {
-            toast('Batch action failed: ' + ((data && data.message) ? data.message : 'Please try again.'));
-            return;
-        }
-        ids.forEach(id => {
-            const r = document.getElementById('reviewRow_' + id);
-            if (r) r.remove();
+    window.dtShowConfirmModal(`Are you sure you want to ${verb} ${ids.length} selected review(s)?`, function() {
+        fetch('/api/reviews.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action, ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data || !data.success) {
+                toast('Batch action failed: ' + ((data && data.message) ? data.message : 'Please try again.'));
+                return;
+            }
+            ids.forEach(id => {
+                const r = document.getElementById('reviewRow_' + id);
+                if (r) r.remove();
+            });
+            toast(data.message || 'Batch action completed successfully.');
+            updateSelectedCount();
+        })
+        .catch(() => {
+            toast('Network error during batch action.');
         });
-        toast(data.message || 'Batch action completed successfully.');
-        updateSelectedCount();
-    })
-    .catch(() => {
-        toast('Network error during batch action.');
     });
 }
 </script>

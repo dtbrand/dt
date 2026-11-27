@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Banner: Surat Heritage Silk Festival 2026 — DT Brand's</title>
+    <title>Edit Banner: Festive Pure Silk Collection — DT Brand's</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2398,7 +2398,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = 'bee3ba89d0adc607e5af500be66496336dbceaf10ee75fef78f0d17adad9276d';
+window.DT_ADMIN_CSRF_TOKEN = '1efb752857cc38e4bebfbccf479a0d2f79b05ac0d3959381f7cf69f619c199b8';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2925,7 +2925,7 @@ window.showToast = window.showToast || function(msg, type) {
             
             <div class="wp-heading-wrap" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
                 <div>
-                    <h1 class="wp-heading-inline" style="font-size:20px; font-weight:800; color:#181512; margin:0;">Edit Banner: Surat Heritage Silk Festival 2026</h1>
+                    <h1 class="wp-heading-inline" style="font-size:20px; font-weight:800; color:#181512; margin:0;">Edit Banner: Festive Pure Silk Collection</h1>
                     <p style="font-size:12px; color:#64748b; margin:2px 0 0 0;">Update desktop &amp; mobile banner assets, aspect ratios, and device targeting rules.</p>
                 </div>
                 <div style="display:flex; gap:6px;">
@@ -2933,7 +2933,7 @@ window.showToast = window.showToast || function(msg, type) {
                 </div>
             </div>
 
-            <form onsubmit="if(window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Banner changes saved live!'); return false;" class="dt-form-grid">
+            <form id="editBannerForm" onsubmit="return window.saveBannerForm(event, 1)" class="dt-form-grid">
                 <!-- Left 2-Col Main Form -->
                 <div>
                     <!-- 1. Banner Content & Headlines -->
@@ -2951,23 +2951,23 @@ window.showToast = window.showToast || function(msg, type) {
 
                         <div class="dt-form-group">
                             <label class="dt-form-label" for="bannerTitle">Banner Title / Main Heading <span style="color:#DC2626;">*</span></label>
-                            <input type="text" id="bannerTitle" class="dt-form-input" required value="Surat Heritage Silk Festival 2026" placeholder="e.g. Surat Heritage Silk Festival 2026">
+                            <input type="text" id="bannerTitle" class="dt-form-input" required value="Festive Pure Silk Collection" placeholder="e.g. Surat Heritage Silk Festival 2026">
                         </div>
 
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                             <div class="dt-form-group">
                                 <label class="dt-form-label" for="bannerSubtitle">Sub-Heading / Tagline</label>
-                                <input type="text" id="bannerSubtitle" class="dt-form-input" value="Direct Surat Factory Wholesale Rates • Certified Silk Mark" placeholder="e.g. Direct Surat Factory Wholesale Rates">
+                                <input type="text" id="bannerSubtitle" class="dt-form-input" value="Direct Surat Manufacturer Wholesale Rates — Pure Silk Sarees from ₹1,399/pc" placeholder="e.g. Direct Surat Factory Wholesale Rates">
                             </div>
                             <div class="dt-form-group">
                                 <label class="dt-form-label" for="bannerCta">Call to Action (CTA) Button</label>
-                                <input type="text" id="bannerCta" class="dt-form-input" value="Explore Wholesale Catalogues" placeholder="e.g. Explore Wholesale Catalogues">
+                                <input type="text" id="bannerCta" class="dt-form-input" value="Explore Wholesale Lots" placeholder="e.g. Explore Wholesale Catalogues">
                             </div>
                         </div>
 
                         <div class="dt-form-group">
                             <label class="dt-form-label" for="bannerLink">Destination Target URL</label>
-                            <input type="text" id="bannerLink" class="dt-form-input" value="/shop/silk-sarees" placeholder="e.g. /shop/silk-sarees">
+                            <input type="text" id="bannerLink" class="dt-form-input" value="/wholesale" placeholder="e.g. /shop/silk-sarees">
                         </div>
                     </div>
 
@@ -3004,7 +3004,7 @@ window.showToast = window.showToast || function(msg, type) {
                                 </div>
                             </div>
                             <div class="dt-upload-zone" onclick="document.getElementById('deskBannerUpload').click()" style="padding:12px;">
-                                <img id="deskBannerPreview" src="/assets/images/product1.png" style="width:100%; height:90px; object-fit:cover; border-radius:4px; margin-bottom:6px; border:1px solid #e2e8f0;">
+                                <img id="deskBannerPreview" src="/assets/images/no-image.svg" style="width:100%; height:90px; object-fit:cover; border-radius:4px; margin-bottom:6px; border:1px solid #e2e8f0;">
                                 <input type="file" id="deskBannerUpload" style="display:none;" onchange="window.DT_CATALOGUE.previewImage(this, 'deskBannerPreview')">
                                 <span style="font-size:11px; font-weight:700; color:#8A681F;">Click to Change Desktop Banner Image</span>
                             </div>
@@ -3037,7 +3037,7 @@ window.showToast = window.showToast || function(msg, type) {
                                 </div>
                             </div>
                             <div class="dt-upload-zone" onclick="document.getElementById('mobileBannerUpload').click()" style="padding:12px;">
-                                <img id="mobileBannerPreview" src="/assets/images/product2.png" style="width:100%; max-width:240px; height:110px; object-fit:cover; border-radius:6px; margin:0 auto 6px auto; display:block; border:1px solid #e2e8f0;">
+                                <img id="mobileBannerPreview" src="/assets/images/no-image.svg" style="width:100%; max-width:240px; height:110px; object-fit:cover; border-radius:6px; margin:0 auto 6px auto; display:block; border:1px solid #e2e8f0;">
                                 <input type="file" id="mobileBannerUpload" style="display:none;" onchange="window.DT_CATALOGUE.previewImage(this, 'mobileBannerPreview')">
                                 <span style="font-size:11px; font-weight:700; color:#8A681F;">Click to Change Dedicated Mobile Banner Image</span>
                             </div>
@@ -3057,7 +3057,7 @@ window.showToast = window.showToast || function(msg, type) {
                         <div class="dt-form-group">
                             <label class="dt-form-label">Banner Slot Position</label>
                             <select class="dt-form-select">
-                                <option selected>Homepage Main Top Hero Slider</option>
+                                <option >Homepage Main Top Hero Slider</option>
                                 <option >Category Page Header Banner</option>
                                 <option >Collection Spotlight Banner</option>
                                 <option>Cart &amp; Checkout Top Offer Strip</option>
@@ -3107,7 +3107,7 @@ window.showToast = window.showToast || function(msg, type) {
 
                         <!-- Desktop View Container -->
                         <div id="prevBoxDesk" style="display:none; width:100%; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; background:#181512;">
-                            <img src="/assets/images/product1.png" id="liveDeskImg" style="width:100%; height:90px; object-fit:cover; display:block;">
+                            <img src="/assets/images/no-image.svg" id="liveDeskImg" style="width:100%; height:90px; object-fit:cover; display:block;">
                         </div>
 
                         <!-- Authentic Mobile Phone View Container -->
@@ -3119,7 +3119,7 @@ window.showToast = window.showToast || function(msg, type) {
                                     <span style="font-size:8px; background:#D4AF37; color:#181512; padding:1px 4px; border-radius:3px;">SURAT B2B</span>
                                 </div>
                                 <div class="dt-mobile-banner-slot" id="mobBannerSlot">
-                                    <img src="/assets/images/product2.png" id="liveMobImg" alt="Mobile Banner">
+                                    <img src="/assets/images/no-image.svg" id="liveMobImg" alt="Mobile Banner">
                                 </div>
                                 <div class="dt-mobile-banner-dots">
                                     <span class="dt-mobile-dot active"></span>
@@ -3205,5 +3205,44 @@ window.showToast = window.showToast || function(msg, type) {
 </div>
 
 <script src="/admin/catalogue/assets/js/catalogue.js?v=cf"></script>
+<script>
+window.saveBannerForm = function(e, bid) {
+    if (e) e.preventDefault();
+    var form = e ? e.target : document.getElementById('editBannerForm');
+    var slotSel = form.querySelectorAll('select.dt-form-select');
+    var slot = slotSel[3] ? slotSel[3].value : 'hero';
+    var statusVal = slotSel[5] ? slotSel[5].value : 'active';
+    var priInput = form.querySelector('input[type="number"]');
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'save_banner',
+            id: Number(bid || 0),
+            title: document.getElementById('bannerTitle')?.value.trim() || '',
+            subtitle: document.getElementById('bannerSubtitle')?.value.trim() || '',
+            cta_text: document.getElementById('bannerCta')?.value.trim() || 'Explore',
+            cta_link: document.getElementById('bannerLink')?.value.trim() || '/shop',
+            placement: slot,
+            display_order: priInput ? Number(priInput.value || 1) : 1,
+            status: statusVal,
+            image: document.getElementById('deskBannerPreview')?.getAttribute('src') || '/assets/images/no-image.svg',
+            image_mobile: document.getElementById('mobileBannerPreview')?.getAttribute('src') || ''
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (!res || !res.success) {
+            if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'Failed to save banner.');
+            return;
+        }
+        if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast(res.message || 'Banner saved to database!');
+        setTimeout(function() { window.location.href = '/admin/catalogue/banners/'; }, 600);
+    })
+    .catch(function() { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving banner.'); });
+    return false;
+};
+</script>
 </body>
 </html>

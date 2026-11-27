@@ -2404,7 +2404,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '7ca689fe5c8a73ceef8529e30fbbdcbef2165a38bb0aac7cb87893b00a3f2b52';
+window.DT_ADMIN_CSRF_TOKEN = 'db29a55169addb349eff9eee4a082bb938931d6a86a80d7dc2fbab54e4d1bb9a';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2983,7 +2983,7 @@ window.showToast = window.showToast || function(msg, type) {
                                     <td>
                                         <div style="font-weight:700; color:#181512;">Vikram Joshi</div>
                                         <div style="font-size:11px; color:#64748B; margin-top:2px;">
-                                            Pune, MH &bull; 25 Nov 2026, 06:22 PM                                        </div>
+                                            Pune, MH &bull; 25 Nov 2026, 06:40 PM                                        </div>
                                     </td>
                                     <td>
                                         <div style="font-weight:600; color:#1F2937; font-size:12.5px;">
@@ -3041,7 +3041,7 @@ window.showToast = window.showToast || function(msg, type) {
                                     <td>
                                         <div style="font-weight:700; color:#181512;">Spam Bot 99</div>
                                         <div style="font-size:11px; color:#64748B; margin-top:2px;">
-                                            Unknown &bull; 22 Nov 2026, 06:22 PM                                        </div>
+                                            Unknown &bull; 22 Nov 2026, 06:40 PM                                        </div>
                                     </td>
                                     <td>
                                         <div style="font-weight:600; color:#1F2937; font-size:12.5px;">
@@ -3164,8 +3164,13 @@ function toast(m, type) {
     else console.warn(m);
 }
 
-function moderateAction(id, action) {
-    if (action === 'delete' && !confirm('Are you sure you want to permanently purge this entry from the database?')) return;
+function moderateAction(id, action, skipConfirm = false) {
+    if (action === 'delete' && !skipConfirm) {
+        window.dtShowConfirmModal('Are you sure you want to permanently purge this entry from the database?', function() {
+            moderateAction(id, action, true);
+        });
+        return;
+    }
 
     const params = new URLSearchParams();
     params.append('action', action);

@@ -8,7 +8,7 @@
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#8A681F">
-    <meta name="csrf-token" content="742f4f95c7c17546805c6ac61c2f6b151893d8151efe30f4eb3bc782c307672a">
+    <meta name="csrf-token" content="ece43ace91e576e73bd248846fbc24a896a96340c61384e01fb377bf825ecce6">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +19,7 @@
 
     <!-- ════════════ GLOBAL PRODUCTS & REAL USER BOOTSTRAP ════════════ -->
     <script>
-        window.DT_CSRF_TOKEN = "742f4f95c7c17546805c6ac61c2f6b151893d8151efe30f4eb3bc782c307672a";
+        window.DT_CSRF_TOKEN = "ece43ace91e576e73bd248846fbc24a896a96340c61384e01fb377bf825ecce6";
         window.b2bRoleMismatch = false;
         window.b2bWallet = {"balance":0,"pending_payout":0,"lifetime_earned":0,"transactions":[]};
         window.resellerCrmContacts = [];
@@ -3309,7 +3309,7 @@
                             <div class="ws-ti-cell-header">Invoice Details:</div>
                             <div style="line-height:1.5;">
                                 No: <strong id="invNum">-</strong><br>
-                                Date: <strong id="invDate">26-11-2026</strong><br>
+                                Date: <strong id="invDate">27-11-2026</strong><br>
                                 Place of Supply: <strong id="invPlaceOfSupply">Gujarat</strong>
                             </div>
                         </div>
@@ -3846,11 +3846,11 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
                             <label style="font-size: 0.70rem; font-weight:600; color: var(--ws-text-muted); display: block; margin-bottom: 3px;">Start Date</label>
-                            <input type="date" id="customStartDate" value="2026-10-27" class="ws-input" style="height: 38px; font-size: 0.80rem;">
+                            <input type="date" id="customStartDate" value="2026-10-28" class="ws-input" style="height: 38px; font-size: 0.80rem;">
                         </div>
                         <div>
                             <label style="font-size: 0.70rem; font-weight:600; color: var(--ws-text-muted); display: block; margin-bottom: 3px;">End Date</label>
-                            <input type="date" id="customEndDate" value="2026-11-26" class="ws-input" style="height: 38px; font-size: 0.80rem;">
+                            <input type="date" id="customEndDate" value="2026-11-27" class="ws-input" style="height: 38px; font-size: 0.80rem;">
                         </div>
                     </div>
                     <button class="ws-btn ws-btn-primary" style="width: 100%; margin-top: 10px; height: 38px; font-size: 0.82rem;" onclick="applyCustomDateRange()">
@@ -4383,30 +4383,36 @@ if (!window.allProducts || !window.allProducts.length) {
             }
             wrap.dataset.emptyRendered = '1';
 
-            /* Render Animated SVG Empty Cart + Auto Product Recommendation Slider */
-            var products = window.allProducts || window.catalogProducts || window.products || [
-                { id: 1, name: 'Nilambari Silk Saree', price: 4899, image: '/assets/images/product1.png' },
-                { id: 3, name: 'Kanjivaram Temple Silk', price: 12999, image: '/assets/images/product3.png' },
-                { id: 5, name: 'Royal Anarkali Kurti', price: 2799, image: '/assets/images/product5.png' },
-                { id: 8, name: 'Ivory Designer Gown', price: 7499, image: '/assets/images/product8.png' },
-                { id: 4, name: 'Georgette Bloom Saree', price: 3299, image: '/assets/images/product4.png' }
-            ];
+            /* Render Animated SVG Empty Cart + Live Catalog Recommendation Slider */
+            var products = window.allProducts || window.catalogProducts || window.products || [];
 
             var fullList = products.slice(0, 6);
 
             var sliderCardsHtml = fullList.map(function(p) {
-                var imgSrc = p.image || p.img || '/assets/images/product1.png';
+                var imgSrc = p.image || p.img || '/assets/images/no-image.svg';
                 return '<div class="cd-rec-card">' +
                     '<div class="cd-rec-img-wrap">' +
-                        '<img src="' + imgSrc + '" alt="' + (p.name || 'Ethnic Attire') + '" class="cd-rec-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=\'/assets/images/product1.png\';" />' +
+                        '<img src="' + imgSrc + '" alt="' + (p.name || 'Ethnic Attire') + '" class="cd-rec-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=\'/assets/images/no-image.svg\';" />' +
                     '</div>' +
                     '<h5 class="cd-rec-title">' + (p.name || 'Ethnic Attire') + '</h5>' +
                     '<div class="cd-price-row">' +
-                        '<span class="cd-rec-price">₹' + Number(p.price || 2999).toLocaleString('en-IN') + '</span>' +
+                        '<span class="cd-rec-price">₹' + Number(p.price || 0).toLocaleString('en-IN') + '</span>' +
                         '<button class="cd-rec-add-btn" onclick="window.addRecToCart(' + p.id + ')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> <span>ADD</span></button>' +
                     '</div>' +
                 '</div>';
             }).join('');
+
+            var recSectionHtml = fullList.length > 0 ? (
+                    '<div class="cd-recommend-section">' +
+                        '<div class="cd-rec-head">' +
+                            '<span style="display:inline-flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="#D4AF37" stroke="#8A681F" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>TRENDING LUXURY PICKS</span></span>' +
+                            '<span style="font-size:0.65rem; opacity:0.8;">SWIPE &rsaquo;</span>' +
+                        '</div>' +
+                        '<div class="cd-rec-track" id="cdRecTrack">' +
+                            sliderCardsHtml +
+                        '</div>' +
+                    '</div>'
+            ) : '';
 
             wrap.innerHTML =
                 '<div class="cd-empty-container">' +
@@ -4429,16 +4435,7 @@ if (!window.allProducts || !window.allProducts.length) {
                         '<a href="/shop.php?category=Kurti" class="cd-quick-chip">Kurti Sets</a>' +
                         '<a href="/shop.php?category=Gown" class="cd-quick-chip">Ethnic Gowns</a>' +
                     '</div>' +
-
-                    '<div class="cd-recommend-section">' +
-                        '<div class="cd-rec-head">' +
-                            '<span style="display:inline-flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="#D4AF37" stroke="#8A681F" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>TRENDING LUXURY PICKS</span></span>' +
-                            '<span style="font-size:0.65rem; opacity:0.8;">SWIPE &rsaquo;</span>' +
-                        '</div>' +
-                        '<div class="cd-rec-track" id="cdRecTrack">' +
-                            sliderCardsHtml +
-                        '</div>' +
-                    '</div>' +
+                    recSectionHtml +
 
                     '<div class="cd-atelier-foot">' +
                         '<div class="cd-atelier-pill"><strong>Silk Mark</strong><span>100% Certified</span></div>' +
@@ -4783,7 +4780,7 @@ if (!window.allProducts || !window.allProducts.length) {
 
     <!-- ════════════ CHECKOUT MODAL PARTIAL ════════════ -->
     <script>
-window.paymentGatewaysConfig = {"upi_direct":{"gateway_key":"upi_direct","name":"Instant UPI & QR Pay","description":"Pay instantly via GPay, PhonePe, Paytm or any UPI app","is_recommended":true,"sort_order":1,"config":[]},"cod":{"gateway_key":"cod","name":"Cash on Delivery (COD)","description":"Pay via Cash or UPI at doorstep","is_recommended":false,"sort_order":2,"config":{"handling_fee":0,"min_order":299,"max_order":25000,"verify_otp":false,"partial_deposit":0}},"whatsapp_pay":{"gateway_key":"whatsapp_pay","name":"WhatsApp Order & Pay","description":"Confirm your order directly with our Surat desk","is_recommended":false,"sort_order":3,"config":{"phone":"917046363528","auto_upi_link":false,"welcome_msg":"Namaste! I would like to place an order from DT Brand's."}}};
+window.paymentGatewaysConfig = {"upi_direct":{"gateway_key":"upi_direct","name":"Instant UPI & QR Pay","description":"Pay via GPay, PhonePe, Paytm or BHIM (917046363528@okaxis)","is_recommended":true,"sort_order":1,"config":[]},"razorpay":{"gateway_key":"razorpay","name":"Razorpay Online (Cards, UPI, NetBanking)","description":"Instant signature-verified online checkout","is_recommended":false,"sort_order":2,"config":{"key_id":"","is_test":false,"theme_color":"#8A681F","auto_capture":false}},"cod":{"gateway_key":"cod","name":"Cash on Delivery (COD)","description":"Pay via Cash or UPI at doorstep","is_recommended":false,"sort_order":3,"config":{"handling_fee":0,"min_order":299,"max_order":25000,"verify_otp":false,"partial_deposit":0}},"whatsapp_pay":{"gateway_key":"whatsapp_pay","name":"WhatsApp Order & Pay","description":"Confirm your order directly with Surat concierge","is_recommended":false,"sort_order":4,"config":{"phone":"917046363528","auto_upi_link":false,"welcome_msg":"Namaste! I would like to place an order from DT Brand's."}}};
 window.DT_LOGGED_USER = null;
 window.DT_CUSTOMER_PROFILE = null;
 window.DT_SAVED_ADDRESSES = [];
@@ -6836,7 +6833,14 @@ window.DT_SAVED_ADDRESSES = [];
         orderFormData.append('items', JSON.stringify(cart));
 
         fetch('/api/orders.php', { method: 'POST', body: orderFormData })
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+            return r.json().catch(function() { return {}; }).then(function(res) {
+                if (!r.ok || !res || !res.success) {
+                    throw new Error((res && res.message) || 'Could not create order in database. Please verify your items and address.');
+                }
+                return res;
+            });
+        })
         .then(function(res) {
             if (res.order && res.order.order_number) {
                 orderNum = res.order.order_number;
@@ -6844,13 +6848,22 @@ window.DT_SAVED_ADDRESSES = [];
                 window.coActiveOrderNumber = orderNum;
                 orderPayload.order_number = orderNum;
             }
+            if (activePaymentMethod === 'cod' || activePaymentMethod === 'whatsapp') {
+                return { success: true, gateway: activePaymentMethod, order_created: true };
+            }
             return fetch('/api/payment/create_order.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderPayload)
+            }).then(function(r) {
+                return r.json().catch(function() { return {}; }).then(function(data) {
+                    if (!r.ok || !data || !data.success) {
+                        throw new Error((data && (data.error || data.message)) || 'Payment gateway initialization failed.');
+                    }
+                    return data;
+                });
             });
         })
-        .then(function(r) { return r.json(); })
         .then(function(data) {
             coIsPlacingOrder = false;
             if (placeBtn) {
@@ -6887,16 +6900,7 @@ window.DT_SAVED_ADDRESSES = [];
                 placeBtn.style.cursor = 'pointer';
                 window.selectPaymentMethod(activePaymentMethod);
             }
-            // Fallback: Direct WhatsApp Order Routing
-            completeOrderSuccess(orderNum, {
-                order_number: orderNum,
-                amount: grandTotal,
-                customer_name: fullName,
-                customer_phone: whatsApp,
-                address: `${address}, ${city}, ${state} - ${pincode}`,
-                note: note,
-                cart: cart
-            });
+            showCoNotice((err && err.message) ? err.message : 'Unable to place order right now. Please try again.', false);
         });
     }
 
@@ -6997,18 +7001,22 @@ window.DT_SAVED_ADDRESSES = [];
                 utr_reference: utr
             })
         })
-        .then(r => r.json())
-        .then(data => {
-            btn.innerText = 'Submit & Confirm';
-            btn.disabled = false;
-            document.getElementById('coUpiModalOverlay').classList.remove('active');
-            completeOrderSuccess(currentOrderData.order_number, currentOrderData, utr);
+        .then(function(r) {
+            return r.json().catch(function() { return {}; }).then(function(data) {
+                btn.innerText = 'Submit & Confirm';
+                btn.disabled = false;
+                if (!r.ok || !data || data.success === false) {
+                    showCoNotice((data && (data.message || data.error)) || 'UTR verification failed. Please double-check your 12-digit UTR number.', false);
+                    return;
+                }
+                document.getElementById('coUpiModalOverlay').classList.remove('active');
+                completeOrderSuccess(currentOrderData.order_number, currentOrderData, utr);
+            });
         })
-        .catch(err => {
+        .catch(function() {
             btn.innerText = 'Submit & Confirm';
             btn.disabled = false;
-            document.getElementById('coUpiModalOverlay').classList.remove('active');
-            completeOrderSuccess(currentOrderData.order_number, currentOrderData, utr);
+            showCoNotice('Network error while verifying UTR. Please try again.', false);
         });
     };
 
@@ -7111,9 +7119,19 @@ window.DT_SAVED_ADDRESSES = [];
         if (successWaLink) successWaLink.href = waUrl;
         if (successOverlay) successOverlay.classList.add('active');
 
-        // Clear cart and sync all storefront widgets immediately without reload
+        // Clear cart and sync all storefront widgets + SQL backend immediately without reload
         localStorage.removeItem('dtbrands_cart');
         window.cartState = [];
+        try {
+            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            var csrfTok = (csrfMeta && csrfMeta.getAttribute('content')) || window.DT_CSRF_TOKEN || '';
+            fetch('/api/cart.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfTok },
+                body: JSON.stringify({ action: 'clear', csrf_token: csrfTok })
+            }).catch(function() {});
+        } catch (e) {}
         if (typeof window.dtSyncBadges === 'function') window.dtSyncBadges();
         if (typeof window.updateGlobalBadges === 'function') window.updateGlobalBadges();
         if (typeof window.renderCart === 'function') window.renderCart();
@@ -7150,6 +7168,16 @@ window.DT_SAVED_ADDRESSES = [];
 
         var placeBtn = document.getElementById('coPlaceOrderBtn');
         if (placeBtn) placeBtn.addEventListener('click', handlePlaceOrder);
+
+        ['coDirectUpiIntentBtn', 'coGpayLink', 'coPhonepeLink', 'coPaytmLink', 'coCredLink'].forEach(function(id) {
+            var a = document.getElementById(id);
+            if (a) {
+                a.addEventListener('click', function(e) {
+                    var href = a.getAttribute('href') || '#';
+                    if (href === '#') e.preventDefault();
+                });
+            }
+        });
     });
 
 })();
@@ -9884,13 +9912,8 @@ body.qv-modal-open #dtMobileBottomNav {
             }
             wrap.dataset.emptyRendered = '1';
 
-            /* Render Animated Floating Heart SVG Empty Wishlist + Recommended Product Slider */
-            var products = window.allProducts || [
-                { id: 2, name: 'Banarasi Zari Saree', price: 8499, image: '/assets/images/product2.png' },
-                { id: 4, name: 'Georgette Bloom Saree', price: 3299, image: '/assets/images/product4.png' },
-                { id: 6, name: 'Bridal Zardosi Lehenga', price: 24999, image: '/assets/images/product6.png' },
-                { id: 7, name: 'Mustard Block Print', price: 1899, image: '/assets/images/product7.png' }
-            ];
+            /* Render Animated Floating Heart SVG Empty Wishlist + Live Recommended Product Slider */
+            var products = window.allProducts || window.catalogProducts || window.products || [];
 
             var fullList = products.slice(0, 6);
 
@@ -10980,7 +11003,7 @@ body.qv-modal-open #dtMobileBottomNav {
     <!-- ═══════════════════════════════════════════
          JAVASCRIPT CONTROLLER & STATE ENGINE (END OF BODY)
     ═══════════════════════════════════════════ -->
-    <script src="/assets/js/reseller.js?v=1795719001"></script>
+    <script src="/assets/js/reseller.js?v=1795804638"></script>
     <script src="/assets/js/profile-save.js?v=1795716299"></script>
 
 <style>
@@ -11984,5 +12007,6 @@ body.reels-open #dtMobileBottomNav {
     });
 })();
 </script>
+<script src="/assets/js/dt-cart-sync.js?v=1795804638"></script>
 </body>
 </html>

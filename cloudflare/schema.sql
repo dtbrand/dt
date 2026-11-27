@@ -188,6 +188,16 @@ CREATE TABLE IF NOT EXISTS social_channels (
     status TEXT DEFAULT 'active'
 );
 
+CREATE TABLE IF NOT EXISTS cms_pages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    status TEXT DEFAULT 'published',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS seo_metadata (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     page_route TEXT NOT NULL UNIQUE,
@@ -302,8 +312,10 @@ CREATE TABLE IF NOT EXISTS cart_items (
     session_id TEXT NOT NULL,
     customer_id INTEGER DEFAULT NULL,
     product_id INTEGER NOT NULL,
+    variant_id INTEGER DEFAULT NULL,
     color TEXT DEFAULT '',
     size TEXT DEFAULT '',
+    lot_type TEXT DEFAULT 'single',
     quantity INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -384,6 +396,7 @@ CREATE TABLE IF NOT EXISTS orders (
     tracking_number TEXT DEFAULT '',
     courier_name TEXT DEFAULT 'Delhivery Express',
     utr_reference TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Category: Silk Sarees — DT Brand's</title>
+    <title>Edit Category: Kanjivaram Silk — DT Brand's</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2398,7 +2398,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = 'd5acc86cac7bf45af243e93d706fac63784f2ab44d61a045c1201ff3b08fea0b';
+window.DT_ADMIN_CSRF_TOKEN = '4f353936a9b65b768b28d60e7f2df61cce93a6555e791f51dc74497abf965cca';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2925,13 +2925,14 @@ window.showToast = window.showToast || function(msg, type) {
             
             <div class="wp-heading-wrap" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
                 <div>
-                    <h1 class="wp-heading-inline" style="font-size:20px; font-weight:800; color:#181512; margin:0;">Edit Category: Silk Sarees</h1>
+                    <h1 class="wp-heading-inline" style="font-size:20px; font-weight:800; color:#181512; margin:0;">Edit Category: Kanjivaram Silk</h1>
                     <p style="font-size:12px; color:#64748b; margin:2px 0 0 0;">Update category metadata, banner imagery, and storefront merchandising rules.</p>
                 </div>
                 <a href="/admin/catalogue/categories/view.php?id=1" class="dt-btn-action-sm pale-gold" style="height:30px; padding:0 12px; font-size:11.5px;">View Live Page</a>
             </div>
 
             <form onsubmit="return window.DT_CATEGORIES.saveCategoryForm(event)" class="dt-form-grid">
+    <input type="hidden" id="catId" value="1">
     <!-- Left 2-Col Main Section -->
     <div>
         <div class="dt-form-card">
@@ -2942,12 +2943,12 @@ window.showToast = window.showToast || function(msg, type) {
 
             <div class="dt-form-group">
                 <label class="dt-form-label" for="catName">Category Name <span style="color:#DC2626;">*</span></label>
-                <input type="text" id="catName" class="dt-form-input" value="Silk Sarees" required placeholder="e.g. Silk Sarees & Handlooms" oninput="window.DT_CATALOGUE.generateSlug('catName', 'catSlug')">
+                <input type="text" id="catName" class="dt-form-input" value="Kanjivaram Silk" required placeholder="e.g. Silk Sarees & Handlooms" oninput="window.DT_CATALOGUE.generateSlug('catName', 'catSlug')">
             </div>
 
             <div class="dt-form-group">
                 <label class="dt-form-label" for="catSlug">URL Slug</label>
-                <input type="text" id="catSlug" class="dt-form-input" value="silk-sarees" placeholder="e.g. silk-sarees">
+                <input type="text" id="catSlug" class="dt-form-input" value="kanjivaram-silk" placeholder="e.g. silk-sarees">
                 <small style="font-size:10.5px; color:#64748b;">Unique URL identifier in shop: <code>/shop/category/slug</code></small>
             </div>
 
@@ -2970,12 +2971,12 @@ window.showToast = window.showToast || function(msg, type) {
                         <span>AI Write Description</span>
                     </button>
                 </div>
-                <textarea id="catDesc" class="dt-form-textarea" rows="4" placeholder="Rich wholesale catalog description, fabric specifications, Surat depot stock info...">Surat central depot master handloom and powerloom weaves. Certified pure silk and zari border designs.</textarea>
+                <textarea id="catDesc" class="dt-form-textarea" rows="4" placeholder="Rich wholesale catalog description, fabric specifications, Surat depot stock info...">Authentic handwoven Kanjivaram silk sarees with tested gold zari.</textarea>
             </div>
 
             <div class="dt-form-group">
                 <label class="dt-form-label" for="catShortDesc">Short Summary / Tagline</label>
-                <input type="text" id="catShortDesc" class="dt-form-input" value="Authentic Surat Pure Silk &amp; Jacquard Weaves" placeholder="e.g. Authentic Surat Jacquard Pure Silk Weaves with Zari Border">
+                <input type="text" id="catShortDesc" class="dt-form-input" value="" placeholder="e.g. Authentic Surat Jacquard Pure Silk Weaves with Zari Border">
             </div>
         </div>
 
@@ -3019,7 +3020,7 @@ window.showToast = window.showToast || function(msg, type) {
 
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">
-                    <input type="checkbox" checked style="width:15px; height:15px;">
+                    <input type="checkbox" id="catActiveChk" checked style="width:15px; height:15px;">
                     <span>Active Status (Live on Store)</span>
                 </label>
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">

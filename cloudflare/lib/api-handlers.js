@@ -1069,6 +1069,49 @@ async function handleOrders(request, url, env, session) {
             return jsonResponse({ success: true, updated_count: count, status, message: `Updated ${count} orders.` });
         }
 
+        if (action === 'save_notes' || action === 'add_note') {
+            const deny = requireAdmin(session, 'update order notes');
+            if (deny) return deny;
+            const key = String(body.order_id || body.id || body.order_number || '').trim();
+            if (!key) return jsonResponse({ success: false, message: 'Order ID required.' }, 400);
+            const rawNotes = body.notes ?? body.note ?? '';
+            const notesVal = Array.isArray(rawNotes) ? JSON.stringify(rawNotes) : String(rawNotes);
+            await env.DB.prepare('UPDATE orders SET notes = ? WHERE id = ? OR UPPER(order_number) = UPPER(?)')
+                .bind(notesVal, Number(key) || -1, key)
+                .run();
+            return jsonResponse({ success: true, order_id: key, message: 'Order notes saved in D1.' });
+        }
+
+        if (action === 'update_address') {
+            const deny = requireAdmin(session, 'update order shipping address');
+            if (deny) return deny;
+            const key = String(body.order_id || body.id || body.order_number || '').trim();
+            const shipAddr = String(body.shipping_address || '').trim();
+            if (!key || !shipAddr)
+                return jsonResponse({ success: false, message: 'Order ID and shipping address required.' }, 400);
+            const recName = String(body.customer_name || '').trim();
+            const recPhone = String(body.customer_phone || '').trim();
+            if (recName && recPhone) {
+                await env.DB.prepare(
+                    'UPDATE orders SET shipping_address = ?, customer_name = ?, customer_phone = ? WHERE id = ? OR UPPER(order_number) = UPPER(?)'
+                )
+                    .bind(shipAddr, recName, recPhone, Number(key) || -1, key)
+                    .run();
+            } else {
+                await env.DB.prepare(
+                    'UPDATE orders SET shipping_address = ? WHERE id = ? OR UPPER(order_number) = UPPER(?)'
+                )
+                    .bind(shipAddr, Number(key) || -1, key)
+                    .run();
+            }
+            return jsonResponse({
+                success: true,
+                order_id: key,
+                shipping_address: shipAddr,
+                message: 'Shipping address updated in D1.',
+            });
+        }
+
         if (action === 'delete') {
             const deny = requireAdmin(session, 'delete orders');
             if (deny) return deny;
@@ -3541,16 +3584,53 @@ export async function routeApiRequest(request, url, env, session) {
     }
 
     if (path === '/api/content.php') {
-        if (request.method === 'POST') {
+        if (request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE') {
             const deny = requireAdmin(session, 'manage CMS & marketing content');
             if (deny) return deny;
             const body = await readRequestBody(request);
             const action = String(body.action || '').trim();
             const id = Number(body.id || 0);
 
-            if (action === 'create_banner' || action === 'create_slide') {
+            if (
+                action === 'save_banner' ||
+                action === 'create_banner' ||
+                action === 'update_banner' ||
+                action === 'create_slide'
+            ) {
                 const title = String(body.title || 'DT Brand Banner').trim();
-                const placement = action === 'create_slide' ? 'slider' : String(body.placement || 'hero');
+                const placement = action === 'create_slide' ? 'slider' : String(body.placement || body.slot || 'hero');
+                const deskImg = String(body.image || body.image_url || body.desk_img || '/assets/images/product1.png');
+                const mobImg = String(body.image_mobile || body.image_mobile_url || body.mobile_img || '');
+                const ctaText = String(body.cta_text || body.cta || body.button_text || 'Explore Collection');
+                const ctaLink = String(body.cta_link || body.link_url || body.link || '/shop');
+                const badgeText = String(body.badge_text || body.badge || '');
+                const rawSt = String(body.status || 'active').toLowerCase();
+                const cleanSt =
+                    rawSt.includes('inactive') || rawSt.includes('draft') || rawSt.includes('hidden')
+                        ? 'inactive'
+                        : 'active';
+                const orderVal = Math.max(1, Number(body.display_order || body.priority || 1));
+
+                if (id > 0 && (action === 'save_banner' || action === 'update_banner')) {
+                    await env.DB.prepare(
+                        'UPDATE banners SET title = ?, subtitle = ?, badge = ?, cta_text = ?, cta_link = ?, image_url = ?, image_mobile_url = ?, placement = ?, status = ?, display_order = ? WHERE id = ?'
+                    )
+                        .bind(
+                            title,
+                            String(body.subtitle || ''),
+                            badgeText,
+                            ctaText,
+                            ctaLink,
+                            deskImg,
+                            mobImg,
+                            placement,
+                            cleanSt,
+                            orderVal,
+                            id
+                        )
+                        .run();
+                    return jsonResponse({ success: true, id, message: 'Banner updated in D1.' });
+                }
                 const ins = await env.DB.prepare(
                     'INSERT INTO banners (title, subtitle, tagline, badge, cta_text, cta_link, image_url, image_mobile_url, placement, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 )
@@ -3558,44 +3638,103 @@ export async function routeApiRequest(request, url, env, session) {
                         title,
                         String(body.subtitle || ''),
                         String(body.tagline || ''),
-                        String(body.badge_text || body.badge || ''),
-                        String(body.button_text || body.cta_text || 'Explore Collection'),
-                        String(body.link_url || body.cta_link || '/shop'),
-                        String(body.image_url || '/assets/images/product1.png'),
-                        String(body.image_mobile_url || ''),
+                        badgeText,
+                        ctaText,
+                        ctaLink,
+                        deskImg,
+                        mobImg,
                         placement,
-                        String(body.status || 'active'),
-                        Number(body.display_order || 1)
+                        cleanSt,
+                        orderVal
                     )
                     .run();
                 return jsonResponse(
-                    { success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Banner/slide saved in D1.' },
+                    { success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Banner saved live to D1.' },
                     201
                 );
             }
-            if (action === 'update_banner' && id > 0) {
-                await env.DB.prepare(
-                    'UPDATE banners SET title = ?, subtitle = ?, badge = ?, cta_text = ?, cta_link = ?, image_url = ?, image_mobile_url = ?, placement = ?, status = ?, display_order = ? WHERE id = ?'
-                )
-                    .bind(
-                        String(body.title || ''),
-                        String(body.subtitle || ''),
-                        String(body.badge_text || body.badge || ''),
-                        String(body.button_text || body.cta_text || 'Explore'),
-                        String(body.link_url || body.cta_link || '/shop'),
-                        String(body.image_url || '/assets/images/product1.png'),
-                        String(body.image_mobile_url || ''),
-                        String(body.placement || 'hero'),
-                        String(body.status || 'active'),
-                        Number(body.display_order || 1),
-                        id
-                    )
-                    .run();
-                return jsonResponse({ success: true, id, message: 'Banner updated.' });
+            if (action === 'toggle_banner' && id > 0) {
+                const cur = await env.DB.prepare('SELECT status FROM banners WHERE id = ? LIMIT 1').bind(id).first();
+                if (!cur) return jsonResponse({ success: false, message: 'Banner not found.' }, 404);
+                const next = cur.status === 'active' ? 'inactive' : 'active';
+                await env.DB.prepare('UPDATE banners SET status = ? WHERE id = ?').bind(next, id).run();
+                return jsonResponse({ success: true, id, status: next, message: `Banner status set to ${next}.` });
+            }
+            if (action === 'reorder_banners') {
+                const ordIds = Array.isArray(body.order) ? body.order : safeParseJsonArray(body.order || '[]');
+                for (let i = 0; i < ordIds.length; i++) {
+                    await env.DB.prepare('UPDATE banners SET display_order = ? WHERE id = ?')
+                        .bind(i + 1, Number(ordIds[i]))
+                        .run();
+                }
+                return jsonResponse({ success: true, message: 'Banner sequence updated in D1.' });
             }
             if ((action === 'delete_banner' || action === 'delete_slide') && id > 0) {
                 await env.DB.prepare('DELETE FROM banners WHERE id = ?').bind(id).run();
                 return jsonResponse({ success: true, id, message: 'Banner deleted.' });
+            }
+            if (action === 'toggle_section' && id > 0) {
+                const isActive = body.is_active ? 1 : 0;
+                await env.DB.prepare('UPDATE homepage_sections SET is_active = ? WHERE id = ?')
+                    .bind(isActive, id)
+                    .run();
+                return jsonResponse({ success: true, id, is_active: isActive, message: 'Homepage section updated.' });
+            }
+            if (action === 'reorder_sections') {
+                const sections = Array.isArray(body.sections)
+                    ? body.sections
+                    : safeParseJsonArray(body.sections || '[]');
+                for (let i = 0; i < sections.length; i++) {
+                    const sec = sections[i];
+                    const sid = Number(sec?.id || 0);
+                    if (sid > 0) {
+                        await env.DB.prepare(
+                            'UPDATE homepage_sections SET display_order = ?, is_active = ? WHERE id = ?'
+                        )
+                            .bind(Number(sec.display_order ?? i + 1), sec.is_active ? 1 : 0, sid)
+                            .run();
+                    }
+                }
+                return jsonResponse({ success: true, message: 'Homepage section layout saved in D1.' });
+            }
+            if (action === 'save_menu') {
+                const items = Array.isArray(body.items) ? body.items : safeParseJsonArray(body.items || '[]');
+                const val = JSON.stringify(items);
+                await env.DB.prepare(
+                    'INSERT INTO settings (key_name, value, value_text, category) VALUES (?, ?, ?, ?) ON CONFLICT(key_name) DO UPDATE SET value = excluded.value, value_text = excluded.value_text'
+                )
+                    .bind('store_navigation_menu', val, val, 'cms')
+                    .run();
+                return jsonResponse({ success: true, count: items.length, message: 'Navigation menu saved in D1.' });
+            }
+            if (action === 'save_merchandising') {
+                const catKey = slugify(body.category || 'default').replace(/-/g, '_');
+                const items = typeof body.items === 'string' ? body.items : JSON.stringify(body.items || []);
+                const sk = `merchandising_order_${catKey}`;
+                await env.DB.prepare(
+                    'INSERT INTO settings (key_name, value, value_text, category) VALUES (?, ?, ?, ?) ON CONFLICT(key_name) DO UPDATE SET value = excluded.value, value_text = excluded.value_text'
+                )
+                    .bind(sk, items, items, 'cms')
+                    .run();
+                return jsonResponse({ success: true, message: 'Merchandising positions saved in D1.' });
+            }
+            if (action === 'save_cms_page') {
+                const slug = slugify(body.slug || body.page || 'about-us') || 'about-us';
+                const title = String(body.title || body.headline || 'DT Brand Page').trim();
+                const content = String(body.content || body.narrative || JSON.stringify(body)).trim();
+                const st = ['draft', 'published', 'archived'].includes(String(body.status || '').toLowerCase())
+                    ? String(body.status).toLowerCase()
+                    : 'published';
+                await env.DB.prepare(
+                    'INSERT INTO cms_pages (slug, title, content, status) VALUES (?, ?, ?, ?) ON CONFLICT(slug) DO UPDATE SET title = excluded.title, content = excluded.content, status = excluded.status, updated_at = CURRENT_TIMESTAMP'
+                )
+                    .bind(slug, title, content, st)
+                    .run();
+                return jsonResponse({ success: true, slug, message: `CMS page "${title}" saved live in D1.` });
+            }
+            if (action === 'publish_all_cms') {
+                await env.DB.prepare("UPDATE cms_pages SET status = 'published', updated_at = CURRENT_TIMESTAMP").run();
+                return jsonResponse({ success: true, message: 'All CMS pages published live in D1.' });
             }
             if (action === 'create_announcement') {
                 const msg = String(body.message || '').trim();
@@ -3766,9 +3905,10 @@ export async function routeApiRequest(request, url, env, session) {
             env.DB.prepare('SELECT * FROM seo_metadata ORDER BY id ASC').all(),
             env.DB.prepare('SELECT * FROM share_templates ORDER BY id ASC').all(),
         ]);
+        const allBanners = banners.results || [];
         return jsonResponse({
             success: true,
-            hero_banners: banners.results || [],
+            hero_banners: allBanners,
             announcements: announcements.results || [],
             collections: collections.results || [],
             categories: categories.results || [],
@@ -3776,6 +3916,15 @@ export async function routeApiRequest(request, url, env, session) {
             social_channels: socials.results || [],
             seo: seo.results || [],
             share_templates: templates.results || [],
+            data: {
+                sections: sections.results || [],
+                hero_banners: allBanners.filter((b) => (b.placement || 'hero') === 'hero'),
+                promo_banners: allBanners.filter((b) => b.placement === 'promo_strip'),
+                announcements: announcements.results || [],
+                collections: collections.results || [],
+                seo: (seo.results || [])[0] || {},
+                social_channels: socials.results || [],
+            },
         });
     }
 
@@ -3834,8 +3983,122 @@ export async function routeApiRequest(request, url, env, session) {
 
     if (path === '/api/cart.php' || path === '/api/cart' || path === '/api/cart/index.php') {
         const body = await readRequestBody(request);
-        const items = Array.isArray(body.items) ? body.items : Array.isArray(body.cart) ? body.cart : [];
-        const couponCode = String(body.coupon || body.coupon_code || '').trim();
+        const action = String(
+            body.action || url.searchParams.get('action') || (request.method === 'GET' ? 'view' : 'recalculate')
+        )
+            .trim()
+            .toLowerCase();
+        const couponCode = String(body.coupon || body.coupon_code || url.searchParams.get('coupon') || '').trim();
+        const col = session.user ? 'customer_id' : 'session_id';
+        const val = session.user ? session.user.id : session.sid;
+
+        async function loadStoredCart() {
+            const res = await env.DB.prepare(`SELECT * FROM cart_items WHERE ${col} = ? ORDER BY id ASC`)
+                .bind(val)
+                .all();
+            return (res.results || []).map((r) => ({
+                product_id: r.product_id,
+                variant_id: r.variant_id || null,
+                color: r.color || '',
+                size: r.size || '',
+                lot_type: r.lot_type || 'single',
+                qty: Number(r.quantity || 1),
+            }));
+        }
+
+        async function replaceStoredCart(newItems) {
+            await env.DB.prepare(`DELETE FROM cart_items WHERE ${col} = ?`).bind(val).run();
+            for (const it of newItems) {
+                const pid = Number(it.product_id || it.id || 0);
+                const qty = Math.max(1, Math.min(999, Number(it.qty || it.quantity || 1)));
+                if (pid <= 0) continue;
+                await env.DB.prepare(
+                    'INSERT INTO cart_items (session_id, customer_id, product_id, variant_id, color, size, lot_type, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                )
+                    .bind(
+                        session.sid,
+                        session.user?.id || null,
+                        pid,
+                        it.variant_id ? Number(it.variant_id) : null,
+                        String(it.color || ''),
+                        String(it.size || ''),
+                        String(it.lot_type || 'single'),
+                        qty
+                    )
+                    .run();
+            }
+        }
+
+        let items = [];
+        if (action === 'view') {
+            items = await loadStoredCart();
+        } else if (action === 'clear') {
+            await env.DB.prepare(`DELETE FROM cart_items WHERE ${col} = ?`).bind(val).run();
+            items = [];
+        } else if (action === 'add' || action === 'update') {
+            const it = typeof body.item === 'object' && body.item ? body.item : body;
+            const pid = Number(it.product_id || it.id || 0);
+            const qty = Math.max(1, Math.min(999, Number(it.qty || it.quantity || 1)));
+            const color = String(it.color || '');
+            const size = String(it.size || '');
+            if (pid > 0) {
+                const ex = await env.DB.prepare(
+                    `SELECT id, quantity FROM cart_items WHERE ${col} = ? AND product_id = ? AND color = ? AND size = ? LIMIT 1`
+                )
+                    .bind(val, pid, color, size)
+                    .first();
+                if (ex) {
+                    const nextQty = action === 'add' ? Number(ex.quantity) + qty : qty;
+                    await env.DB.prepare(
+                        'UPDATE cart_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+                    )
+                        .bind(nextQty, ex.id)
+                        .run();
+                } else {
+                    await env.DB.prepare(
+                        'INSERT INTO cart_items (session_id, customer_id, product_id, variant_id, color, size, lot_type, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                    )
+                        .bind(
+                            session.sid,
+                            session.user?.id || null,
+                            pid,
+                            it.variant_id ? Number(it.variant_id) : null,
+                            color,
+                            size,
+                            String(it.lot_type || 'single'),
+                            qty
+                        )
+                        .run();
+                }
+            }
+            items = await loadStoredCart();
+        } else if (action === 'remove') {
+            const pid = Number(body.product_id || body.id || 0);
+            if (pid > 0) {
+                await env.DB.prepare(`DELETE FROM cart_items WHERE ${col} = ? AND product_id = ?`).bind(val, pid).run();
+            }
+            items = await loadStoredCart();
+        } else if (action === 'merge' || action === 'sync' || action === 'save') {
+            const incoming = Array.isArray(body.items) ? body.items : Array.isArray(body.cart) ? body.cart : [];
+            if (action === 'merge') {
+                const existing = await loadStoredCart();
+                const merged = [...existing];
+                for (const inc of incoming) {
+                    const pid = Number(inc.product_id || inc.id || 0);
+                    const match = merged.find((m) => m.product_id === pid && (m.size || '') === (inc.size || ''));
+                    if (match) match.qty = Math.min(999, match.qty + Number(inc.qty || inc.quantity || 1));
+                    else if (pid > 0)
+                        merged.push({ ...inc, product_id: pid, qty: Number(inc.qty || inc.quantity || 1) });
+                }
+                await replaceStoredCart(merged);
+                items = await loadStoredCart();
+            } else {
+                await replaceStoredCart(incoming);
+                items = await loadStoredCart();
+            }
+        } else {
+            items = Array.isArray(body.items) ? body.items : Array.isArray(body.cart) ? body.cart : [];
+        }
         if (items.length === 0) {
             return jsonResponse({
                 success: true,

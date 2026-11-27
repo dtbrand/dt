@@ -2394,7 +2394,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = 'cffcb0416aa7cffc64ece2605cf89cfe';
+window.DT_ADMIN_CSRF_TOKEN = '834f75f904c2b47cf59b062076c476ad';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -3108,7 +3108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     action: 'maintenance_toggle',
                     enable: pendingMaintenanceEnable ? 1 : 0,
                     password: pwd,
-                    _csrf: 'cffcb0416aa7cffc64ece2605cf89cfe'
+                    _csrf: '834f75f904c2b47cf59b062076c476ad'
                 });
                 sysToast(data.message || 'Done.', data.success ? 'success' : 'error');
                 if (data.success) setTimeout(() => location.reload(), 1400);
@@ -3124,7 +3124,7 @@ async function saveMaintConfig() {
         maintenance_message:  document.getElementById('maintMessage').value,
         maintenance_eta:      document.getElementById('maintEta').value,
         maintenance_bypass:   document.getElementById('maintBypassIps').value,
-        _csrf: 'cffcb0416aa7cffc64ece2605cf89cfe'
+        _csrf: '834f75f904c2b47cf59b062076c476ad'
     });
     sysToast(data.message || 'Saved.', data.success ? 'success' : 'error');
 }

@@ -2395,7 +2395,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '7d8ea83d649015a83d1c4431983f51af62a06e25e8ab5c96e2f51c2b4e67d609';
+window.DT_ADMIN_CSRF_TOKEN = 'aa136d7292f87540ef15262e91c81da1f58c48052c21ef63824a37f0870adb11';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -3081,9 +3081,15 @@ function reorderSingleSku(id, title, qty) {
     params.append('reason', `Emergency loom re-order restock (+${qty} pcs) for critical SKU`);
     params.append('movement_type', 'inward');
 
-    fetch('/api/products.php', { method: 'POST', body: params })
+    fetch('/api/products.php', { method: 'POST', credentials: 'same-origin', body: params })
         .then(res => res.json())
         .then(data => {
+            if (!data || !data.success) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast((data && data.message) || `Could not restock ${title}.`);
+                }
+                return;
+            }
             const el = document.getElementById('stockQtyVal_' + id);
             if (el) {
                 const cur = parseInt(el.textContent) || 0;
@@ -3096,7 +3102,7 @@ function reorderSingleSku(id, title, qty) {
         })
         .catch(() => {
             if (typeof window.showToast === 'function') {
-                window.showToast(`Restock PO sent for ${title}!`);
+                window.showToast(`Network error restocking ${title}. Please try again.`);
             }
         });
 }

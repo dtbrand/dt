@@ -2398,7 +2398,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '31e6aefa27223bf4ce517637511238baf1785137dc2eddb0774f65e0741729c2';
+window.DT_ADMIN_CSRF_TOKEN = 'dc9ecd5180976e948570ff3e1c3c2c656a8233b6bd7340f290f4fd62b1f1d0cc';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -2931,6 +2931,7 @@ window.showToast = window.showToast || function(msg, type) {
             </div>
 
             <form onsubmit="return window.DT_CATEGORIES.saveCategoryForm(event)" class="dt-form-grid">
+    <input type="hidden" id="catId" value="0">
     <!-- Left 2-Col Main Section -->
     <div>
         <div class="dt-form-card">
@@ -3018,7 +3019,7 @@ window.showToast = window.showToast || function(msg, type) {
 
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">
-                    <input type="checkbox" checked style="width:15px; height:15px;">
+                    <input type="checkbox" id="catActiveChk" checked style="width:15px; height:15px;">
                     <span>Active Status (Live on Store)</span>
                 </label>
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">
