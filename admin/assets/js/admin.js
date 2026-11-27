@@ -355,6 +355,39 @@
 
     // ════ TAB ROUTING ════
     window.switchAdmTab = function(tabId) {
+        if (tabId === 'catalogue' && !document.getElementById('tab-catalogue')) {
+            tabId = 'products';
+        }
+        const targetTab = document.getElementById('tab-' + tabId);
+        if (!targetTab) {
+            const routeFallback = {
+                overview: '/admin/',
+                products: '/admin/products/',
+                catalogue: '/admin/catalogue/',
+                orders: '/admin/orders/',
+                whatsapp: '/admin/whatsapp/',
+                partners: '/admin/customers/wholesalers.php',
+                customers: '/admin/customers/',
+                inventory: '/admin/inventory/',
+                pricing: '/admin/pricing/',
+                shipping: '/admin/shipping/',
+                payments: '/admin/payments/',
+                marketing: '/admin/marketing/',
+                reviews: '/admin/reviews/',
+                reports: '/admin/reports/',
+                cms: '/admin/cms/',
+                media: '/admin/media/',
+                notifications: '/admin/notifications/',
+                users: '/admin/users/',
+                settings: '/admin/settings/',
+                system: '/admin/system/',
+            };
+            if (routeFallback[tabId]) {
+                window.location.href = routeFallback[tabId];
+            }
+            return;
+        }
+
         const tabs = document.querySelectorAll('.adm-tab-panel');
         const navItems = document.querySelectorAll('.adm-nav-item');
         const subnavItems = document.querySelectorAll('.adm-subnav-item');
@@ -365,11 +398,10 @@
         subnavItems.forEach(item => item.classList.remove('active'));
         dockItems.forEach(item => item.classList.remove('active'));
 
-        const targetTab = document.getElementById('tab-' + tabId);
         const targetNav = document.getElementById('navItem-' + tabId);
         const targetSubnav = document.getElementById('subnav-' + tabId);
 
-        if (targetTab) targetTab.classList.add('active');
+        targetTab.classList.add('active');
         if (targetNav) targetNav.classList.add('active');
         if (targetSubnav) targetSubnav.classList.add('active');
 

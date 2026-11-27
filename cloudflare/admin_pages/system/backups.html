@@ -2394,7 +2394,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = 'aaaaa20be71ae9fff4d75dc8c6b1ccb7';
+window.DT_ADMIN_CSRF_TOKEN = '1886a7ec2b394d7f3128dcaf82dd8cfc';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -3082,7 +3082,7 @@ window.showToast = window.showToast || function(msg, type) {
 async function sysRunBackup() {
     sysToast('Initiating database snapshot backup…', 'info');
     try {
-        const data = await sysPost('/api/system.php', { action: 'backup_run', _csrf: 'aaaaa20be71ae9fff4d75dc8c6b1ccb7' });
+        const data = await sysPost('/api/system.php', { action: 'backup_run', _csrf: '1886a7ec2b394d7f3128dcaf82dd8cfc' });
         sysToast(data.message || 'Backup started.', data.success ? 'success' : 'error');
         if (data.success) setTimeout(() => location.reload(), 2000);
     } catch (e) { sysToast('Backup failed.', 'error'); }
@@ -3117,7 +3117,7 @@ async function sysExecuteDeleteBackup() {
             action: 'backup_delete',
             file,
             password: pwd,
-            _csrf: 'aaaaa20be71ae9fff4d75dc8c6b1ccb7'
+            _csrf: '1886a7ec2b394d7f3128dcaf82dd8cfc'
         });
         sysToast(data.message || 'Done.', data.success ? 'success' : 'error');
         if (data.success) setTimeout(() => location.reload(), 1400);

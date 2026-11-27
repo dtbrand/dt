@@ -2498,7 +2498,7 @@ if (typeof window.closeWishlistDrawer !== 'function') {
     <!-- Search Card -->
     <div class="track-card">
         
-        <form method="GET" action="/track" class="track-form-grid">
+        <form method="GET" action="/track" id="trackOrderForm" class="track-form-grid">
             <div class="track-form-group">
                 <label class="track-form-label" for="orderNoInput">Order Number</label>
                 <input type="text" id="orderNoInput" name="order_number" class="track-input" placeholder="e.g. DT-ORD-XXXXXX" value="" required autocomplete="off">
@@ -2514,9 +2514,152 @@ if (typeof window.closeWishlistDrawer !== 'function') {
                 <span>Track Order</span>
             </button>
         </form>
+        <div id="dtTrackDynamicAlert" class="track-alert-error" style="display:none; margin-top:16px; margin-bottom:0;"></div>
     </div>
 
+    <div id="dtTrackDynamicCard"></div>
+
     </div>
+
+<script>
+(function () {
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function stageFromStatus(status) {
+        var st = String(status || 'processing').toLowerCase();
+        if (st.indexOf('deliver') !== -1) return 5;
+        if (st.indexOf('dispatch') !== -1 || st.indexOf('ship') !== -1 || st.indexOf('transit') !== -1) return 4;
+        if (st.indexOf('pack') !== -1) return 3;
+        if (st.indexOf('process') !== -1 || st.indexOf('loom') !== -1) return 2;
+        return 1;
+    }
+
+    function renderDynamicOrder(order) {
+        var cardWrap = document.getElementById('dtTrackDynamicCard');
+        var alertEl = document.getElementById('dtTrackDynamicAlert');
+        if (!cardWrap) return;
+        if (alertEl) alertEl.style.display = 'none';
+
+        var curStage = stageFromStatus(order.fulfillment_status || order.status);
+        var checkSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        var steps = [
+            { n: 1, label: 'Order Confirmed', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' },
+            { n: 2, label: 'Loom QC &amp; Process', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>' },
+            { n: 3, label: 'Luxury Box Packed', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>' },
+            { n: 4, label: 'Dispatched (In Transit)', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>' },
+            { n: 5, label: 'Delivered', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>' }
+        ];
+        var timelineHtml = steps.map(function (st) {
+            var cls = curStage >= st.n ? (curStage === st.n && st.n < 5 ? 'active' : 'completed') : '';
+            var ico = (curStage > st.n) ? checkSvg : st.icon;
+            return '<div class="timeline-step ' + cls + '"><div class="step-circle">' + ico + '</div><div class="step-label">' + st.label + '</div></div>';
+        }).join('');
+
+        var ordNo = order.order_number || ('#' + (order.id || ''));
+        var totalAmt = Number(order.total_amount || order.total || 0);
+        var payLabel = String(order.payment_method || 'Prepaid').replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+        var dateLabel = order.created_at ? new Date(String(order.created_at).replace(' ', 'T')).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
+        var courierName = order.courier_name || 'Delhivery Logistics';
+        var awb = order.tracking_number || order.awb_number || '';
+        var items = Array.isArray(order.items) ? order.items : [];
+        var itemsRows = items.length ? items.map(function (it) {
+            var img = it.image || it.img || it.primary_image || '/assets/images/no-image.svg';
+            var title = it.product_title || it.title || 'Ethnic Silk Saree';
+            var qty = Number(it.quantity || it.qty || 1);
+            var price = Number(it.unit_price || it.price || 0);
+            var lineTotal = Number(it.total_price || (price * qty));
+            return '<tr>' +
+                '<td><img src="' + esc(img) + '" alt="' + esc(title) + '" class="track-item-img" onerror="this.onerror=null;this.src=\'/assets/images/no-image.svg\';"></td>' +
+                '<td><div style="font-weight:700;color:#181512;">' + esc(title) + '</div>' + (it.sku ? '<div style="font-size:0.75rem;color:#6B7280;">SKU: ' + esc(it.sku) + '</div>' : '') + '</td>' +
+                '<td><div style="font-size:0.82rem;color:#374151;font-weight:600;">' + esc(it.variant_color || it.color || 'Standard') + '</div><div style="font-size:0.75rem;color:#6B7280;">' + esc(it.variant_size || it.size || 'Free Size') + '</div></td>' +
+                '<td style="text-align:center;font-weight:700;">' + qty + '</td>' +
+                '<td style="text-align:right;font-weight:800;color:#8A681F;">₹' + lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+                '</tr>';
+        }).join('') : '<tr><td colspan="5" style="text-align:center;color:#6B7280;padding:20px;">Order items verified and packed in mill dispatch.</td></tr>';
+
+        var customerLine = order.customer_name ? (' &bull; Buyer: <strong>' + esc(order.customer_name) + '</strong>' + (order.city ? ' (' + esc(order.city) + ')' : '')) : '';
+        cardWrap.innerHTML =
+            '<div class="track-card">' +
+            '  <div class="order-meta-ribbon">' +
+            '    <div class="order-meta-item"><div class="label">Order Number</div><div class="value">' + esc(ordNo) + '</div></div>' +
+            '    <div class="order-meta-item"><div class="label">Placed On</div><div class="value">' + esc(dateLabel) + '</div></div>' +
+            '    <div class="order-meta-item"><div class="label">Total Amount</div><div class="value"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8"></path></svg><span>' + totalAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span></div></div>' +
+            '    <div class="order-meta-item"><div class="label">Payment</div><div class="value">' + esc(payLabel) + '</div></div>' +
+            '  </div>' +
+            '  <h3 style="margin:0 0 6px;font-size:1.05rem;font-weight:800;color:#181512;">Shipment Status Pipeline — ' + esc(String(order.fulfillment_status || 'Processing').toUpperCase()) + '</h3>' +
+            '  <div style="font-size:0.84rem;color:#64748B;margin-bottom:14px;">Customer verified' + customerLine + '</div>' +
+            '  <div class="track-timeline">' + timelineHtml + '</div>' +
+            '  <div class="courier-box">' +
+            '    <div class="courier-left">' +
+            '      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>' +
+            '      <div><div style="font-size:0.78rem;font-weight:700;color:#1E40AF;">COURIER &amp; WAYBILL</div><div style="font-size:0.95rem;font-weight:800;color:#1E3A8A;">' + esc(courierName) + (awb ? (' — AWB: ' + esc(awb)) : ' — Generating Waybill') + '</div></div>' +
+            '    </div>' +
+            (awb ? ('<a href="https://www.delhivery.com/track/package/' + encodeURIComponent(awb) + '" target="_blank" rel="noopener noreferrer" class="courier-btn"><span>Direct Courier Tracking</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>') : '') +
+            '  </div>' +
+            '  <h4 style="margin:28px 0 10px;font-size:0.95rem;font-weight:800;color:#181512;">Items in this Package</h4>' +
+            '  <div style="overflow-x:auto;"><table class="track-items-table"><thead><tr><th style="width:60px;">Image</th><th>Product Details</th><th>Color / Size</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Price</th></tr></thead><tbody>' + itemsRows + '</tbody></table></div>' +
+            '  <div class="wa-concierge-card">' +
+            '    <div style="display:flex;align-items:center;gap:12px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"></path></svg><div><div style="font-size:0.78rem;font-weight:700;color:#166534;">DEDICATED CONCIERGE</div><div style="font-size:0.88rem;font-weight:700;color:#14532D;">Need priority dispatch or delivery instructions?</div></div></div>' +
+            '    <a href="https://wa.me/917046363528?text=' + encodeURIComponent('Hello DT Brand, I would like an update on my order ' + ordNo) + '" target="_blank" rel="noopener noreferrer" class="wa-btn"><span>WhatsApp Assistance</span></a>' +
+            '  </div>' +
+            '</div>';
+    }
+
+    async function lookupOrder(ordNo, phone) {
+        var alertEl = document.getElementById('dtTrackDynamicAlert');
+        var cardWrap = document.getElementById('dtTrackDynamicCard');
+        if (cardWrap) cardWrap.innerHTML = '';
+        if (!ordNo || !phone) return;
+        try {
+            var res = await fetch('/api/orders.php?order_number=' + encodeURIComponent(ordNo) + '&phone=' + encodeURIComponent(phone));
+            var data = await res.json();
+            if (data && data.success && data.order) {
+                renderDynamicOrder(data.order);
+            } else if (alertEl) {
+                alertEl.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>' + esc((data && data.message) || 'No order found matching that Order Number and Mobile Number.') + '</span>';
+                alertEl.style.display = 'flex';
+            }
+        } catch (err) {
+            if (alertEl) {
+                alertEl.textContent = 'Unable to connect to tracking server. Please try again.';
+                alertEl.style.display = 'flex';
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var form = document.getElementById('trackOrderForm');
+        var ordInp = document.getElementById('orderNoInput');
+        var phInp = document.getElementById('phoneInput');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var o = ordInp ? ordInp.value.trim() : '';
+                var p = phInp ? phInp.value.trim() : '';
+                if (!o || !p) return;
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', '/track?order_number=' + encodeURIComponent(o) + '&phone=' + encodeURIComponent(p));
+                }
+                lookupOrder(o, p);
+            });
+        }
+        var qs = new URLSearchParams(window.location.search);
+        var qOrd = (qs.get('order_number') || '').trim();
+        var qPh = (qs.get('phone') || '').trim();
+        if (qOrd && qPh && !document.querySelector('.order-meta-ribbon')) {
+            if (ordInp) ordInp.value = qOrd;
+            if (phInp) phInp.value = qPh;
+            lookupOrder(qOrd, qPh);
+        }
+    });
+})();
+</script>
 
 <style>
 /* ════════════════════════════════════════════════════

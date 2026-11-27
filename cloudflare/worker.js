@@ -86,6 +86,12 @@ function safeJsonInline(data) {
     return JSON.stringify(data).replace(/</g, '\\u003c');
 }
 
+function injectBeforeLastTag(html, tag, snippet) {
+    const idx = html.toLowerCase().lastIndexOf(tag.toLowerCase());
+    if (idx === -1) return `${html}\n${snippet}`;
+    return html.slice(0, idx) + snippet + '\n' + html.slice(idx);
+}
+
 function rewriteOriginUrls(text, url) {
     return String(text || '')
         .replace(/https?:\/\/yourdomain\.com/gi, () => url.origin)
@@ -221,7 +227,7 @@ async function handleAdminRoutes(request, url, env, session) {
         const cnt = await env.DB.prepare('SELECT COUNT(*) AS c FROM users').first();
         const needsSetup = Number(cnt?.c || 0) === 0;
         const inject = `<script>window.DT_ADMIN_NEEDS_SETUP=${needsSetup ? 'true' : 'false'};</script><script src="/admin/assets/js/admin-edge-bridge.js?v=cf"></script>`;
-        html = html.includes('</body>') ? html.replace('</body>', `${inject}\n</body>`) : `${html}\n${inject}`;
+        html = injectBeforeLastTag(html, '</body>', inject);
         return new Response(html, {
             status: 200,
             headers: {
@@ -280,12 +286,12 @@ async function handleAdminRoutes(request, url, env, session) {
         );
 
     const bridgeHeadScript = `<script>window.DT_ADMIN_USER=${safeJsonInline(session.admin)};window.DT_ADMIN_CSRF_TOKEN=${csrfJson};window.DT_DASH=window.DT_DASH||${dashJson};(function(){var f=window.fetch;if(!f||f.__dtCsrfPatched)return;var w=function(u,o){var s=typeof u==="string"?u:(u&&u.url)||"";var m=((o&&o.method)||"GET").toUpperCase();if(s.indexOf("/api/")!==-1&&m!=="GET"&&m!=="HEAD"){o=Object.assign({},o||{});var h=new Headers(o.headers||{});if(!h.has("X-CSRF-Token")&&window.DT_ADMIN_CSRF_TOKEN)h.set("X-CSRF-Token",window.DT_ADMIN_CSRF_TOKEN);o.headers=h;if(!o.credentials)o.credentials="same-origin";}return f.call(this,u,o);};w.__dtCsrfPatched=true;window.fetch=w;})();</script>`;
-    if (html.includes('</head>')) {
-        html = html.replace('</head>', `${bridgeHeadScript}\n</head>`);
+    if (html.toLowerCase().includes('</head>')) {
+        html = injectBeforeLastTag(html, '</head>', bridgeHeadScript);
     }
     const bridgeTag = `<script src="/admin/assets/js/admin-edge-bridge.js?v=cf"></script>`;
-    html = html.includes('</body>')
-        ? html.replace('</body>', `${bridgeTag}\n</body>`)
+    html = html.toLowerCase().includes('</body>')
+        ? injectBeforeLastTag(html, '</body>', bridgeTag)
         : `${bridgeHeadScript}\n${html}\n${bridgeTag}`;
 
     return new Response(html, {
@@ -339,10 +345,10 @@ window.allProducts = window.shopProductsData;
 window.products = window.allProducts;
 window.catalogProducts = window.allProducts;
 window.allCategories = ${JSON.stringify(categories)};
-</script></head>`;
+</script>`;
 
-    if (html.includes('</head>')) {
-        html = html.replace('</head>', hydrationScript);
+    if (html.toLowerCase().includes('</head>')) {
+        html = injectBeforeLastTag(html, '</head>', hydrationScript);
     }
 
     const headers = new Headers(assetRes.headers);
@@ -440,7 +446,10 @@ export default {
         console.log(JSON.stringify({ event: 'request', method: request.method, path }));
 
         try {
-            // 1. Storefront static assets & robots.txt
+            // 1. Storefront static assets, favicon & robots.txt
+            if (path === '/favicon.ico') {
+                return env.ASSETS.fetch(new Request(new URL('/assets/images/logo.png', url.origin), { method: 'GET' }));
+            }
             if (path.startsWith('/assets/') || path === '/manifest.json') {
                 return env.ASSETS.fetch(request);
             }

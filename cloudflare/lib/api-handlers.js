@@ -923,7 +923,8 @@ async function handleOrders(request, url, env, session) {
                     curTot += val;
                 }
             }
-            const growth = prevTot > 0 ? Math.round(((curTot - prevTot) / prevTot) * 1000) / 10 : curTot > 0 ? 100 : 0;
+            const growth =
+                prevTot > 0 ? Math.round(((curTot - prevTot) / prevTot) * 1000) / 10 : curTot > 0 ? 100 : 0;
             return jsonResponse({
                 success: true,
                 range,
@@ -961,9 +962,9 @@ async function handleOrders(request, url, env, session) {
             }
             const key = String(
                 url.searchParams.get('order_id') ||
-                    url.searchParams.get('id') ||
-                    url.searchParams.get('order_number') ||
-                    ''
+                url.searchParams.get('id') ||
+                url.searchParams.get('order_number') ||
+                ''
             ).trim();
             const ord = await env.DB.prepare(
                 'SELECT * FROM orders WHERE id = ? OR UPPER(order_number) = UPPER(?) LIMIT 1'
@@ -1067,49 +1068,6 @@ async function handleOrders(request, url, env, session) {
                 }
             }
             return jsonResponse({ success: true, updated_count: count, status, message: `Updated ${count} orders.` });
-        }
-
-        if (action === 'save_notes' || action === 'add_note') {
-            const deny = requireAdmin(session, 'update order notes');
-            if (deny) return deny;
-            const key = String(body.order_id || body.id || body.order_number || '').trim();
-            if (!key) return jsonResponse({ success: false, message: 'Order ID required.' }, 400);
-            const rawNotes = body.notes ?? body.note ?? '';
-            const notesVal = Array.isArray(rawNotes) ? JSON.stringify(rawNotes) : String(rawNotes);
-            await env.DB.prepare('UPDATE orders SET notes = ? WHERE id = ? OR UPPER(order_number) = UPPER(?)')
-                .bind(notesVal, Number(key) || -1, key)
-                .run();
-            return jsonResponse({ success: true, order_id: key, message: 'Order notes saved in D1.' });
-        }
-
-        if (action === 'update_address') {
-            const deny = requireAdmin(session, 'update order shipping address');
-            if (deny) return deny;
-            const key = String(body.order_id || body.id || body.order_number || '').trim();
-            const shipAddr = String(body.shipping_address || '').trim();
-            if (!key || !shipAddr)
-                return jsonResponse({ success: false, message: 'Order ID and shipping address required.' }, 400);
-            const recName = String(body.customer_name || '').trim();
-            const recPhone = String(body.customer_phone || '').trim();
-            if (recName && recPhone) {
-                await env.DB.prepare(
-                    'UPDATE orders SET shipping_address = ?, customer_name = ?, customer_phone = ? WHERE id = ? OR UPPER(order_number) = UPPER(?)'
-                )
-                    .bind(shipAddr, recName, recPhone, Number(key) || -1, key)
-                    .run();
-            } else {
-                await env.DB.prepare(
-                    'UPDATE orders SET shipping_address = ? WHERE id = ? OR UPPER(order_number) = UPPER(?)'
-                )
-                    .bind(shipAddr, Number(key) || -1, key)
-                    .run();
-            }
-            return jsonResponse({
-                success: true,
-                order_id: key,
-                shipping_address: shipAddr,
-                message: 'Shipping address updated in D1.',
-            });
         }
 
         if (action === 'delete') {
@@ -1364,9 +1322,7 @@ async function handlePaymentsAndWebhooks(request, url, env, session, path) {
                 );
             }
             const payEntity = body?.payload?.payment?.entity || {};
-            const orderRef = String(payEntity?.notes?.order_number || payEntity?.receipt || '')
-                .trim()
-                .toUpperCase();
+            const orderRef = String(payEntity?.notes?.order_number || payEntity?.receipt || '').trim().toUpperCase();
             if (orderRef && (eventType === 'payment.captured' || eventType === 'order.paid')) {
                 await env.DB.prepare("UPDATE orders SET payment_status = 'paid' WHERE UPPER(order_number) = ?")
                     .bind(orderRef)
@@ -1390,7 +1346,10 @@ async function handlePaymentsAndWebhooks(request, url, env, session, path) {
                 )
                     .bind(provider, eventType, rawText.slice(0, 4000))
                     .run();
-                return jsonResponse({ success: false, verified: false, error: 'webhook_secret_not_configured' }, 503);
+                return jsonResponse(
+                    { success: false, verified: false, error: 'webhook_secret_not_configured' },
+                    503
+                );
             }
             const ok =
                 sig &&
@@ -1403,12 +1362,7 @@ async function handlePaymentsAndWebhooks(request, url, env, session, path) {
                     .bind(provider, eventType, rawText.slice(0, 4000))
                     .run();
                 return jsonResponse(
-                    {
-                        success: false,
-                        verified: false,
-                        error: 'invalid_signature',
-                        message: 'Invalid Cashfree signature.',
-                    },
+                    { success: false, verified: false, error: 'invalid_signature', message: 'Invalid Cashfree signature.' },
                     401
                 );
             }
@@ -1604,9 +1558,7 @@ async function handlePaymentsAndWebhooks(request, url, env, session, path) {
 
     if (request.method === 'POST' && action === 'approve_utr') {
         const txId = Number(body.tx_id || body.id || 0);
-        const orderNumber = String(body.order_number || '')
-            .trim()
-            .toUpperCase();
+        const orderNumber = String(body.order_number || '').trim().toUpperCase();
         const utrRef = String(body.utr_ref || body.utr_reference || '').trim();
         if (txId > 0) {
             await env.DB.prepare("UPDATE payment_transactions SET status = 'captured' WHERE id = ?").bind(txId).run();
@@ -1621,47 +1573,23 @@ async function handlePaymentsAndWebhooks(request, url, env, session, path) {
                 .bind(orderNumber)
                 .run();
         }
-        await logAudit(
-            env,
-            session.admin.email,
-            'payment_approve_utr',
-            'order',
-            orderNumber || txId,
-            `Approved UTR ${utrRef}`,
-            request
-        );
-        return jsonResponse({
-            success: true,
-            order_number: orderNumber,
-            message: 'Payment verified & marked Paid in D1.',
-        });
+        await logAudit(env, session.admin.email, 'payment_approve_utr', 'order', orderNumber || txId, `Approved UTR ${utrRef}`, request);
+        return jsonResponse({ success: true, order_number: orderNumber, message: 'Payment verified & marked Paid in D1.' });
     }
 
     if (request.method === 'POST' && (action === 'refund' || action === 'reconcile')) {
         const txId = Number(body.tx_id || body.id || 0);
-        const orderNumber = String(body.order_number || '')
-            .trim()
-            .toUpperCase();
+        const orderNumber = String(body.order_number || '').trim().toUpperCase();
         const nextStatus = action === 'refund' ? 'refunded' : 'captured';
         if (txId > 0) {
-            await env.DB.prepare('UPDATE payment_transactions SET status = ? WHERE id = ?')
-                .bind(nextStatus, txId)
-                .run();
+            await env.DB.prepare('UPDATE payment_transactions SET status = ? WHERE id = ?').bind(nextStatus, txId).run();
         }
         if (orderNumber && action === 'refund') {
             await env.DB.prepare("UPDATE orders SET payment_status = 'refunded' WHERE UPPER(order_number) = ?")
                 .bind(orderNumber)
                 .run();
         }
-        await logAudit(
-            env,
-            session.admin.email,
-            `payment_${action}`,
-            'payment',
-            orderNumber || txId,
-            `Marked ${nextStatus}`,
-            request
-        );
+        await logAudit(env, session.admin.email, `payment_${action}`, 'payment', orderNumber || txId, `Marked ${nextStatus}`, request);
         return jsonResponse({ success: true, status: nextStatus, message: `Transaction updated to ${nextStatus}.` });
     }
 
@@ -1684,31 +1612,82 @@ async function handleShipping(request, url, env, session, path) {
         }
         const first2 = Number(pincode.slice(0, 2));
         let zone = 'Pan-India National';
+        let state = 'India';
+        let region = 'National';
         let estDays = 5;
         let rate = 99;
         if (first2 >= 36 && first2 <= 39) {
             zone = 'Gujarat (Surat Hub)';
+            state = 'Gujarat (Intra-State / Surat Hub)';
+            region = 'Local Zone';
             estDays = 2;
             rate = 49;
-        } else if ((first2 >= 40 && first2 <= 44) || (first2 >= 11 && first2 <= 13) || (first2 >= 30 && first2 <= 34)) {
+        } else if (first2 >= 40 && first2 <= 44) {
             zone = 'West & North Express';
+            state = 'Maharashtra';
+            region = 'West Zone';
             estDays = 3;
             rate = 79;
-        } else if (first2 >= 50 && first2 <= 74) {
+        } else if (first2 >= 11 && first2 <= 13) {
+            zone = 'West & North Express';
+            state = 'Delhi NCR';
+            region = 'North Zone';
+            estDays = 3;
+            rate = 79;
+        } else if (first2 >= 30 && first2 <= 34) {
+            zone = 'West & North Express';
+            state = 'Rajasthan';
+            region = 'North Zone';
+            estDays = 3;
+            rate = 79;
+        } else if (first2 >= 50 && first2 <= 53) {
             zone = 'Metro & South/East Air';
+            state = 'Andhra Pradesh / Telangana';
+            region = 'South Zone';
+            estDays = 4;
+            rate = 99;
+        } else if (first2 >= 56 && first2 <= 59) {
+            zone = 'Metro & South/East Air';
+            state = 'Karnataka (Bengaluru Hub)';
+            region = 'South Zone';
+            estDays = 4;
+            rate = 99;
+        } else if (first2 >= 60 && first2 <= 64) {
+            zone = 'Metro & South/East Air';
+            state = 'Tamil Nadu (Chennai Hub)';
+            region = 'South Zone';
+            estDays = 4;
+            rate = 99;
+        } else if (first2 >= 70 && first2 <= 74) {
+            zone = 'Metro & South/East Air';
+            state = 'West Bengal (Kolkata Hub)';
+            region = 'East Zone';
             estDays = 4;
             rate = 99;
         }
+        const delDate = new Date(Date.now() + estDays * 86400000).toLocaleDateString('en-IN', {
+            weekday: 'short',
+            day: '2-digit',
+            month: 'short',
+        });
+        const couriers = ['Delhivery Surface', 'BlueDart Air', 'DTDC Express', 'TCI Freight (B2B)'];
         return jsonResponse({
             success: true,
             serviceable: true,
             pincode,
             zone,
+            state,
+            region,
             est_days: estDays,
+            estimated_days: estDays,
+            estimated_delivery_date: delDate,
+            origin_hub: 'Surat Mill Depot (395002)',
             shipping_rate: rate,
             free_above: FREE_SHIPPING_THRESHOLD,
             cod_available: true,
-            couriers: ['Delhivery Express', 'Blue Dart Aviation', 'DTDC Priority'],
+            prepaid_available: true,
+            couriers,
+            supported_couriers: couriers,
         });
     }
 
@@ -1752,9 +1731,7 @@ async function handleShipping(request, url, env, session, path) {
                 )
                 .run()
                 .catch(() => null);
-            await env.DB.prepare(
-                'UPDATE shipping_zones SET states = ?, base_rate = ?, free_above = ?, est_days = ? WHERE name = ?'
-            )
+            await env.DB.prepare('UPDATE shipping_zones SET states = ?, base_rate = ?, free_above = ?, est_days = ? WHERE name = ?')
                 .bind(
                     String(r.coverage || ''),
                     Number(r.base_rate || 79),
@@ -1764,20 +1741,8 @@ async function handleShipping(request, url, env, session, path) {
                 )
                 .run();
         }
-        await logAudit(
-            env,
-            session.admin.email,
-            'shipping_update_rates',
-            'shipping',
-            'rates',
-            `Updated ${body.rates.length} rate rows`,
-            request
-        );
-        return jsonResponse({
-            success: true,
-            updated: body.rates.length,
-            message: 'Shipping rate matrix saved to D1.',
-        });
+        await logAudit(env, session.admin.email, 'shipping_update_rates', 'shipping', 'rates', `Updated ${body.rates.length} rate rows`, request);
+        return jsonResponse({ success: true, updated: body.rates.length, message: 'Shipping rate matrix saved to D1.' });
     }
     if (action === 'save_zone') {
         const zName = String(body.zone_name || body.name || '').trim();
@@ -1786,31 +1751,17 @@ async function handleShipping(request, url, env, session, path) {
         const baseRate = Number(body.base_rate || 79);
         const freeAbove = Number(body.free_threshold || body.free_above || 1999);
         const estDays = parseInt(String(body.sla || body.est_days || '3'), 10) || 3;
-        const existing = await env.DB.prepare('SELECT id FROM shipping_zones WHERE name = ? LIMIT 1')
-            .bind(zName)
-            .first();
+        const existing = await env.DB.prepare('SELECT id FROM shipping_zones WHERE name = ? LIMIT 1').bind(zName).first();
         if (existing) {
-            await env.DB.prepare(
-                'UPDATE shipping_zones SET states = ?, base_rate = ?, free_above = ?, est_days = ? WHERE id = ?'
-            )
+            await env.DB.prepare('UPDATE shipping_zones SET states = ?, base_rate = ?, free_above = ?, est_days = ? WHERE id = ?')
                 .bind(states, baseRate, freeAbove, estDays, existing.id)
                 .run();
         } else {
-            await env.DB.prepare(
-                'INSERT INTO shipping_zones (name, states, base_rate, free_above, est_days) VALUES (?, ?, ?, ?, ?)'
-            )
+            await env.DB.prepare('INSERT INTO shipping_zones (name, states, base_rate, free_above, est_days) VALUES (?, ?, ?, ?, ?)')
                 .bind(zName, states, baseRate, freeAbove, estDays)
                 .run();
         }
-        await logAudit(
-            env,
-            session.admin.email,
-            'shipping_save_zone',
-            'shipping_zone',
-            zName,
-            `Rate ₹${baseRate}`,
-            request
-        );
+        await logAudit(env, session.admin.email, 'shipping_save_zone', 'shipping_zone', zName, `Rate ₹${baseRate}`, request);
         return jsonResponse({ success: true, zone_name: zName, message: `Zone "${zName}" saved to D1.` });
     }
     if (action === 'resolve_exception') {
@@ -1925,9 +1876,9 @@ async function handleMediaAndStorage(request, url, env, session, path) {
         }
         const ext = filename.includes('.')
             ? filename
-                  .split('.')
-                  .pop()
-                  .replace(/[^a-z0-9]/gi, '')
+                .split('.')
+                .pop()
+                .replace(/[^a-z0-9]/gi, '')
             : 'bin';
         const rand = new Uint8Array(4);
         crypto.getRandomValues(rand);
@@ -2082,34 +2033,8 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                     'SELECT id, sku, title, category_name, fabric, mrp, retail_price, wholesale_price, reseller_price, stock_qty, reviews_count, status FROM products ORDER BY id ASC'
                 ).all();
                 return {
-                    headers: [
-                        'id',
-                        'sku',
-                        'title',
-                        'category',
-                        'fabric',
-                        'mrp',
-                        'retail_price',
-                        'wholesale_price',
-                        'reseller_price',
-                        'stock_qty',
-                        'reviews',
-                        'status',
-                    ],
-                    rows: (r.results || []).map((x) => [
-                        x.id,
-                        x.sku,
-                        x.title,
-                        x.category_name,
-                        x.fabric,
-                        x.mrp,
-                        x.retail_price,
-                        x.wholesale_price,
-                        x.reseller_price,
-                        x.stock_qty,
-                        x.reviews_count,
-                        x.status,
-                    ]),
+                    headers: ['id', 'sku', 'title', 'category', 'fabric', 'mrp', 'retail_price', 'wholesale_price', 'reseller_price', 'stock_qty', 'reviews', 'status'],
+                    rows: (r.results || []).map((x) => [x.id, x.sku, x.title, x.category_name, x.fabric, x.mrp, x.retail_price, x.wholesale_price, x.reseller_price, x.stock_qty, x.reviews_count, x.status]),
                     objects: r.results || [],
                 };
             }
@@ -2119,14 +2044,7 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                 ).all();
                 return {
                     headers: ['id', 'name', 'slug', 'products_count', 'display_order', 'status'],
-                    rows: (r.results || []).map((x) => [
-                        x.id,
-                        x.name,
-                        x.slug,
-                        x.products_count,
-                        x.display_order,
-                        x.status,
-                    ]),
+                    rows: (r.results || []).map((x) => [x.id, x.name, x.slug, x.products_count, x.display_order, x.status]),
                     objects: r.results || [],
                 };
             }
@@ -2136,15 +2054,7 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                 ).all();
                 return {
                     headers: ['id', 'sku', 'title', 'category', 'stock_qty', 'wholesale_value_inr', 'status'],
-                    rows: (r.results || []).map((x) => [
-                        x.id,
-                        x.sku,
-                        x.title,
-                        x.category_name,
-                        x.stock_qty,
-                        Number(x.stock_qty) * Number(x.wholesale_price || 0),
-                        x.status,
-                    ]),
+                    rows: (r.results || []).map((x) => [x.id, x.sku, x.title, x.category_name, x.stock_qty, Number(x.stock_qty) * Number(x.wholesale_price || 0), x.status]),
                     objects: r.results || [],
                 };
             }
@@ -2156,32 +2066,8 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                     (c) => roleFilter === 'all' || !roleFilter || String(c.type || '').toLowerCase() === roleFilter
                 );
                 return {
-                    headers: [
-                        'id',
-                        'name',
-                        'phone',
-                        'email',
-                        'type',
-                        'city',
-                        'state',
-                        'tier',
-                        'gstin',
-                        'status',
-                        'created_at',
-                    ],
-                    rows: list.map((x) => [
-                        x.id,
-                        x.name,
-                        x.phone,
-                        x.email,
-                        x.type,
-                        x.city,
-                        x.state,
-                        x.tier,
-                        x.gstin,
-                        x.status,
-                        x.created_at,
-                    ]),
+                    headers: ['id', 'name', 'phone', 'email', 'type', 'city', 'state', 'tier', 'gstin', 'status', 'created_at'],
+                    rows: list.map((x) => [x.id, x.name, x.phone, x.email, x.type, x.city, x.state, x.tier, x.gstin, x.status, x.created_at]),
                     objects: list,
                 };
             }
@@ -2190,28 +2076,8 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                     'SELECT id, order_number, customer_name, gateway, payment_method, amount, status, utr_reference, created_at FROM payment_transactions ORDER BY id DESC'
                 ).all();
                 return {
-                    headers: [
-                        'id',
-                        'order_number',
-                        'customer_name',
-                        'gateway',
-                        'method',
-                        'amount',
-                        'status',
-                        'utr_reference',
-                        'created_at',
-                    ],
-                    rows: (r.results || []).map((x) => [
-                        x.id,
-                        x.order_number,
-                        x.customer_name,
-                        x.gateway,
-                        x.payment_method,
-                        x.amount,
-                        x.status,
-                        x.utr_reference,
-                        x.created_at,
-                    ]),
+                    headers: ['id', 'order_number', 'customer_name', 'gateway', 'method', 'amount', 'status', 'utr_reference', 'created_at'],
+                    rows: (r.results || []).map((x) => [x.id, x.order_number, x.customer_name, x.gateway, x.payment_method, x.amount, x.status, x.utr_reference, x.created_at]),
                     objects: r.results || [],
                 };
             }
@@ -2221,40 +2087,17 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                 ).all();
                 return {
                     headers: ['id', 'order_number', 'carrier', 'awb_number', 'status', 'created_at'],
-                    rows: (r.results || []).map((x) => [
-                        x.id,
-                        x.order_number,
-                        x.carrier,
-                        x.awb_number,
-                        x.status,
-                        x.created_at,
-                    ]),
+                    rows: (r.results || []).map((x) => [x.id, x.order_number, x.carrier, x.awb_number, x.status, x.created_at]),
                     objects: r.results || [],
                 };
             }
             if (repType === 'returns') {
                 const r = await env.DB.prepare(
-                    'SELECT id, order_number, customer_phone, reason, status, refund_amount, created_at FROM returns ORDER BY id DESC'
+                    'SELECT id, order_number, customer_name, reason, status, refund_amount, created_at FROM returns ORDER BY id DESC'
                 ).all();
                 return {
-                    headers: [
-                        'id',
-                        'order_number',
-                        'customer_phone',
-                        'reason',
-                        'status',
-                        'refund_amount',
-                        'created_at',
-                    ],
-                    rows: (r.results || []).map((x) => [
-                        x.id,
-                        x.order_number,
-                        x.customer_phone,
-                        x.reason,
-                        x.status,
-                        x.refund_amount,
-                        x.created_at,
-                    ]),
+                    headers: ['id', 'order_number', 'customer_name', 'reason', 'status', 'refund_amount', 'created_at'],
+                    rows: (r.results || []).map((x) => [x.id, x.order_number, x.customer_name, x.reason, x.status, x.refund_amount, x.created_at]),
                     objects: r.results || [],
                 };
             }
@@ -2263,28 +2106,8 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                     'SELECT id, code, title, discount_type, discount_value, min_order_value, max_discount, channel, status FROM coupons ORDER BY id DESC'
                 ).all();
                 return {
-                    headers: [
-                        'id',
-                        'code',
-                        'title',
-                        'discount_type',
-                        'discount_value',
-                        'min_order_value',
-                        'max_discount',
-                        'channel',
-                        'status',
-                    ],
-                    rows: (r.results || []).map((x) => [
-                        x.id,
-                        x.code,
-                        x.title,
-                        x.discount_type,
-                        x.discount_value,
-                        x.min_order_value,
-                        x.max_discount,
-                        x.channel,
-                        x.status,
-                    ]),
+                    headers: ['id', 'code', 'title', 'discount_type', 'discount_value', 'min_order_value', 'max_discount', 'channel', 'status'],
+                    rows: (r.results || []).map((x) => [x.id, x.code, x.title, x.discount_type, x.discount_value, x.min_order_value, x.max_discount, x.channel, x.status]),
                     objects: r.results || [],
                 };
             }
@@ -2296,40 +2119,8 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                 (o) => channel === 'all' || !channel || String(o.channel || '').toLowerCase() === channel
             );
             return {
-                headers: [
-                    'order_number',
-                    'customer_name',
-                    'phone',
-                    'city',
-                    'state',
-                    'channel',
-                    'subtotal',
-                    'discount',
-                    'gst_amount',
-                    'shipping_fee',
-                    'total_amount',
-                    'payment_method',
-                    'payment_status',
-                    'fulfillment_status',
-                    'created_at',
-                ],
-                rows: list.map((o) => [
-                    o.order_number,
-                    o.customer_name,
-                    o.customer_phone,
-                    o.city,
-                    o.state,
-                    o.channel,
-                    o.subtotal,
-                    o.discount,
-                    o.gst_amount,
-                    o.shipping_fee,
-                    o.total_amount,
-                    o.payment_method,
-                    o.payment_status,
-                    o.fulfillment_status,
-                    o.created_at,
-                ]),
+                headers: ['order_number', 'customer_name', 'phone', 'city', 'state', 'channel', 'subtotal', 'discount', 'gst_amount', 'shipping_fee', 'total_amount', 'payment_method', 'payment_status', 'fulfillment_status', 'created_at'],
+                rows: list.map((o) => [o.order_number, o.customer_name, o.customer_phone, o.city, o.state, o.channel, o.subtotal, o.discount, o.gst_amount, o.shipping_fee, o.total_amount, o.payment_method, o.payment_status, o.fulfillment_status, o.created_at]),
                 objects: list,
             };
         }
@@ -2338,9 +2129,7 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
             const ds = await buildReportDataset(type);
             const isExcel = format === 'excel' || format === 'xls' || format === 'xlsx';
             const ext = isExcel ? 'xls' : 'csv';
-            const csv = [ds.headers.map(csvCell).join(','), ...ds.rows.map((row) => row.map(csvCell).join(','))].join(
-                '\n'
-            );
+            const csv = [ds.headers.map(csvCell).join(','), ...ds.rows.map((row) => row.map(csvCell).join(','))].join('\n');
             return new Response(csv, {
                 status: 200,
                 headers: {
@@ -2350,22 +2139,7 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
             });
         }
 
-        const repType = [
-            'sales',
-            'orders',
-            'revenue',
-            'pnl',
-            'products',
-            'categories',
-            'inventory',
-            'customers',
-            'roles',
-            'role_detail',
-            'payments',
-            'shipping',
-            'returns',
-            'coupons',
-        ].includes(action)
+        const repType = ['sales', 'orders', 'revenue', 'pnl', 'products', 'categories', 'inventory', 'customers', 'roles', 'role_detail', 'payments', 'shipping', 'returns', 'coupons'].includes(action)
             ? action
             : type;
         const ds = await buildReportDataset(repType);
@@ -2476,14 +2250,20 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
         const cid = Number(url.searchParams.get('id') || 0);
         if (cid > 0) {
             const cust = await env.DB.prepare(
-                'SELECT id, name, phone, email, type, city, state, tier, gstin, status, created_at FROM customers WHERE id = ? LIMIT 1'
+                'SELECT id, name, business_name, phone, email, type, city, state, tier, credit_limit, outstanding_balance, gstin, pan, kyc_status, total_orders, lifetime_spend, status, created_at FROM customers WHERE id = ? LIMIT 1'
             )
                 .bind(cid)
                 .first();
             if (!cust) return jsonResponse({ success: false, message: 'Customer not found.' }, 404);
             const [addrs, notes] = await Promise.all([
-                env.DB.prepare('SELECT * FROM addresses WHERE customer_id = ?').bind(cid).all(),
-                env.DB.prepare('SELECT * FROM customer_notes WHERE customer_id = ? ORDER BY id DESC').bind(cid).all(),
+                env.DB.prepare('SELECT * FROM addresses WHERE customer_id = ?')
+                    .bind(cid)
+                    .all()
+                    .catch(() => ({ results: [] })),
+                env.DB.prepare('SELECT * FROM customer_notes WHERE customer_id = ? ORDER BY id DESC')
+                    .bind(cid)
+                    .all()
+                    .catch(() => ({ results: [] })),
             ]);
             return jsonResponse({
                 success: true,
@@ -2493,7 +2273,7 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
             });
         }
         const rows = await env.DB.prepare(
-            'SELECT id, name, phone, email, type, city, state, tier, status, created_at FROM customers ORDER BY id DESC LIMIT 200'
+            'SELECT id, name, business_name, phone, email, type, city, state, tier, credit_limit, gstin, kyc_status, total_orders, lifetime_spend, status, created_at FROM customers ORDER BY id DESC LIMIT 200'
         ).all();
         return jsonResponse({ success: true, customers: rows.results || [] });
     }
@@ -2603,29 +2383,17 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                     await env.DB.prepare('DELETE FROM users WHERE id = ? AND id != ?')
                         .bind(uid, session.admin.id)
                         .run();
-                    await logAudit(
-                        env,
-                        session.admin.email,
-                        'admin_delete_user',
-                        'user',
-                        uid,
-                        'Deleted admin user',
-                        request
-                    );
+                    await logAudit(env, session.admin.email, 'admin_delete_user', 'user', uid, 'Deleted admin user', request);
                     return jsonResponse({ success: true, message: 'User removed.' });
                 }
                 const cur = await env.DB.prepare('SELECT status FROM users WHERE id = ? LIMIT 1').bind(uid).first();
-                const nextStatus = body.status ? String(body.status) : cur?.status === 'active' ? 'inactive' : 'active';
+                const nextStatus = body.status
+                    ? String(body.status)
+                    : cur?.status === 'active'
+                        ? 'inactive'
+                        : 'active';
                 await env.DB.prepare('UPDATE users SET status = ? WHERE id = ?').bind(nextStatus, uid).run();
-                await logAudit(
-                    env,
-                    session.admin.email,
-                    'admin_toggle_user',
-                    'user',
-                    uid,
-                    `Status -> ${nextStatus}`,
-                    request
-                );
+                await logAudit(env, session.admin.email, 'admin_toggle_user', 'user', uid, `Status -> ${nextStatus}`, request);
                 return jsonResponse({ success: true, status: nextStatus, message: `User marked ${nextStatus}.` });
             }
             if (action === 'reset_password') {
@@ -2636,15 +2404,7 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                 }
                 const hash = await hashPassword(pw);
                 await env.DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(hash, uid).run();
-                await logAudit(
-                    env,
-                    session.admin.email,
-                    'admin_reset_password',
-                    'user',
-                    uid,
-                    'Reset admin password',
-                    request
-                );
+                await logAudit(env, session.admin.email, 'admin_reset_password', 'user', uid, 'Reset admin password', request);
                 return jsonResponse({ success: true, message: 'Admin password updated securely.' });
             }
             if (action === 'save_permissions' && body.role) {
@@ -2656,58 +2416,29 @@ async function handleReportsAndAdmin(request, url, env, session, path) {
                 )
                     .bind(roleKey, permsVal, permsVal, 'permissions')
                     .run();
-                await logAudit(
-                    env,
-                    session.admin.email,
-                    'save_permissions',
-                    'role',
-                    body.role,
-                    'Updated permissions matrix',
-                    request
-                );
+                await logAudit(env, session.admin.email, 'save_permissions', 'role', body.role, 'Updated permissions matrix', request);
                 return jsonResponse({ success: true, message: `Permissions matrix saved for ${body.role}.` });
             }
             if (action === 'revoke_session' || action === 'revoke_all_other_sessions') {
-                await logAudit(
-                    env,
-                    session.admin.email,
-                    action,
-                    'session',
-                    body.session_id || 'other',
-                    'Session action logged',
-                    request
-                );
+                await logAudit(env, session.admin.email, action, 'session', body.session_id || 'other', 'Session action logged', request);
                 return jsonResponse({ success: true, message: 'Session termination logged cleanly.' });
             }
         }
         const action = String(url.searchParams.get('action') || '').trim();
         if (action === 'export' || action === 'export_logs') {
             const logType = String(url.searchParams.get('type') || 'audit').trim();
-            const qSearch = String(url.searchParams.get('search') || '')
-                .trim()
-                .toLowerCase();
-            const qEntity = String(url.searchParams.get('entity_type') || '')
-                .trim()
-                .toLowerCase();
-            const qActor = String(url.searchParams.get('actor') || '')
-                .trim()
-                .toLowerCase();
+            const qSearch = String(url.searchParams.get('search') || '').trim().toLowerCase();
+            const qEntity = String(url.searchParams.get('entity_type') || '').trim().toLowerCase();
+            const qActor = String(url.searchParams.get('actor') || '').trim().toLowerCase();
             const rowsRes = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY id DESC LIMIT 1000').all();
             let list = rowsRes.results || [];
             if (logType === 'login') {
                 list = list.filter((r) => String(r.action || '').includes('login'));
             }
             if (qEntity) list = list.filter((r) => String(r.entity_type || '').toLowerCase() === qEntity);
-            if (qActor)
-                list = list.filter((r) =>
-                    String(r.actor || '')
-                        .toLowerCase()
-                        .includes(qActor)
-                );
+            if (qActor) list = list.filter((r) => String(r.actor || '').toLowerCase().includes(qActor));
             if (qSearch) {
-                list = list.filter((r) =>
-                    `${r.actor} ${r.action} ${r.entity_type} ${r.details}`.toLowerCase().includes(qSearch)
-                );
+                list = list.filter((r) => `${r.actor} ${r.action} ${r.entity_type} ${r.details}`.toLowerCase().includes(qSearch));
             }
             const csv = [
                 'id,actor,action,entity_type,entity_id,details,ip_address,created_at',
@@ -2987,26 +2718,16 @@ async function verifyAdminCsrf(request, url, env, session) {
         try {
             if (new URL(originHdr).origin !== url.origin) {
                 return jsonResponse(
-                    {
-                        success: false,
-                        error: 'csrf_origin_mismatch',
-                        message: 'Forbidden: Cross-origin request denied.',
-                    },
+                    { success: false, error: 'csrf_origin_mismatch', message: 'Forbidden: Cross-origin request denied.' },
                     403
                 );
             }
         } catch {
-            return jsonResponse(
-                { success: false, error: 'csrf_origin_invalid', message: 'Forbidden: Invalid Origin.' },
-                403
-            );
+            return jsonResponse({ success: false, error: 'csrf_origin_invalid', message: 'Forbidden: Invalid Origin.' }, 403);
         }
     }
     if (request.headers.get('sec-fetch-site') === 'cross-site') {
-        return jsonResponse(
-            { success: false, error: 'csrf_cross_site', message: 'Forbidden: Cross-site request blocked.' },
-            403
-        );
+        return jsonResponse({ success: false, error: 'csrf_cross_site', message: 'Forbidden: Cross-site request blocked.' }, 403);
     }
 
     if (!session.isAdmin) return null;
@@ -3025,7 +2746,10 @@ async function verifyAdminCsrf(request, url, env, session) {
         }
     }
     if (!token) {
-        return jsonResponse({ success: false, error: 'csrf_missing', message: 'Forbidden: Missing CSRF token.' }, 403);
+        return jsonResponse(
+            { success: false, error: 'csrf_missing', message: 'Forbidden: Missing CSRF token.' },
+            403
+        );
     }
     const secret = await getSigningSecret(env);
     const verified = await verifyToken(token, secret);
@@ -3159,18 +2883,13 @@ export async function routeApiRequest(request, url, env, session) {
                 const name = String(body.name || '').trim();
                 let categoryId = Number(body.category_id || 0);
                 if (!categoryId && (body.category || body.category_name)) {
-                    const f = await env.DB.prepare(
-                        'SELECT id FROM categories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1'
-                    )
+                    const f = await env.DB.prepare('SELECT id FROM categories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1')
                         .bind(String(body.category || body.category_name))
                         .first();
                     if (f) categoryId = Number(f.id);
                 }
                 if (!name || categoryId <= 0) {
-                    return jsonResponse(
-                        { success: false, message: 'Subcategory name and parent category required.' },
-                        400
-                    );
+                    return jsonResponse({ success: false, message: 'Subcategory name and parent category required.' }, 400);
                 }
                 const slug = slugify(body.slug || name) || `subcat-${Date.now()}`;
                 const ins = await env.DB.prepare(
@@ -3178,23 +2897,11 @@ export async function routeApiRequest(request, url, env, session) {
                 )
                     .bind(categoryId, name, slug, String(body.description || ''), String(body.status || 'active'))
                     .run();
-                return jsonResponse(
-                    {
-                        success: true,
-                        id: Number(ins.meta?.last_row_id || 0),
-                        name,
-                        slug,
-                        category_id: categoryId,
-                        message: `Subcategory "${name}" created.`,
-                    },
-                    201
-                );
+                return jsonResponse({ success: true, id: Number(ins.meta?.last_row_id || 0), name, slug, category_id: categoryId, message: `Subcategory "${name}" created.` }, 201);
             }
 
             if (action === 'update_subcategory' && targetId > 0) {
-                await env.DB.prepare(
-                    "UPDATE subcategories SET name = COALESCE(NULLIF(?, ''), name), status = COALESCE(NULLIF(?, ''), status) WHERE id = ?"
-                )
+                await env.DB.prepare("UPDATE subcategories SET name = COALESCE(NULLIF(?, ''), name), status = COALESCE(NULLIF(?, ''), status) WHERE id = ?")
                     .bind(String(body.name || ''), String(body.status || ''), targetId)
                     .run();
                 return jsonResponse({ success: true, id: targetId, message: 'Subcategory updated.' });
@@ -3206,17 +2913,13 @@ export async function routeApiRequest(request, url, env, session) {
             }
 
             if (action === 'reorder') {
-                const items = Array.isArray(body.items)
-                    ? body.items
-                    : safeParseJsonArray(body.items || body.order || '[]');
+                const items = Array.isArray(body.items) ? body.items : safeParseJsonArray(body.items || body.order || '[]');
                 for (let i = 0; i < items.length; i++) {
                     const it = items[i];
                     const cid = Number(typeof it === 'object' ? it.id : it);
                     const ord = Number(typeof it === 'object' ? (it.display_order ?? i + 1) : i + 1);
                     if (cid > 0) {
-                        await env.DB.prepare('UPDATE categories SET display_order = ? WHERE id = ?')
-                            .bind(ord, cid)
-                            .run();
+                        await env.DB.prepare('UPDATE categories SET display_order = ? WHERE id = ?').bind(ord, cid).run();
                     }
                 }
                 return jsonResponse({ success: true, message: 'Categories reordered in D1.' });
@@ -3224,15 +2927,7 @@ export async function routeApiRequest(request, url, env, session) {
 
             if (action === 'delete' && targetId > 0) {
                 await env.DB.prepare('DELETE FROM categories WHERE id = ?').bind(targetId).run();
-                await logAudit(
-                    env,
-                    session.admin.email,
-                    'category_delete',
-                    'category',
-                    targetId,
-                    'Deleted category',
-                    request
-                );
+                await logAudit(env, session.admin.email, 'category_delete', 'category', targetId, 'Deleted category', request);
                 return jsonResponse({ success: true, id: targetId, message: 'Category deleted.' });
             }
 
@@ -3243,17 +2938,11 @@ export async function routeApiRequest(request, url, env, session) {
                 for (const cid of ids) {
                     await env.DB.prepare('DELETE FROM categories WHERE id = ?').bind(cid).run();
                 }
-                return jsonResponse({
-                    success: true,
-                    affected_count: ids.length,
-                    message: `Deleted ${ids.length} categories.`,
-                });
+                return jsonResponse({ success: true, affected_count: ids.length, message: `Deleted ${ids.length} categories.` });
             }
 
             if (action === 'update' && targetId > 0) {
-                const cur = await env.DB.prepare('SELECT * FROM categories WHERE id = ? LIMIT 1')
-                    .bind(targetId)
-                    .first();
+                const cur = await env.DB.prepare('SELECT * FROM categories WHERE id = ? LIMIT 1').bind(targetId).first();
                 if (!cur) return jsonResponse({ success: false, message: 'Category not found.' }, 404);
                 await env.DB.prepare(
                     'UPDATE categories SET name = ?, slug = ?, description = ?, image = ?, display_order = ?, status = ? WHERE id = ?'
@@ -3292,9 +2981,7 @@ export async function routeApiRequest(request, url, env, session) {
         const [cats, subs] = await Promise.all([
             showAll
                 ? env.DB.prepare('SELECT * FROM categories ORDER BY display_order ASC, id ASC').all()
-                : env.DB.prepare(
-                      "SELECT * FROM categories WHERE status = 'active' ORDER BY display_order ASC, id ASC"
-                  ).all(),
+                : env.DB.prepare("SELECT * FROM categories WHERE status = 'active' ORDER BY display_order ASC, id ASC").all(),
             env.DB.prepare('SELECT * FROM subcategories ORDER BY id ASC').all(),
         ]);
         const list = cats.results || [];
@@ -3322,11 +3009,7 @@ export async function routeApiRequest(request, url, env, session) {
                         body[k] = v;
                     } else if (v && typeof v.arrayBuffer === 'function' && v.size > 0) {
                         const bytes = new Uint8Array(await v.arrayBuffer());
-                        const ext =
-                            (v.name || 'logo.png')
-                                .split('.')
-                                .pop()
-                                .replace(/[^a-z0-9]/gi, '') || 'png';
+                        const ext = (v.name || 'logo.png').split('.').pop().replace(/[^a-z0-9]/gi, '') || 'png';
                         const fileKey = `brands/brand_${Date.now()}.${ext}`;
                         const stored = await storeCloudObject(env, {
                             fileKey,
@@ -3344,16 +3027,11 @@ export async function routeApiRequest(request, url, env, session) {
             const action = String(body.action || 'create').trim();
             const id = Number(body.id || 0);
             if (action === 'upload_logo') {
-                if (!uploadedLogoUrl)
-                    return jsonResponse({ success: false, message: 'Valid logo image required.' }, 400);
+                if (!uploadedLogoUrl) return jsonResponse({ success: false, message: 'Valid logo image required.' }, 400);
                 if (id > 0) {
                     await env.DB.prepare('UPDATE brands SET logo_url = ? WHERE id = ?').bind(uploadedLogoUrl, id).run();
                 }
-                return jsonResponse({
-                    success: true,
-                    logo_url: uploadedLogoUrl,
-                    message: 'Brand logo uploaded to Cloudflare storage.',
-                });
+                return jsonResponse({ success: true, logo_url: uploadedLogoUrl, message: 'Brand logo uploaded to Cloudflare storage.' });
             }
             if (action === 'delete' && id > 0) {
                 await env.DB.prepare('DELETE FROM brands WHERE id = ?').bind(id).run();
@@ -3363,9 +3041,7 @@ export async function routeApiRequest(request, url, env, session) {
                 const cur = await env.DB.prepare('SELECT * FROM brands WHERE id = ? LIMIT 1').bind(id).first();
                 if (!cur) return jsonResponse({ success: false, message: 'Brand not found.' }, 404);
                 const nextLogo = uploadedLogoUrl || String(body.logo_url || cur.logo_url || '');
-                await env.DB.prepare(
-                    'UPDATE brands SET name = ?, slug = ?, tagline = ?, description = ?, tier = ?, logo_url = ?, status = ? WHERE id = ?'
-                )
+                await env.DB.prepare('UPDATE brands SET name = ?, slug = ?, tagline = ?, description = ?, tier = ?, logo_url = ?, status = ? WHERE id = ?')
                     .bind(
                         String(body.name || cur.name),
                         slugify(body.slug || body.name || cur.slug),
@@ -3396,15 +3072,7 @@ export async function routeApiRequest(request, url, env, session) {
                     String(body.status || 'active')
                 )
                 .run();
-            return jsonResponse(
-                {
-                    success: true,
-                    id: Number(ins.meta?.last_row_id || 0),
-                    logo_url: logoUrl,
-                    message: `Brand "${name}" saved in D1.`,
-                },
-                201
-            );
+            return jsonResponse({ success: true, id: Number(ins.meta?.last_row_id || 0), logo_url: logoUrl, message: `Brand "${name}" saved in D1.` }, 201);
         }
         const rows = await env.DB.prepare('SELECT * FROM brands ORDER BY id ASC').all();
         const list = rows.results || [];
@@ -3428,10 +3096,7 @@ export async function routeApiRequest(request, url, env, session) {
                 )
                     .bind(name, slug, String(body.type || 'Text Badge / Pill'), vals)
                     .run();
-                return jsonResponse(
-                    { success: true, id: Number(ins.meta?.last_row_id || 0), message: `Attribute "${name}" saved.` },
-                    201
-                );
+                return jsonResponse({ success: true, id: Number(ins.meta?.last_row_id || 0), message: `Attribute "${name}" saved.` }, 201);
             }
             if (action === 'update' && id > 0) {
                 const cur = await env.DB.prepare('SELECT * FROM attributes WHERE id = ? LIMIT 1').bind(id).first();
@@ -3451,9 +3116,7 @@ export async function routeApiRequest(request, url, env, session) {
                 return jsonResponse({ success: true, id, message: 'Attribute deleted.' });
             }
             if ((action === 'add_term' || action === 'remove_term') && id > 0) {
-                const row = await env.DB.prepare('SELECT values_json FROM attributes WHERE id = ? LIMIT 1')
-                    .bind(id)
-                    .first();
+                const row = await env.DB.prepare('SELECT values_json FROM attributes WHERE id = ? LIMIT 1').bind(id).first();
                 if (!row) return jsonResponse({ success: false, message: 'Attribute not found.' }, 404);
                 let terms = safeParseJsonArray(row.values_json, []);
                 const termName = String(body.term_name || '').trim();
@@ -3503,10 +3166,7 @@ export async function routeApiRequest(request, url, env, session) {
                     Number(body.reseller_price || 1699)
                 )
                 .run();
-            return jsonResponse(
-                { success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Variant saved.' },
-                201
-            );
+            return jsonResponse({ success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Variant saved.' }, 201);
         }
         const pid = Number(url.searchParams.get('product_id') || 0);
         const rows =
@@ -3550,22 +3210,14 @@ export async function routeApiRequest(request, url, env, session) {
             return jsonResponse({ success: true, product_id: pid, field_name: fieldName, new_price: newPrice });
         }
         if (action === 'summary') {
-            const tot = await env.DB.prepare(
-                "SELECT COUNT(*) AS changes FROM audit_logs WHERE action = 'price_change'"
-            ).first();
+            const tot = await env.DB.prepare("SELECT COUNT(*) AS changes FROM audit_logs WHERE action = 'price_change'").first();
             return jsonResponse({ success: true, stats: { total_changes: Number(tot?.changes || 0) } });
         }
         if (action === 'history' || action === 'product_history') {
             const pid = url.searchParams.get('product_id');
             const rows = pid
-                ? await env.DB.prepare(
-                      "SELECT * FROM audit_logs WHERE action = 'price_change' AND entity_id = ? ORDER BY id DESC LIMIT 50"
-                  )
-                      .bind(String(pid))
-                      .all()
-                : await env.DB.prepare(
-                      "SELECT * FROM audit_logs WHERE action = 'price_change' ORDER BY id DESC LIMIT 50"
-                  ).all();
+                ? await env.DB.prepare("SELECT * FROM audit_logs WHERE action = 'price_change' AND entity_id = ? ORDER BY id DESC LIMIT 50").bind(String(pid)).all()
+                : await env.DB.prepare("SELECT * FROM audit_logs WHERE action = 'price_change' ORDER BY id DESC LIMIT 50").all();
             return jsonResponse({ success: true, data: rows.results || [], history: rows.results || [] });
         }
         const pid = Number(url.searchParams.get('product_id') || url.searchParams.get('id') || 0);
@@ -3584,53 +3236,16 @@ export async function routeApiRequest(request, url, env, session) {
     }
 
     if (path === '/api/content.php') {
-        if (request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE') {
+        if (request.method === 'POST') {
             const deny = requireAdmin(session, 'manage CMS & marketing content');
             if (deny) return deny;
             const body = await readRequestBody(request);
             const action = String(body.action || '').trim();
             const id = Number(body.id || 0);
 
-            if (
-                action === 'save_banner' ||
-                action === 'create_banner' ||
-                action === 'update_banner' ||
-                action === 'create_slide'
-            ) {
+            if (action === 'create_banner' || action === 'create_slide') {
                 const title = String(body.title || 'DT Brand Banner').trim();
-                const placement = action === 'create_slide' ? 'slider' : String(body.placement || body.slot || 'hero');
-                const deskImg = String(body.image || body.image_url || body.desk_img || '/assets/images/product1.png');
-                const mobImg = String(body.image_mobile || body.image_mobile_url || body.mobile_img || '');
-                const ctaText = String(body.cta_text || body.cta || body.button_text || 'Explore Collection');
-                const ctaLink = String(body.cta_link || body.link_url || body.link || '/shop');
-                const badgeText = String(body.badge_text || body.badge || '');
-                const rawSt = String(body.status || 'active').toLowerCase();
-                const cleanSt =
-                    rawSt.includes('inactive') || rawSt.includes('draft') || rawSt.includes('hidden')
-                        ? 'inactive'
-                        : 'active';
-                const orderVal = Math.max(1, Number(body.display_order || body.priority || 1));
-
-                if (id > 0 && (action === 'save_banner' || action === 'update_banner')) {
-                    await env.DB.prepare(
-                        'UPDATE banners SET title = ?, subtitle = ?, badge = ?, cta_text = ?, cta_link = ?, image_url = ?, image_mobile_url = ?, placement = ?, status = ?, display_order = ? WHERE id = ?'
-                    )
-                        .bind(
-                            title,
-                            String(body.subtitle || ''),
-                            badgeText,
-                            ctaText,
-                            ctaLink,
-                            deskImg,
-                            mobImg,
-                            placement,
-                            cleanSt,
-                            orderVal,
-                            id
-                        )
-                        .run();
-                    return jsonResponse({ success: true, id, message: 'Banner updated in D1.' });
-                }
+                const placement = action === 'create_slide' ? 'slider' : String(body.placement || 'hero');
                 const ins = await env.DB.prepare(
                     'INSERT INTO banners (title, subtitle, tagline, badge, cta_text, cta_link, image_url, image_mobile_url, placement, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 )
@@ -3638,103 +3253,41 @@ export async function routeApiRequest(request, url, env, session) {
                         title,
                         String(body.subtitle || ''),
                         String(body.tagline || ''),
-                        badgeText,
-                        ctaText,
-                        ctaLink,
-                        deskImg,
-                        mobImg,
+                        String(body.badge_text || body.badge || ''),
+                        String(body.button_text || body.cta_text || 'Explore Collection'),
+                        String(body.link_url || body.cta_link || '/shop'),
+                        String(body.image_url || '/assets/images/product1.png'),
+                        String(body.image_mobile_url || ''),
                         placement,
-                        cleanSt,
-                        orderVal
+                        String(body.status || 'active'),
+                        Number(body.display_order || 1)
                     )
                     .run();
-                return jsonResponse(
-                    { success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Banner saved live to D1.' },
-                    201
-                );
+                return jsonResponse({ success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Banner/slide saved in D1.' }, 201);
             }
-            if (action === 'toggle_banner' && id > 0) {
-                const cur = await env.DB.prepare('SELECT status FROM banners WHERE id = ? LIMIT 1').bind(id).first();
-                if (!cur) return jsonResponse({ success: false, message: 'Banner not found.' }, 404);
-                const next = cur.status === 'active' ? 'inactive' : 'active';
-                await env.DB.prepare('UPDATE banners SET status = ? WHERE id = ?').bind(next, id).run();
-                return jsonResponse({ success: true, id, status: next, message: `Banner status set to ${next}.` });
-            }
-            if (action === 'reorder_banners') {
-                const ordIds = Array.isArray(body.order) ? body.order : safeParseJsonArray(body.order || '[]');
-                for (let i = 0; i < ordIds.length; i++) {
-                    await env.DB.prepare('UPDATE banners SET display_order = ? WHERE id = ?')
-                        .bind(i + 1, Number(ordIds[i]))
-                        .run();
-                }
-                return jsonResponse({ success: true, message: 'Banner sequence updated in D1.' });
+            if (action === 'update_banner' && id > 0) {
+                await env.DB.prepare(
+                    'UPDATE banners SET title = ?, subtitle = ?, badge = ?, cta_text = ?, cta_link = ?, image_url = ?, image_mobile_url = ?, placement = ?, status = ?, display_order = ? WHERE id = ?'
+                )
+                    .bind(
+                        String(body.title || ''),
+                        String(body.subtitle || ''),
+                        String(body.badge_text || body.badge || ''),
+                        String(body.button_text || body.cta_text || 'Explore'),
+                        String(body.link_url || body.cta_link || '/shop'),
+                        String(body.image_url || '/assets/images/product1.png'),
+                        String(body.image_mobile_url || ''),
+                        String(body.placement || 'hero'),
+                        String(body.status || 'active'),
+                        Number(body.display_order || 1),
+                        id
+                    )
+                    .run();
+                return jsonResponse({ success: true, id, message: 'Banner updated.' });
             }
             if ((action === 'delete_banner' || action === 'delete_slide') && id > 0) {
                 await env.DB.prepare('DELETE FROM banners WHERE id = ?').bind(id).run();
                 return jsonResponse({ success: true, id, message: 'Banner deleted.' });
-            }
-            if (action === 'toggle_section' && id > 0) {
-                const isActive = body.is_active ? 1 : 0;
-                await env.DB.prepare('UPDATE homepage_sections SET is_active = ? WHERE id = ?')
-                    .bind(isActive, id)
-                    .run();
-                return jsonResponse({ success: true, id, is_active: isActive, message: 'Homepage section updated.' });
-            }
-            if (action === 'reorder_sections') {
-                const sections = Array.isArray(body.sections)
-                    ? body.sections
-                    : safeParseJsonArray(body.sections || '[]');
-                for (let i = 0; i < sections.length; i++) {
-                    const sec = sections[i];
-                    const sid = Number(sec?.id || 0);
-                    if (sid > 0) {
-                        await env.DB.prepare(
-                            'UPDATE homepage_sections SET display_order = ?, is_active = ? WHERE id = ?'
-                        )
-                            .bind(Number(sec.display_order ?? i + 1), sec.is_active ? 1 : 0, sid)
-                            .run();
-                    }
-                }
-                return jsonResponse({ success: true, message: 'Homepage section layout saved in D1.' });
-            }
-            if (action === 'save_menu') {
-                const items = Array.isArray(body.items) ? body.items : safeParseJsonArray(body.items || '[]');
-                const val = JSON.stringify(items);
-                await env.DB.prepare(
-                    'INSERT INTO settings (key_name, value, value_text, category) VALUES (?, ?, ?, ?) ON CONFLICT(key_name) DO UPDATE SET value = excluded.value, value_text = excluded.value_text'
-                )
-                    .bind('store_navigation_menu', val, val, 'cms')
-                    .run();
-                return jsonResponse({ success: true, count: items.length, message: 'Navigation menu saved in D1.' });
-            }
-            if (action === 'save_merchandising') {
-                const catKey = slugify(body.category || 'default').replace(/-/g, '_');
-                const items = typeof body.items === 'string' ? body.items : JSON.stringify(body.items || []);
-                const sk = `merchandising_order_${catKey}`;
-                await env.DB.prepare(
-                    'INSERT INTO settings (key_name, value, value_text, category) VALUES (?, ?, ?, ?) ON CONFLICT(key_name) DO UPDATE SET value = excluded.value, value_text = excluded.value_text'
-                )
-                    .bind(sk, items, items, 'cms')
-                    .run();
-                return jsonResponse({ success: true, message: 'Merchandising positions saved in D1.' });
-            }
-            if (action === 'save_cms_page') {
-                const slug = slugify(body.slug || body.page || 'about-us') || 'about-us';
-                const title = String(body.title || body.headline || 'DT Brand Page').trim();
-                const content = String(body.content || body.narrative || JSON.stringify(body)).trim();
-                const st = ['draft', 'published', 'archived'].includes(String(body.status || '').toLowerCase())
-                    ? String(body.status).toLowerCase()
-                    : 'published';
-                await env.DB.prepare(
-                    'INSERT INTO cms_pages (slug, title, content, status) VALUES (?, ?, ?, ?) ON CONFLICT(slug) DO UPDATE SET title = excluded.title, content = excluded.content, status = excluded.status, updated_at = CURRENT_TIMESTAMP'
-                )
-                    .bind(slug, title, content, st)
-                    .run();
-                return jsonResponse({ success: true, slug, message: `CMS page "${title}" saved live in D1.` });
-            }
-            if (action === 'publish_all_cms') {
-                await env.DB.prepare("UPDATE cms_pages SET status = 'published', updated_at = CURRENT_TIMESTAMP").run();
-                return jsonResponse({ success: true, message: 'All CMS pages published live in D1.' });
             }
             if (action === 'create_announcement') {
                 const msg = String(body.message || '').trim();
@@ -3753,10 +3306,7 @@ export async function routeApiRequest(request, url, env, session) {
                         Number(body.display_order || 1)
                     )
                     .run();
-                return jsonResponse(
-                    { success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Announcement saved in D1.' },
-                    201
-                );
+                return jsonResponse({ success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Announcement saved in D1.' }, 201);
             }
             if (action === 'delete_announcement' && id > 0) {
                 await env.DB.prepare('DELETE FROM announcements WHERE id = ?').bind(id).run();
@@ -3768,19 +3318,9 @@ export async function routeApiRequest(request, url, env, session) {
                 const ins = await env.DB.prepare(
                     'INSERT INTO curated_collections (title, slug, description, image_url, status, display_order) VALUES (?, ?, ?, ?, ?, ?)'
                 )
-                    .bind(
-                        title,
-                        slug,
-                        String(body.description || ''),
-                        String(body.image_url || '/assets/images/product1.png'),
-                        String(body.status || 'active'),
-                        Number(body.display_order || 1)
-                    )
+                    .bind(title, slug, String(body.description || ''), String(body.image_url || '/assets/images/product1.png'), String(body.status || 'active'), Number(body.display_order || 1))
                     .run();
-                return jsonResponse(
-                    { success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Collection saved.' },
-                    201
-                );
+                return jsonResponse({ success: true, id: Number(ins.meta?.last_row_id || 0), message: 'Collection saved.' }, 201);
             }
             if (action === 'delete_collection' && id > 0) {
                 await env.DB.prepare('DELETE FROM curated_collections WHERE id = ?').bind(id).run();
@@ -3810,13 +3350,7 @@ export async function routeApiRequest(request, url, env, session) {
                 await env.DB.prepare(
                     'INSERT INTO share_templates (template_key, channel, title, content_body, status) VALUES (?, ?, ?, ?, ?) ON CONFLICT(template_key) DO UPDATE SET title = excluded.title, content_body = excluded.content_body'
                 )
-                    .bind(
-                        tKey,
-                        String(body.channel || 'whatsapp'),
-                        title,
-                        String(body.content_body || body.content || ''),
-                        String(body.status || 'active')
-                    )
+                    .bind(tKey, String(body.channel || 'whatsapp'), title, String(body.content_body || body.content || ''), String(body.status || 'active'))
                     .run();
                 return jsonResponse({ success: true, template_key: tKey, message: 'Share template saved in D1.' }, 201);
             }
@@ -3829,38 +3363,20 @@ export async function routeApiRequest(request, url, env, session) {
                 await env.DB.prepare(
                     'INSERT INTO homepage_sections (section_key, title, subtitle, display_order, is_active) VALUES (?, ?, ?, ?, 1) ON CONFLICT(section_key) DO UPDATE SET title = excluded.title, subtitle = excluded.subtitle, display_order = excluded.display_order'
                 )
-                    .bind(
-                        sKey,
-                        String(body.title || sKey),
-                        String(body.subtitle || ''),
-                        Number(body.display_order || 1)
-                    )
+                    .bind(sKey, String(body.title || sKey), String(body.subtitle || ''), Number(body.display_order || 1))
                     .run();
                 return jsonResponse({ success: true, message: 'Homepage section saved.' }, 201);
             }
             if (action === 'toggle_active' && id > 0) {
                 const nextActive = String(body.current_active) === '1' ? 0 : 1;
-                await env.DB.prepare('UPDATE homepage_sections SET is_active = ? WHERE id = ?')
-                    .bind(nextActive, id)
-                    .run();
-                return jsonResponse({
-                    success: true,
-                    is_active: nextActive,
-                    message: 'Homepage section visibility updated.',
-                });
+                await env.DB.prepare('UPDATE homepage_sections SET is_active = ? WHERE id = ?').bind(nextActive, id).run();
+                return jsonResponse({ success: true, is_active: nextActive, message: 'Homepage section visibility updated.' });
             }
             if (action === 'create_channel') {
                 await env.DB.prepare(
                     'INSERT INTO social_channels (platform, title, handle, url, display_order, status) VALUES (?, ?, ?, ?, ?, ?)'
                 )
-                    .bind(
-                        String(body.platform || 'whatsapp'),
-                        String(body.title || 'Channel'),
-                        String(body.handle || ''),
-                        String(body.url || ''),
-                        Number(body.display_order || 1),
-                        'active'
-                    )
+                    .bind(String(body.platform || 'whatsapp'), String(body.title || 'Channel'), String(body.handle || ''), String(body.url || ''), Number(body.display_order || 1), 'active')
                     .run();
                 return jsonResponse({ success: true, message: 'Social channel added.' }, 201);
             }
@@ -3869,12 +3385,7 @@ export async function routeApiRequest(request, url, env, session) {
                 return jsonResponse({ success: true, message: 'Social channel removed.' });
             }
             if (action === 'toggle_status' && id > 0) {
-                const tbl =
-                    body.target === 'announcement'
-                        ? 'announcements'
-                        : body.target === 'collection'
-                          ? 'curated_collections'
-                          : 'banners';
+                const tbl = body.target === 'announcement' ? 'announcements' : body.target === 'collection' ? 'curated_collections' : 'banners';
                 const next = body.current_status === 'active' ? 'inactive' : 'active';
                 await env.DB.prepare(`UPDATE ${tbl} SET status = ? WHERE id = ?`).bind(next, id).run();
                 return jsonResponse({ success: true, id, status: next, message: 'Status updated.' });
@@ -3896,19 +3407,16 @@ export async function routeApiRequest(request, url, env, session) {
         const [banners, announcements, collections, categories, sections, socials, seo, templates] = await Promise.all([
             env.DB.prepare("SELECT * FROM banners WHERE status = 'active' ORDER BY display_order ASC").all(),
             env.DB.prepare("SELECT * FROM announcements WHERE status = 'active' ORDER BY display_order ASC").all(),
-            env.DB.prepare(
-                "SELECT * FROM curated_collections WHERE status = 'active' ORDER BY display_order ASC"
-            ).all(),
+            env.DB.prepare("SELECT * FROM curated_collections WHERE status = 'active' ORDER BY display_order ASC").all(),
             env.DB.prepare("SELECT * FROM categories WHERE status = 'active' ORDER BY display_order ASC").all(),
             env.DB.prepare('SELECT * FROM homepage_sections ORDER BY display_order ASC').all(),
             env.DB.prepare('SELECT * FROM social_channels ORDER BY display_order ASC').all(),
             env.DB.prepare('SELECT * FROM seo_metadata ORDER BY id ASC').all(),
             env.DB.prepare('SELECT * FROM share_templates ORDER BY id ASC').all(),
         ]);
-        const allBanners = banners.results || [];
         return jsonResponse({
             success: true,
-            hero_banners: allBanners,
+            hero_banners: banners.results || [],
             announcements: announcements.results || [],
             collections: collections.results || [],
             categories: categories.results || [],
@@ -3916,15 +3424,6 @@ export async function routeApiRequest(request, url, env, session) {
             social_channels: socials.results || [],
             seo: seo.results || [],
             share_templates: templates.results || [],
-            data: {
-                sections: sections.results || [],
-                hero_banners: allBanners.filter((b) => (b.placement || 'hero') === 'hero'),
-                promo_banners: allBanners.filter((b) => b.placement === 'promo_strip'),
-                announcements: announcements.results || [],
-                collections: collections.results || [],
-                seo: (seo.results || [])[0] || {},
-                social_channels: socials.results || [],
-            },
         });
     }
 
@@ -3983,122 +3482,8 @@ export async function routeApiRequest(request, url, env, session) {
 
     if (path === '/api/cart.php' || path === '/api/cart' || path === '/api/cart/index.php') {
         const body = await readRequestBody(request);
-        const action = String(
-            body.action || url.searchParams.get('action') || (request.method === 'GET' ? 'view' : 'recalculate')
-        )
-            .trim()
-            .toLowerCase();
-        const couponCode = String(body.coupon || body.coupon_code || url.searchParams.get('coupon') || '').trim();
-        const col = session.user ? 'customer_id' : 'session_id';
-        const val = session.user ? session.user.id : session.sid;
-
-        async function loadStoredCart() {
-            const res = await env.DB.prepare(`SELECT * FROM cart_items WHERE ${col} = ? ORDER BY id ASC`)
-                .bind(val)
-                .all();
-            return (res.results || []).map((r) => ({
-                product_id: r.product_id,
-                variant_id: r.variant_id || null,
-                color: r.color || '',
-                size: r.size || '',
-                lot_type: r.lot_type || 'single',
-                qty: Number(r.quantity || 1),
-            }));
-        }
-
-        async function replaceStoredCart(newItems) {
-            await env.DB.prepare(`DELETE FROM cart_items WHERE ${col} = ?`).bind(val).run();
-            for (const it of newItems) {
-                const pid = Number(it.product_id || it.id || 0);
-                const qty = Math.max(1, Math.min(999, Number(it.qty || it.quantity || 1)));
-                if (pid <= 0) continue;
-                await env.DB.prepare(
-                    'INSERT INTO cart_items (session_id, customer_id, product_id, variant_id, color, size, lot_type, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-                )
-                    .bind(
-                        session.sid,
-                        session.user?.id || null,
-                        pid,
-                        it.variant_id ? Number(it.variant_id) : null,
-                        String(it.color || ''),
-                        String(it.size || ''),
-                        String(it.lot_type || 'single'),
-                        qty
-                    )
-                    .run();
-            }
-        }
-
-        let items = [];
-        if (action === 'view') {
-            items = await loadStoredCart();
-        } else if (action === 'clear') {
-            await env.DB.prepare(`DELETE FROM cart_items WHERE ${col} = ?`).bind(val).run();
-            items = [];
-        } else if (action === 'add' || action === 'update') {
-            const it = typeof body.item === 'object' && body.item ? body.item : body;
-            const pid = Number(it.product_id || it.id || 0);
-            const qty = Math.max(1, Math.min(999, Number(it.qty || it.quantity || 1)));
-            const color = String(it.color || '');
-            const size = String(it.size || '');
-            if (pid > 0) {
-                const ex = await env.DB.prepare(
-                    `SELECT id, quantity FROM cart_items WHERE ${col} = ? AND product_id = ? AND color = ? AND size = ? LIMIT 1`
-                )
-                    .bind(val, pid, color, size)
-                    .first();
-                if (ex) {
-                    const nextQty = action === 'add' ? Number(ex.quantity) + qty : qty;
-                    await env.DB.prepare(
-                        'UPDATE cart_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-                    )
-                        .bind(nextQty, ex.id)
-                        .run();
-                } else {
-                    await env.DB.prepare(
-                        'INSERT INTO cart_items (session_id, customer_id, product_id, variant_id, color, size, lot_type, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-                    )
-                        .bind(
-                            session.sid,
-                            session.user?.id || null,
-                            pid,
-                            it.variant_id ? Number(it.variant_id) : null,
-                            color,
-                            size,
-                            String(it.lot_type || 'single'),
-                            qty
-                        )
-                        .run();
-                }
-            }
-            items = await loadStoredCart();
-        } else if (action === 'remove') {
-            const pid = Number(body.product_id || body.id || 0);
-            if (pid > 0) {
-                await env.DB.prepare(`DELETE FROM cart_items WHERE ${col} = ? AND product_id = ?`).bind(val, pid).run();
-            }
-            items = await loadStoredCart();
-        } else if (action === 'merge' || action === 'sync' || action === 'save') {
-            const incoming = Array.isArray(body.items) ? body.items : Array.isArray(body.cart) ? body.cart : [];
-            if (action === 'merge') {
-                const existing = await loadStoredCart();
-                const merged = [...existing];
-                for (const inc of incoming) {
-                    const pid = Number(inc.product_id || inc.id || 0);
-                    const match = merged.find((m) => m.product_id === pid && (m.size || '') === (inc.size || ''));
-                    if (match) match.qty = Math.min(999, match.qty + Number(inc.qty || inc.quantity || 1));
-                    else if (pid > 0)
-                        merged.push({ ...inc, product_id: pid, qty: Number(inc.qty || inc.quantity || 1) });
-                }
-                await replaceStoredCart(merged);
-                items = await loadStoredCart();
-            } else {
-                await replaceStoredCart(incoming);
-                items = await loadStoredCart();
-            }
-        } else {
-            items = Array.isArray(body.items) ? body.items : Array.isArray(body.cart) ? body.cart : [];
-        }
+        const items = Array.isArray(body.items) ? body.items : Array.isArray(body.cart) ? body.cart : [];
+        const couponCode = String(body.coupon || body.coupon_code || '').trim();
         if (items.length === 0) {
             return jsonResponse({
                 success: true,
@@ -4268,32 +3653,43 @@ export async function routeApiRequest(request, url, env, session) {
                 const rid = Number(url.searchParams.get('id') || 0);
                 const rev = await env.DB.prepare('SELECT * FROM reviews WHERE id = ? LIMIT 1').bind(rid).first();
                 if (!rev) return jsonResponse({ success: false, message: 'Review not found.' }, 404);
-                const prod = await env.DB.prepare('SELECT title, sku FROM products WHERE id = ? LIMIT 1')
-                    .bind(Number(rev.product_id || 0))
-                    .first();
+                const prod = await env.DB.prepare('SELECT title, sku FROM products WHERE id = ? LIMIT 1').bind(Number(rev.product_id || 0)).first();
                 return jsonResponse({
                     success: true,
-                    review: { ...rev, product_title: prod?.title || '', product_sku: prod?.sku || '' },
+                    review: {
+                        ...rev,
+                        city: rev.city || 'India',
+                        store_reply: rev.admin_reply || '',
+                        product_title: prod?.title || '',
+                        product_sku: prod?.sku || '',
+                    },
                 });
             }
             const pid = Number(url.searchParams.get('product_id') || 0);
             const showAll = session.isAdmin && url.searchParams.get('status') === 'all';
             const rows = showAll
-                ? await env.DB.prepare('SELECT * FROM reviews ORDER BY id DESC LIMIT 100').all()
+                ? await env.DB.prepare(
+                      'SELECT r.*, p.title AS product_title, p.sku AS product_sku FROM reviews r LEFT JOIN products p ON p.id = r.product_id ORDER BY r.id DESC LIMIT 100'
+                  ).all()
                 : pid > 0
-                  ? await env.DB.prepare(
+                    ? await env.DB.prepare(
                         "SELECT * FROM reviews WHERE product_id = ? AND status = 'approved' ORDER BY id DESC LIMIT 50"
                     )
                         .bind(pid)
                         .all()
-                  : await env.DB.prepare(
+                    : await env.DB.prepare(
                         "SELECT * FROM reviews WHERE status = 'approved' ORDER BY id DESC LIMIT 50"
                     ).all();
-            return jsonResponse({ success: true, count: (rows.results || []).length, reviews: rows.results || [] });
+            const enriched = (rows.results || []).map((r) => ({
+                ...r,
+                city: r.city || 'India',
+                store_reply: r.admin_reply || '',
+            }));
+            return jsonResponse({ success: true, count: enriched.length, reviews: enriched });
         }
         const body = await readRequestBody(request);
         const revAct = String(body.action || '').trim();
-        if (['approve', 'reject', 'flag', 'reply', 'update_status', 'delete'].includes(revAct)) {
+        if (['approve', 'unpublish', 'reject', 'flag', 'reply', 'update_status', 'delete'].includes(revAct)) {
             const deny = requireAdmin(session, 'moderate reviews');
             if (deny) return deny;
             const rid = Number(body.id || body.review_id || 0);
@@ -4310,15 +3706,15 @@ export async function routeApiRequest(request, url, env, session) {
             const nextStatus =
                 revAct === 'approve'
                     ? 'approved'
-                    : revAct === 'reject'
-                      ? 'rejected'
-                      : revAct === 'flag'
-                        ? 'flagged'
-                        : String(body.status || 'approved');
+                    : revAct === 'unpublish'
+                      ? 'pending'
+                      : revAct === 'reject'
+                        ? 'rejected'
+                        : revAct === 'flag'
+                          ? 'flagged'
+                          : String(body.status || 'approved');
             const reason = String(body.reason || '').trim();
-            await env.DB.prepare(
-                "UPDATE reviews SET status = ?, rejection_reason = COALESCE(NULLIF(?, ''), rejection_reason) WHERE id = ?"
-            )
+            await env.DB.prepare("UPDATE reviews SET status = ?, rejection_reason = COALESCE(NULLIF(?, ''), rejection_reason) WHERE id = ?")
                 .bind(nextStatus, reason, rid)
                 .run();
             return jsonResponse({

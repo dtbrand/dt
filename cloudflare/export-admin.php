@@ -122,12 +122,12 @@ $skipped = [];
 $totalBytes = 0;
 
 $spawn = function (string $rel) use ($workerScript, $root) {
-    $cmd = 'php -d max_execution_time=8 ' . escapeshellarg($workerScript) . ' ' . escapeshellarg($root) . ' ' . escapeshellarg($rel);
-    $desc = [0 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+    $outTmp = tempnam(sys_get_temp_dir(), 'dt_adm_o_');
+    $errTmp = tempnam(sys_get_temp_dir(), 'dt_adm_e_');
+    $cmd = 'php -d max_execution_time=10 ' . escapeshellarg($workerScript) . ' ' . escapeshellarg($root) . ' ' . escapeshellarg($rel);
+    $desc = [0 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'r'], 1 => ['file', $outTmp, 'w'], 2 => ['file', $errTmp, 'w']];
     $proc = proc_open($cmd, $desc, $pipes);
-    stream_set_blocking($pipes[1], false);
-    stream_set_blocking($pipes[2], false);
-    return ['rel' => $rel, 'proc' => $proc, 'pipes' => $pipes, 'out' => '', 'err' => ''];
+    return ['rel' => $rel, 'proc' => $proc, 'outTmp' => $outTmp, 'errTmp' => $errTmp, 'started' => microtime(true)];
 };
 
 while (!empty($queue) || !empty($pool)) {
@@ -136,19 +136,20 @@ while (!empty($queue) || !empty($pool)) {
     }
     usleep(20000);
     foreach ($pool as $i => &$item) {
-        $item['out'] .= stream_get_contents($item['pipes'][1]);
-        $item['err'] .= stream_get_contents($item['pipes'][2]);
         $status = proc_get_status($item['proc']);
-        if (!$status['running']) {
-            $item['out'] .= stream_get_contents($item['pipes'][1]);
-            $item['err'] .= stream_get_contents($item['pipes'][2]);
-            fclose($item['pipes'][1]);
-            fclose($item['pipes'][2]);
+        if (!$status['running'] || (microtime(true) - $item['started'] > 20)) {
+            if ($status['running']) {
+                @proc_terminate($item['proc']);
+            }
             $rc = proc_close($item['proc']);
             $rel = $item['rel'];
+            $rawOut = (string)@file_get_contents($item['outTmp']);
+            $rawErr = (string)@file_get_contents($item['errTmp']);
+            @unlink($item['outTmp']);
+            @unlink($item['errTmp']);
             unset($pool[$i]);
 
-            $payload = json_decode($item['out'], true);
+            $payload = json_decode($rawOut, true);
             $html = is_array($payload) ? (string)($payload['html'] ?? '') : '';
             $loc = is_array($payload) ? (string)($payload['location'] ?? '') : '';
 
@@ -166,7 +167,7 @@ while (!empty($queue) || !empty($pool)) {
                 $exported++;
                 $totalBytes += strlen($html);
             } else {
-                $skipped[] = "$rel (rc=$rc len=" . strlen($html) . ' err=' . substr(trim($item['err']), 0, 120) . ')';
+                $skipped[] = "$rel (rc=$rc len=" . strlen($html) . ' err=' . substr(trim($rawErr), 0, 120) . ')';
             }
         }
     }

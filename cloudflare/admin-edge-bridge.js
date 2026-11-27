@@ -484,27 +484,122 @@
             }
         }
 
+        if (p.startsWith('/admin/reviews/') && !p.includes('audit.php') && !p.includes('analytics.php')) {
+            try {
+                const res = await fetch('/api/reviews.php?status=all');
+                const data = await res.json();
+                if (data && Array.isArray(data.reviews)) {
+                    const allRevs = data.reviews;
+                    const tbody = document.querySelector('.adm-table tbody');
+                    const filterStatus = p.includes('pending')
+                        ? 'pending'
+                        : p.includes('approved')
+                          ? 'approved'
+                          : p.includes('rejected')
+                            ? 'rejected'
+                            : p.includes('flagged')
+                              ? 'flagged'
+                              : 'all';
+                    const rows =
+                        filterStatus === 'all' ? allRevs : allRevs.filter((r) => String(r.status || '') === filterStatus);
+                    if (tbody) {
+                        if (rows.length === 0) {
+                            tbody.innerHTML =
+                                '<tr><td colspan="6" style="text-align:center;padding:36px;color:#64748B;"><div style="font-weight:700;font-size:14px;margin-bottom:4px;">No customer reviews in this status queue</div></td></tr>';
+                        } else {
+                            tbody.innerHTML = rows
+                                .map((rev) => {
+                                    const rId = Number(rev.id);
+                                    const st = String(rev.status || 'pending').toLowerCase();
+                                    const badgeCls =
+                                        st === 'approved' ? 'success' : st === 'rejected' ? 'danger' : 'warning';
+                                    const badgeTxt =
+                                        st === 'approved'
+                                            ? 'Approved & Live'
+                                            : st === 'rejected'
+                                              ? 'Rejected / Hidden'
+                                              : st === 'flagged'
+                                                ? 'Flagged / Support'
+                                                : 'Pending Moderation';
+                                    const rating = Math.min(5, Math.max(1, Number(rev.rating || 5)));
+                                    let stars = '';
+                                    for (let si = 1; si <= 5; si++) {
+                                        stars += `<svg width="12" height="12" viewBox="0 0 24 24" class="${si <= rating ? 'dt-star-fill' : 'dt-star-empty'}" stroke-width="1.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+                                    }
+                                    const reply = rev.store_reply || rev.admin_reply || '';
+                                    return `<tr id="revRow_${rId}">
+                                        <td>
+                                            <div style="font-weight:700;color:#111827;display:flex;align-items:center;gap:4px;"><span>${escapeText(rev.customer_name || 'Buyer')}</span>${rev.verified_buyer ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' : ''}</div>
+                                            <div style="font-size:11px;color:#64748B;margin-top:2px;">${escapeText(rev.city || 'India')} &bull; ${escapeText(rev.created_at || '')}</div>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight:600;color:#1F2937;font-size:12.5px;">${escapeText(rev.product_title || 'Handloom Saree')}</div>
+                                            <div style="font-size:11px;color:#8A681F;font-weight:700;margin-top:2px;">SKU: ${escapeText(rev.product_sku || 'PROD-' + (rev.product_id || 1))}</div>
+                                        </td>
+                                        <td><div style="display:inline-flex;align-items:center;gap:2px;">${stars}<span style="font-weight:800;font-size:11px;color:#111827;margin-left:3px;">(${rating}.0)</span></div></td>
+                                        <td style="max-width:320px;">
+                                            ${rev.review_title ? `<div style="font-weight:700;font-size:12px;color:#111827;margin-bottom:2px;">${escapeText(rev.review_title)}</div>` : ''}
+                                            <div style="font-size:12px;color:#334155;line-height:1.4;">&ldquo;${escapeText(String(rev.review_text || '').slice(0, 120))}&rdquo;</div>
+                                            ${reply ? `<div style="margin-top:6px;background:#FAF5E8;border-left:3px solid #8A681F;padding:4px 8px;border-radius:3px;font-size:11px;color:#705114;"><strong>DT Brand's:</strong> ${escapeText(reply)}</div>` : ''}
+                                        </td>
+                                        <td><span class="adm-badge ${badgeCls}" id="badgeStatus_${rId}">${badgeTxt}</span></td>
+                                        <td style="text-align:right;">
+                                            <div style="display:inline-flex;gap:4px;">
+                                                <button type="button" class="dt-btn dt-btn-pale dt-btn-sm" style="display:inline-flex;align-items:center;gap:4px;" onclick="openReviewInspector(${rId})"><span>Inspect</span></button>
+                                                ${st === 'pending' ? `<button type="button" class="dt-btn dt-btn-emerald dt-btn-sm" onclick="dtModerateReview(${rId}, 'approve')">Approve</button>` : ''}
+                                                <button type="button" class="dt-btn dt-btn-pale dt-btn-sm" style="color:#DC2626;border-color:#FECACA;background:#FEF2F2;" onclick="dtModerateReview(${rId}, 'delete')">Delete</button>
+                                            </div>
+                                        </td>
+                                    </tr>`;
+                                })
+                                .join('');
+                        }
+                    }
+                    const kpiEls = document.querySelectorAll('.adm-kpi-card .adm-kpi-val');
+                    if (kpiEls.length >= 4 && allRevs.length > 0) {
+                        const avg =
+                            allRevs.reduce((s, r) => s + Number(r.rating || 5), 0) / Math.max(1, allRevs.length);
+                        const pendCnt = allRevs.filter((r) => r.status === 'pending').length;
+                        const fiveCnt = allRevs.filter((r) => Number(r.rating) === 5).length;
+                        kpiEls[0].textContent = avg.toFixed(1) + ' / 5.0';
+                        kpiEls[1].textContent = String(pendCnt);
+                        kpiEls[2].textContent = String(fiveCnt);
+                    }
+                }
+            } catch {
+                // Non-blocking fallback
+            }
+        }
+
         if ((p.includes('/admin/customers/edit.php') || p.includes('/admin/customers/view.php')) && numId > 0) {
             try {
+                const listRes = await fetch('/api/customers.php');
+                const listData = await listRes.json();
+                const c = (listData?.customers || []).find((x) => Number(x.id) === numId) || null;
+                if (!c) {
+                    const hdr = document.querySelector('.adm-page-subtitle, .dt-hero-subtitle');
+                    if (hdr) hdr.textContent = `Customer #${numId} is not currently in Cloudflare D1.`;
+                    return;
+                }
                 const res = await fetch('/api/customers.php?id=' + encodeURIComponent(numId));
                 const data = await res.json();
                 if (!data || !data.customer) return;
-                const c = data.customer;
-                window.DT_CUSTOMER = c;
+                const cust = data.customer;
+                window.DT_CUSTOMER = cust;
                 const nameMap = {
-                    name: c.name,
-                    first_name: String(c.name || '').split(' ')[0] || '',
-                    last_name: String(c.name || '')
+                    name: cust.name,
+                    first_name: String(cust.name || '').split(' ')[0] || '',
+                    last_name: String(cust.name || '')
                         .split(' ')
                         .slice(1)
                         .join(' '),
-                    email: c.email || '',
-                    phone: c.phone || '',
-                    city: c.city || '',
-                    state: c.state || '',
-                    gstin: c.gstin || '',
-                    tier: c.tier || 'Standard',
-                    status: c.status || 'active',
+                    email: cust.email || '',
+                    phone: cust.phone || '',
+                    city: cust.city || '',
+                    state: cust.state || '',
+                    gstin: cust.gstin || '',
+                    tier: cust.tier || 'Standard',
+                    status: cust.status || 'active',
                 };
                 Object.entries(nameMap).forEach(([fieldName, val]) => {
                     const el =
