@@ -860,12 +860,38 @@ if (!empty($drawerSubcategories)) {
 }
 
 $defaultCategorySubs = [
+    'kanjivaram-silk' => [
+        ['name' => 'Bridal Korvai', 'badge' => 'PURE ZARI', 'badge_cls' => 'gold'],
+        ['name' => 'Temple Border Heritage', 'badge' => 'HERITAGE', 'badge_cls' => 'gold'],
+        ['name' => 'Pastel Brocade Silk', 'badge' => 'NEW', 'badge_cls' => 'green'],
+    ],
+    'banarasi-silk' => [
+        ['name' => 'Katan Brocade', 'badge' => 'ROYAL', 'badge_cls' => 'gold'],
+        ['name' => 'Kadwa Meenakari', 'badge' => 'ARTISAN', 'badge_cls' => 'gold'],
+        ['name' => 'Jangla Festive Silk', 'badge' => 'FESTIVE', 'badge_cls' => 'green'],
+    ],
+    'paithani' => [
+        ['name' => 'Yeola Handloom', 'badge' => 'HERITAGE', 'badge_cls' => 'gold'],
+        ['name' => 'Mor & Asawali Pallu', 'badge' => 'CLASSIC', 'badge_cls' => 'gold'],
+    ],
+    'organza-sarees' => [
+        ['name' => 'Floral Organza', 'badge' => 'TRENDING', 'badge_cls' => 'gold'],
+        ['name' => 'Scalloped Zari Cutwork', 'badge' => 'NEW', 'badge_cls' => 'green'],
+    ],
+    'georgette-chiffon' => [
+        ['name' => 'Bandhani Georgette', 'badge' => 'HOT', 'badge_cls' => 'gold'],
+        ['name' => 'Gota Patti Festive', 'badge' => 'HALDI', 'badge_cls' => 'green'],
+    ],
+    'cotton' => [
+        ['name' => 'Mulmul Cotton', 'badge' => 'SUMMER', 'badge_cls' => 'green'],
+        ['name' => 'Bagru Hand Block Print', 'badge' => 'ARTISAN', 'badge_cls' => 'gold'],
+    ],
     'saree' => [
+        ['name' => 'Bridal Couture', 'badge' => 'BRIDAL', 'badge_cls' => 'gold'],
         ['name' => 'Banarasi Kadwa Silk', 'badge' => 'ROYAL', 'badge_cls' => 'gold'],
         ['name' => 'Bandhani & Patola Heritage', 'badge' => 'HERITAGE', 'badge_cls' => 'gold'],
         ['name' => 'Chanderi Cotton Silk', 'badge' => 'HANDLOOM', 'badge_cls' => 'green'],
         ['name' => 'Kanjivaram Pure Zari', 'badge' => 'PURE ZARI', 'badge_cls' => 'gold'],
-        ['name' => 'Pure Organza Tissue', 'badge' => 'TRENDING', 'badge_cls' => 'gold'],
         ['name' => 'Yeola Paithani Brocade', 'badge' => 'CLASSIC', 'badge_cls' => 'green'],
     ],
     'lehenga' => [
