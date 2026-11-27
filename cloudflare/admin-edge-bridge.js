@@ -575,16 +575,12 @@
             try {
                 const listRes = await fetch('/api/customers.php');
                 const listData = await listRes.json();
-                const c = (listData?.customers || []).find((x) => Number(x.id) === numId) || null;
-                if (!c) {
+                const cust = (listData?.customers || []).find((x) => Number(x.id) === numId) || null;
+                if (!cust) {
                     const hdr = document.querySelector('.adm-page-subtitle, .dt-hero-subtitle');
                     if (hdr) hdr.textContent = `Customer #${numId} is not currently in Cloudflare D1.`;
                     return;
                 }
-                const res = await fetch('/api/customers.php?id=' + encodeURIComponent(numId));
-                const data = await res.json();
-                if (!data || !data.customer) return;
-                const cust = data.customer;
                 window.DT_CUSTOMER = cust;
                 const nameMap = {
                     name: cust.name,
@@ -599,6 +595,7 @@
                     state: cust.state || '',
                     gstin: cust.gstin || '',
                     tier: cust.tier || 'Standard',
+                    type: cust.type || 'customer',
                     status: cust.status || 'active',
                 };
                 Object.entries(nameMap).forEach(([fieldName, val]) => {

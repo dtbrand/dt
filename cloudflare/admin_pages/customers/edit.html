@@ -2639,7 +2639,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '25b8ab61d506aeef2007a400ae8db8296709aef559945968ceda83eace51f492';
+window.DT_ADMIN_CSRF_TOKEN = 'a5332d4f0f820b565b6f58a09a0876ebd26ba2b7b0fb2f6cafac572fb1a2883c';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -3546,7 +3546,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (editForm) {
         editForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const id = 1;
+            const id = Number(new URLSearchParams(window.location.search).get('id')) || 1;
 
             /* Fields are read by name. The previous version matched on the mock
                placeholders ("Pooja", "Sharma"), and read status with

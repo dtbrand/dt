@@ -44,9 +44,10 @@ test.describe('DT Brand\'s Master Comprehensive E2E & Real-World UI Audit', () =
     await page.goto('/shop.php', { waitUntil: 'domcontentloaded' });
     const firstProduct = page.locator('.product-card a, .product-card').first();
     await expect(firstProduct).toBeVisible();
-    
-    // Navigate to product PDP
-    await page.goto('/product.php?id=13', { waitUntil: 'domcontentloaded' });
+
+    // Navigate to first live product PDP
+    const firstPid = await page.evaluate(() => (window.shopProductsData && window.shopProductsData[0] ? window.shopProductsData[0].id : 1));
+    await page.goto(`/product.php?id=${firstPid}`, { waitUntil: 'domcontentloaded' });
     const body = page.locator('body');
     await expect(body).toBeVisible();
 

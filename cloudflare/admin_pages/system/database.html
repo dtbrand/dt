@@ -2394,7 +2394,7 @@
 </div>
 
 <script>
-window.DT_ADMIN_CSRF_TOKEN = '613b8a91486a6c68dd4bb7ade0903e0a';
+window.DT_ADMIN_CSRF_TOKEN = '058b98fdec43b7a391155d999c2e84d5';
 
 // Universal CSRF-protected admin API fetch utility
 window.dtAdminFetch = window.dtAdminFetch || async function(url, options = {}) {
@@ -3082,7 +3082,7 @@ function filterTables() {
 async function sysDbOptimize() {
     sysToast('Optimizing and defragmenting database tables…', 'info');
     try {
-        const data = await sysPost('/api/system.php', { action: 'db_optimize', _csrf: '613b8a91486a6c68dd4bb7ade0903e0a' });
+        const data = await sysPost('/api/system.php', { action: 'db_optimize', _csrf: '058b98fdec43b7a391155d999c2e84d5' });
         sysToast(data.message || 'Done.', data.success ? 'success' : 'error');
         if (data.success) setTimeout(() => location.reload(), 2000);
     } catch(e) { sysToast('Optimize failed.', 'error'); }

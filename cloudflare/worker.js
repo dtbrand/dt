@@ -86,6 +86,12 @@ function safeJsonInline(data) {
     return JSON.stringify(data).replace(/</g, '\\u003c');
 }
 
+function injectBeforeFirstTag(html, tag, snippet) {
+    const idx = html.toLowerCase().indexOf(tag.toLowerCase());
+    if (idx === -1) return `${snippet}\n${html}`;
+    return html.slice(0, idx) + snippet + '\n' + html.slice(idx);
+}
+
 function injectBeforeLastTag(html, tag, snippet) {
     const idx = html.toLowerCase().lastIndexOf(tag.toLowerCase());
     if (idx === -1) return `${html}\n${snippet}`;
@@ -287,7 +293,7 @@ async function handleAdminRoutes(request, url, env, session) {
 
     const bridgeHeadScript = `<script>window.DT_ADMIN_USER=${safeJsonInline(session.admin)};window.DT_ADMIN_CSRF_TOKEN=${csrfJson};window.DT_DASH=window.DT_DASH||${dashJson};(function(){var f=window.fetch;if(!f||f.__dtCsrfPatched)return;var w=function(u,o){var s=typeof u==="string"?u:(u&&u.url)||"";var m=((o&&o.method)||"GET").toUpperCase();if(s.indexOf("/api/")!==-1&&m!=="GET"&&m!=="HEAD"){o=Object.assign({},o||{});var h=new Headers(o.headers||{});if(!h.has("X-CSRF-Token")&&window.DT_ADMIN_CSRF_TOKEN)h.set("X-CSRF-Token",window.DT_ADMIN_CSRF_TOKEN);o.headers=h;if(!o.credentials)o.credentials="same-origin";}return f.call(this,u,o);};w.__dtCsrfPatched=true;window.fetch=w;})();</script>`;
     if (html.toLowerCase().includes('</head>')) {
-        html = injectBeforeLastTag(html, '</head>', bridgeHeadScript);
+        html = injectBeforeFirstTag(html, '</head>', bridgeHeadScript);
     }
     const bridgeTag = `<script src="/admin/assets/js/admin-edge-bridge.js?v=cf"></script>`;
     html = html.toLowerCase().includes('</body>')
@@ -348,7 +354,7 @@ window.allCategories = ${JSON.stringify(categories)};
 </script>`;
 
     if (html.toLowerCase().includes('</head>')) {
-        html = injectBeforeLastTag(html, '</head>', hydrationScript);
+        html = injectBeforeFirstTag(html, '</head>', hydrationScript);
     }
 
     const headers = new Headers(assetRes.headers);

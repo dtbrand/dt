@@ -789,7 +789,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (editForm) {
         editForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const id = <?= json_encode($customer_id) ?>;
+            const id = Number(new URLSearchParams(window.location.search).get('id')) || <?= json_encode($customer_id) ?>;
 
             /* Fields are read by name. The previous version matched on the mock
                placeholders ("Pooja", "Sharma"), and read status with
