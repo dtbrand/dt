@@ -4,29 +4,70 @@
 window.DT_CATEGORIES = {
     toggleFeatured: function(btn, catId, catName) {
         const isActive = btn.classList.contains('active');
-        if (isActive) {
-            btn.classList.remove('active');
-            btn.style.color = '#c3c4c7';
-            window.DT_CATALOGUE.showToast(`"${catName}" removed from Featured`);
-        } else {
-            btn.classList.add('active');
-            btn.style.color = '#D4AF37';
-            window.DT_CATALOGUE.showToast(`"${catName}" marked as Featured!`);
-        }
+        const nextStatus = isActive ? 'inactive' : 'active';
+        fetch('/api/categories.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update', id: Number(catId), status: nextStatus })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res || !res.success) {
+                window.DT_CATALOGUE.showToast((res && res.message) || 'Could not update category status.');
+                return;
+            }
+            btn.classList.toggle('active', !isActive);
+            btn.style.color = !isActive ? '#D4AF37' : '#c3c4c7';
+            window.DT_CATALOGUE.showToast(`"${catName}" updated in database (${nextStatus})!`);
+        })
+        .catch(function() {
+            window.DT_CATALOGUE.showToast('Network error updating category.');
+        });
     },
 
     saveCategoryForm: function(e) {
         if (e) e.preventDefault();
-        const name = document.getElementById('catName')?.value;
+        const catId = Number(document.getElementById('catId')?.value || 0);
+        const name = (document.getElementById('catName')?.value || '').trim();
+        const slug = (document.getElementById('catSlug')?.value || '').trim();
+        const description = (document.getElementById('catDesc')?.value || '').trim();
+        const activeChk = document.getElementById('catActiveChk');
+        const status = (!activeChk || activeChk.checked) ? 'active' : 'inactive';
         if (!name) {
             if (typeof window.showToast === 'function') window.showToast('Please enter Category Name', 'warning');
             else if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Please enter Category Name');
             return false;
         }
-        window.DT_CATALOGUE.showToast('Category saved successfully!', 'gold');
-        setTimeout(() => {
-            window.location.href = '/admin/catalogue/categories/';
-        }, 800);
+        const payload = {
+            action: catId > 0 ? 'update' : 'create',
+            name: name,
+            slug: slug,
+            description: description,
+            status: status
+        };
+        if (catId > 0) payload.id = catId;
+
+        fetch('/api/categories.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) { return r.json().catch(function(){return {};}).then(function(d){ return { ok: r.ok, d: d }; }); })
+        .then(function(res) {
+            if (!res.ok || !res.d || !res.d.success) {
+                window.DT_CATALOGUE.showToast((res.d && res.d.message) || 'Failed to save category in database.');
+                return;
+            }
+            window.DT_CATALOGUE.showToast(res.d.message || 'Category saved to MariaDB!', 'gold');
+            setTimeout(() => {
+                window.location.href = '/admin/catalogue/categories/';
+            }, 600);
+        })
+        .catch(function() {
+            window.DT_CATALOGUE.showToast('Network error saving category.');
+        });
         return false;
     }
 };

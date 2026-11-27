@@ -462,13 +462,8 @@ if (!window.allProducts || !window.allProducts.length) {
             }
             wrap.dataset.emptyRendered = '1';
 
-            /* Render Animated Floating Heart SVG Empty Wishlist + Recommended Product Slider */
-            var products = window.allProducts || [
-                { id: 2, name: 'Banarasi Zari Saree', price: 8499, image: '/assets/images/product2.png' },
-                { id: 4, name: 'Georgette Bloom Saree', price: 3299, image: '/assets/images/product4.png' },
-                { id: 6, name: 'Bridal Zardosi Lehenga', price: 24999, image: '/assets/images/product6.png' },
-                { id: 7, name: 'Mustard Block Print', price: 1899, image: '/assets/images/product7.png' }
-            ];
+            /* Render Animated Floating Heart SVG Empty Wishlist + Live Recommended Product Slider */
+            var products = window.allProducts || window.catalogProducts || window.products || [];
 
             var fullList = products.slice(0, 6);
 

@@ -379,8 +379,11 @@ function toast(m, type) {
     else console.warn(m);
 }
 
-function dtModerateReview(id, action, reason = '') {
-    if (action === 'delete' && !confirm('Permanently delete this customer review? This action will be logged in the audit ledger.')) {
+function dtModerateReview(id, action, reason = '', skipConfirm = false) {
+    if (action === 'delete' && !skipConfirm) {
+        window.dtShowConfirmModal('Permanently delete this customer review? This action will be logged in the audit ledger.', function() {
+            dtModerateReview(id, action, reason, true);
+        });
         return;
     }
 
@@ -541,17 +544,15 @@ function submitStoreReply(id) {
 }
 
 function promptRejectReview(id) {
-    const reason = prompt('Please enter rejection reason (e.g., spam, offensive language, competitor link):', 'Spam / promotional content');
-    if (reason !== null) {
-        dtModerateReview(id, 'reject', reason);
-    }
+    window.dtShowPromptModal('Please enter rejection reason (e.g., spam, offensive language, competitor link):', 'Spam / promotional content', function(reason) {
+        if (reason) dtModerateReview(id, 'reject', reason);
+    });
 }
 
 function promptFlagReview(id) {
-    const reason = prompt('Please enter flag reason (e.g., customer exchange pending, delivery query):', 'Customer support ticket opened');
-    if (reason !== null) {
-        dtModerateReview(id, 'flag', reason);
-    }
+    window.dtShowPromptModal('Please enter flag reason (e.g., customer exchange pending, delivery query):', 'Customer support ticket opened', function(reason) {
+        if (reason) dtModerateReview(id, 'flag', reason);
+    });
 }
 
 function escapeHtml(text) {

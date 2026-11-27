@@ -91,6 +91,22 @@ $totalOrdersCount = 0;
 $dbLive = ($db !== null && !Database::isMockMode());
 $notCancelled = "COALESCE(`fulfillment_status`, 'unfulfilled') <> 'cancelled'";
 
+$admSettings = [];
+$dbSizeMbLabel = 'Live DB';
+if ($dbLive) {
+    try {
+        foreach ($db->query("SELECT `key_name`, `value` FROM `settings`")->fetchAll(\PDO::FETCH_ASSOC) as $_sRow) {
+            $admSettings[$_sRow['key_name']] = (string)($_sRow['value'] ?? '');
+        }
+    } catch (\Throwable $e) {}
+    try {
+        $_mb = $db->query("SELECT ROUND(COALESCE(SUM(data_length + index_length), 0) / 1048576, 2) FROM information_schema.TABLES WHERE table_schema = DATABASE()")->fetchColumn();
+        if ($_mb !== false && $_mb !== null) {
+            $dbSizeMbLabel = number_format((float)$_mb, 2) . ' MB';
+        }
+    } catch (\Throwable $e) {}
+}
+
 /** Scalar aggregate. Returns $fallback when there is no database. */
 $dtNum = function (string $sql, float $fallback = 0.0) use ($db, $dbLive): float {
     if (!$dbLive) {
@@ -500,30 +516,45 @@ $dashPayload = [
         return [
             'id'              => (int)$p['id'],
             'sku'             => (string)($p['sku'] ?? ''),
-            'name'            => (string)($p['title'] ?? ''),
+            'hsn'             => (string)($p['hsn_code'] ?? ($p['hsn'] ?? '5007')),
+            'name'            => (string)($p['title'] ?? ($p['name'] ?? '')),
             'category'        => (string)($p['category_name'] ?? 'Sarees'),
             'retail_price'    => (float)($p['retail_price'] ?? 0),
             'wholesale_price' => (float)($p['wholesale_price'] ?? 0),
             'reseller_price'  => (float)($p['reseller_price'] ?? 0),
+            'moq'             => (int)($p['moq'] ?? ($p['wholesaler_mcq'] ?? 1)),
             'stock'           => (int)($p['stock_qty'] ?? 0),
-            'image'           => (string)($p['primary_image'] ?? '/assets/images/product1.png'),
+            'image'           => (string)($p['primary_image'] ?? '/assets/images/no-image.svg'),
             'badge'           => (string)($p['badge'] ?? ''),
             'fabric'          => (string)($p['fabric'] ?? ''),
             'status'          => (($p['stock_qty'] ?? 0) > 0) ? 'In Stock' : 'Out of Stock'
         ];
     }, array_slice($allProducts, 0, 25)),
     'partners'   => array_map(function($c) {
+        $isActive = strtolower((string)($c['status'] ?? 'active')) === 'active';
         return [
             'id'           => 'CUST-' . $c['id'],
+            'raw_id'       => (int)$c['id'],
             'name'         => (string)($c['name'] ?? ''),
             'phone'        => (string)($c['phone'] ?? ''),
             'type'         => ucfirst((string)($c['type'] ?? 'Wholesale')),
             'tier'         => (string)($c['tier'] ?? 'Standard'),
+            'gst'          => (string)(!empty($c['gstin']) ? $c['gstin'] : 'Unregistered'),
+            'kyc'          => $isActive ? 'Verified' : 'Pending KYC',
             'orders_count' => (int)($c['total_orders'] ?? 0),
             'total_spend'  => '₹' . number_format((float)($c['lifetime_spend'] ?? 0)),
             'city'         => trim(($c['city'] ?? '') . ', ' . ($c['state'] ?? ''), ', ')
         ];
     }, array_slice($allCustomers, 0, 25)),
+    'wa_leads'   => array_values(array_map(function($c) {
+        return [
+            'name'    => (string)($c['name'] ?? 'Lead'),
+            'phone'   => (string)($c['phone'] ?? ''),
+            'inquiry' => ucfirst((string)($c['type'] ?? 'retail')) . ' account • ' . ((int)($c['total_orders'] ?? 0)) . ' order(s) • ₹' . number_format((float)($c['lifetime_spend'] ?? 0)),
+            'time'    => !empty($c['created_at']) ? date('d M', strtotime($c['created_at'])) : 'Active',
+            'tag'     => (strtolower((string)($c['status'] ?? '')) === 'pending') ? 'Pending KYC' : ucfirst((string)($c['type'] ?? 'Lead'))
+        ];
+    }, array_slice(array_filter($allCustomers, fn($c) => !empty($c['phone'])), 0, 8))),
 ];
 ?>
 <!DOCTYPE html>
@@ -2335,30 +2366,30 @@ _Special 15% VIP Discount Applied!_</textarea>
                     <!-- Business Profile Info -->
                     <div class="adm-card">
                         <h3 class="adm-card-title"><span style="display:inline-flex; align-items:center; gap:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A681F" stroke-width="2.2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="22.01"></line><line x1="15" y1="22" x2="15" y2="22.01"></line><line x1="9" y1="6" x2="9" y2="6.01"></line><line x1="15" y1="6" x2="15" y2="6.01"></line><line x1="9" y1="10" x2="9" y2="10.01"></line><line x1="15" y1="10" x2="15" y2="10.01"></line><line x1="9" y1="14" x2="9" y2="14.01"></line><line x1="15" y1="14" x2="15" y2="14.01"></line><line x1="9" y1="18" x2="9" y2="18.01"></line><line x1="15" y1="18" x2="15" y2="18.01"></line></svg>Brand &amp; Legal Profile</span></h3>
-                        <form onsubmit="event.preventDefault(); window.showToast('Store settings saved successfully!');" style="display:flex; flex-direction:column; gap:12px;">
+                        <form id="admStoreSettingsForm" onsubmit="return window.saveAdminStoreSettings(event);" style="display:flex; flex-direction:column; gap:12px;">
                             <div class="adm-form-grid">
                                 <div class="adm-form-group">
                                     <label class="adm-form-label">Brand Name</label>
-                                    <input type="text" class="adm-form-input" value="DT Brand's (Jai Hanuman Tex)">
+                                    <input type="text" name="site_name" id="admSetSiteName" class="adm-form-input" value="<?= htmlspecialchars($admSettings['site_name'] ?? ($admSettings['store_title'] ?? "DT Brand's (Jai Hanuman Tex)"), ENT_QUOTES, 'UTF-8') ?>" required>
                                 </div>
                                 <div class="adm-form-group">
                                     <label class="adm-form-label">GSTIN Number</label>
-                                    <input type="text" class="adm-form-input" value="24AAACR4920M1Z2">
+                                    <input type="text" name="company_gstin" id="admSetGstin" class="adm-form-input" value="<?= htmlspecialchars($admSettings['company_gstin'] ?? '24AAACR4920M1Z2', ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
                                 <div class="adm-form-group full">
                                     <label class="adm-form-label">Registered Warehouse Address</label>
-                                    <input type="text" class="adm-form-input" value="Ring Road Textile Market, Surat, Gujarat - 395002">
+                                    <input type="text" name="company_address" id="admSetAddress" class="adm-form-input" value="<?= htmlspecialchars($admSettings['company_address'] ?? 'Ring Road Textile Market, Surat, Gujarat - 395002', ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
                                 <div class="adm-form-group">
                                     <label class="adm-form-label">Support WhatsApp Number</label>
-                                    <input type="text" class="adm-form-input" value="+91 70463 63528">
+                                    <input type="text" name="whatsapp_number" id="admSetWhatsapp" class="adm-form-input" value="<?= htmlspecialchars($admSettings['whatsapp_number'] ?? '+91 70463 63528', ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
                                 <div class="adm-form-group">
                                     <label class="adm-form-label">Support Email</label>
-                                    <input type="email" class="adm-form-input" value="support@jaihanumantex.in">
+                                    <input type="email" name="support_email" id="admSetEmail" class="adm-form-input" value="<?= htmlspecialchars($admSettings['support_email'] ?? 'support@jaihanumantex.in', ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
                             </div>
-                            <button type="submit" class="adm-btn-primary" style="margin-top:10px; align-self:flex-start;">
+                            <button type="submit" id="admSaveStoreSettingsBtn" class="adm-btn-primary" style="margin-top:10px; align-self:flex-start;">
                                 <span>Save Changes</span>
                             </button>
                         </form>
@@ -3090,7 +3121,7 @@ _Special 15% VIP Discount Applied!_</textarea>
                         <p class="adm-page-subtitle">Monitor server response time, MySQL database connections, and create instant backup snapshots.</p>
                     </div>
                     <div class="adm-page-actions">
-                        <button class="adm-btn-primary" onclick="window.showToast('Database Backup Snapshot Created (backup_2026.sql)!')" style="display:inline-flex; align-items:center; gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Backup Database Now</span></button>
+                        <button type="button" class="adm-btn-primary" onclick="window.triggerDashboardDbBackup(this)" style="display:inline-flex; align-items:center; gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Backup Database Now</span></button>
                     </div>
                 </div>
 
@@ -3104,18 +3135,18 @@ _Special 15% VIP Discount Applied!_</textarea>
                 <div class="adm-kpi-grid">
                     <div class="adm-kpi-card">
                         <div class="adm-kpi-top"><span class="adm-kpi-label">PHP Engine</span><div class="adm-kpi-icon-box purple"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></div></div>
-                        <div class="adm-kpi-val">PHP 8.2+</div>
-                        <div class="adm-kpi-bottom"><span class="adm-badge success">OPcache Enabled</span></div>
+                        <div class="adm-kpi-val">PHP <?= htmlspecialchars(PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION, ENT_QUOTES, 'UTF-8') ?></div>
+                        <div class="adm-kpi-bottom"><span class="adm-badge success"><?= function_exists('opcache_get_status') && @opcache_get_status(false) ? 'OPcache Enabled' : 'PHP Runtime Ready' ?></span></div>
                     </div>
                     <div class="adm-kpi-card">
                         <div class="adm-kpi-top"><span class="adm-kpi-label">Database Storage</span><div class="adm-kpi-icon-box blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></div></div>
-                        <div class="adm-kpi-val">24.5 MB</div>
-                        <div class="adm-kpi-bottom"><span class="adm-badge gold">MySQL InnoDB</span></div>
+                        <div class="adm-kpi-val"><?= htmlspecialchars($dbSizeMbLabel, ENT_QUOTES, 'UTF-8') ?></div>
+                        <div class="adm-kpi-bottom"><span class="adm-badge gold"><?= $dbLive ? 'MariaDB / InnoDB Live' : 'DB Offline' ?></span></div>
                     </div>
                     <div class="adm-kpi-card">
-                        <div class="adm-kpi-top"><span class="adm-kpi-label">Server Uptime</span><div class="adm-kpi-icon-box green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div></div>
-                        <div class="adm-kpi-val">99.98%</div>
-                        <div class="adm-kpi-bottom"><span class="adm-kpi-delta up">Hostinger Cloud</span></div>
+                        <div class="adm-kpi-top"><span class="adm-kpi-label">Active Catalog</span><div class="adm-kpi-icon-box green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div></div>
+                        <div class="adm-kpi-val"><?= (int)$totalProductsCount ?> SKUs</div>
+                        <div class="adm-kpi-bottom"><span class="adm-kpi-delta up"><?= (int)$liveOrdersCount ?> Live Orders</span></div>
                     </div>
                 </div>
             </section>

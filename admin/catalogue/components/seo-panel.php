@@ -40,7 +40,7 @@ $current_seo_tab = basename($_SERVER['SCRIPT_NAME']);
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#8A681F" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 <span>AI Generate SEO</span>
             </button>
-            <button type="button" class="dt-btn-action-sm gold" onclick="if(window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('SEO Meta tags updated live!')" style="height:28px; padding:0 12px; font-size:11px;">Save SEO Settings</button>
+            <button type="button" class="dt-btn-action-sm gold" onclick="window.dtSaveSeoSettings('<?php echo htmlspecialchars(addslashes('/shop/' . $seo_cat_slug), ENT_QUOTES, 'UTF-8'); ?>')" style="height:28px; padding:0 12px; font-size:11px;">Save SEO Settings</button>
         </div>
     </div>
 
@@ -68,8 +68,30 @@ $current_seo_tab = basename($_SERVER['SCRIPT_NAME']);
 
                 <div class="dt-form-group">
                     <label class="dt-form-label">Focus SEO Keywords</label>
-                    <input type="text" class="dt-form-input" value="<?php echo strtolower($seo_cat_name); ?> wholesale, surat textile depot, bulk lot price, dt brands surat">
+                    <input type="text" id="seoKeywordsInput" class="dt-form-input" value="<?php echo strtolower($seo_cat_name); ?> wholesale, surat textile depot, bulk lot price, dt brands surat">
                 </div>
+<script>
+window.dtSaveSeoSettings = function(routeSlug) {
+    var payload = {
+        action: 'save_seo',
+        page_route: routeSlug || '/',
+        meta_title: (document.getElementById('seoTitleInput')?.value || '').trim(),
+        meta_description: (document.getElementById('seoDescInput')?.value || '').trim(),
+        meta_keywords: (document.getElementById('seoKeywordsInput')?.value || '').trim()
+    };
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'SEO settings saved!');
+    })
+    .catch(function() { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving SEO settings.'); });
+};
+</script>
             </div>
 
             <!-- Google SERP Live Snippet Box -->

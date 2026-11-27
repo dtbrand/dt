@@ -3154,5 +3154,6 @@ $catalogHasProducts = $catalogProducts !== [];
     })();
     </script>
 <?php include_once __DIR__ . '/Shared/reels.php'; ?>
+<script src="/assets/js/dt-cart-sync.js?v=<?= @filemtime(__DIR__ . '/assets/js/dt-cart-sync.js') ?: '1' ?>"></script>
 </body>
 </html>

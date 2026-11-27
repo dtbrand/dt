@@ -67,8 +67,29 @@ window.DT_CATALOGUE = {
         checks.forEach(c => c.checked = master.checked);
     },
 
-    // Apply Bulk Actions
+    _confirm: function(msg, onConfirm) {
+        var old = document.getElementById('dtCatConfirmDlg');
+        if (old) old.remove();
+        var el = document.createElement('div');
+        el.id = 'dtCatConfirmDlg';
+        el.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+        el.innerHTML = '<div style="background:#fff;border-radius:12px;max-width:390px;width:100%;border:1.5px solid #D4AF37;box-shadow:0 20px 45px rgba(0,0,0,0.3);overflow:hidden;font-family:Inter,sans-serif;">' +
+            '<div style="padding:12px 16px;background:#181512;color:#D4AF37;font-weight:800;font-size:13.5px;">Confirm Catalogue Action</div>' +
+            '<div class="dt-cat-msg" style="padding:16px;font-size:13px;color:#1F2937;line-height:1.5;"></div>' +
+            '<div style="padding:10px 16px;display:flex;justify-content:flex-end;gap:8px;background:#F9FAFB;border-top:1px solid #E5E7EB;">' +
+                '<button type="button" class="dt-btn-action-sm pale-gold dt-cnf-no">Cancel</button>' +
+                '<button type="button" class="dt-btn-action-sm gold dt-cnf-yes">Confirm</button>' +
+            '</div></div>';
+        el.querySelector('.dt-cat-msg').textContent = msg;
+        el.querySelector('.dt-cnf-no').onclick = function() { el.remove(); };
+        el.querySelector('.dt-cnf-yes').onclick = function() { el.remove(); onConfirm(); };
+        el.onclick = function(e) { if (e.target === el) el.remove(); };
+        document.body.appendChild(el);
+    },
+
+    // Apply Bulk Actions (real SQL persistence via /api/categories.php)
     applyBulkAction: function(selectId, checkClass) {
+        const self = this;
         const select = document.getElementById(selectId);
         if (!select || !select.value) {
             this.showToast('Please select a bulk action from the dropdown.');
@@ -81,73 +102,97 @@ window.DT_CATALOGUE = {
             return;
         }
 
-        const count = checkedBoxes.length;
-        if (action === 'activate') {
-            checkedBoxes.forEach(chk => {
-                const row = chk.closest('tr');
-                if (row) {
-                    row.setAttribute('data-status', 'active');
-                    const badge = row.querySelector('.dt-badge.red, .dt-badge.gray');
-                    if (badge) {
-                        badge.className = 'dt-badge green';
-                        badge.textContent = 'Active';
+        const runBulk = function() {
+            const requests = checkedBoxes.map(chk => {
+                const idVal = Number(chk.value || String(chk.closest('tr')?.id || '').replace(/[^0-9]/g, ''));
+                if (!idVal) return Promise.resolve({ success: false });
+                let payload;
+                if (action === 'activate' || action === 'feature') {
+                    payload = { action: 'update', id: idVal, status: 'active' };
+                } else if (action === 'deactivate') {
+                    payload = { action: 'update', id: idVal, status: 'inactive' };
+                } else if (action === 'delete') {
+                    payload = { action: 'delete', id: idVal };
+                } else {
+                    return Promise.resolve({ success: false });
+                }
+                return fetch('/api/categories.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(r => r.json()).then(d => ({ d, chk })).catch(() => ({ d: { success: false }, chk }));
+            });
+
+            Promise.all(requests).then(results => {
+                let okCount = 0;
+                let lastErr = '';
+                results.forEach(({ d, chk }) => {
+                    if (d && d.success) {
+                        okCount++;
+                        const row = chk.closest('tr');
+                        if (!row) return;
+                        if (action === 'delete') {
+                            row.style.transition = 'all 0.25s ease';
+                            row.style.opacity = '0';
+                            setTimeout(() => row.remove(), 250);
+                        } else if (action === 'activate') {
+                            row.setAttribute('data-status', 'active');
+                            const badge = row.querySelector('.dt-badge.red, .dt-badge.gray');
+                            if (badge) { badge.className = 'dt-badge green'; badge.textContent = 'Active'; }
+                        } else if (action === 'deactivate') {
+                            row.setAttribute('data-status', 'inactive');
+                            const badge = row.querySelector('.dt-badge.green');
+                            if (badge) { badge.className = 'dt-badge gray'; badge.textContent = 'Inactive'; }
+                        }
+                    } else if (d && d.message) {
+                        lastErr = d.message;
                     }
+                });
+                if (okCount > 0) {
+                    self.showToast(`Updated ${okCount} category item(s) in database!`);
+                } else {
+                    self.showToast(lastErr || 'Bulk action could not be completed.');
                 }
             });
-            this.showToast(`Activated ${count} selected categories!`);
-        } else if (action === 'deactivate') {
-            checkedBoxes.forEach(chk => {
-                const row = chk.closest('tr');
-                if (row) {
-                    row.setAttribute('data-status', 'inactive');
-                    const badge = row.querySelector('.dt-badge.green');
-                    if (badge) {
-                        badge.className = 'dt-badge gray';
-                        badge.textContent = 'Inactive';
-                    }
-                }
-            });
-            this.showToast(`Deactivated ${count} selected categories!`);
-        } else if (action === 'feature') {
-            checkedBoxes.forEach(chk => {
-                const row = chk.closest('tr');
-                if (row) {
-                    const starBtn = row.querySelector('.wp-star-btn');
-                    if (starBtn) {
-                        starBtn.classList.add('active');
-                        starBtn.style.color = '#D4AF37';
-                    }
-                }
-            });
-            this.showToast(`Marked ${count} categories as Featured!`);
-        } else if (action === 'delete') {
-            if (!confirm(`Are you sure you want to delete ${count} selected categories?`)) return;
-            checkedBoxes.forEach(chk => {
-                const row = chk.closest('tr');
-                if (row) {
-                    row.style.transition = 'all 0.25s ease';
-                    row.style.opacity = '0';
-                    row.style.transform = 'translateX(20px)';
-                    setTimeout(() => row.remove(), 250);
-                }
-            });
-            this.showToast(`Deleted ${count} selected categories!`);
+        };
+
+        if (action === 'delete') {
+            this._confirm(`Are you sure you want to permanently delete ${checkedBoxes.length} selected category(ies)?`, runBulk);
+        } else {
+            runBulk();
         }
     },
 
-    // Delete row with smooth animation
+    // Delete row in live SQL DB with smooth animation
     deleteRow: function(rowId, itemName) {
-        if (!confirm(`Are you sure you want to delete "${itemName}"?`)) return;
+        const self = this;
         const row = document.getElementById(rowId);
         if (!row) return;
-
-        row.style.transition = 'all 0.25s ease';
-        row.style.opacity = '0';
-        row.style.transform = 'translateX(20px)';
-        setTimeout(() => {
-            row.remove();
-            this.showToast(`"${itemName}" deleted successfully!`);
-        }, 250);
+        const catId = Number(row.querySelector('.cat-row-chk')?.value || String(rowId).replace(/[^0-9]/g, ''));
+        this._confirm(`Are you sure you want to permanently delete "${itemName}" from database?`, function() {
+            fetch('/api/categories.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', id: catId })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (!res || !res.success) {
+                    self.showToast((res && res.message) || `Cannot delete "${itemName}".`);
+                    return;
+                }
+                row.style.transition = 'all 0.25s ease';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    row.remove();
+                    self.showToast(res.message || `"${itemName}" deleted from database!`);
+                }, 250);
+            })
+            .catch(() => self.showToast('Network error deleting category.'));
+        });
     },
 
     // Image preview helper for file inputs

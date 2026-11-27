@@ -203,73 +203,73 @@ function toast(m, type) {
 }
 
 function promptReply(id) {
-    const reply = prompt('Enter official store reply to display publicly under this customer review:');
-    if (reply === null || reply.trim() === '') return;
+    window.dtShowPromptModal('Enter official store reply to display publicly under this customer review:', '', function(reply) {
+        if (!reply || !reply.trim()) return;
+        const params = new URLSearchParams();
+        params.append('action', 'reply');
+        params.append('id', id);
+        params.append('reply', reply.trim());
 
-    const params = new URLSearchParams();
-    params.append('action', 'reply');
-    params.append('id', id);
-    params.append('reply', reply.trim());
-
-    fetch('/api/reviews.php', { method: 'POST', body: params })
-        .then(res => res.json())
-        .then(data => {
-            if (!data || !data.success) {
-                toast('Could not save store reply: ' + ((data && data.message) ? data.message : 'Please try again.'));
-                return;
-            }
-            toast('Official store reply published successfully!');
-            setTimeout(() => location.reload(), 600);
-        })
-        .catch(() => {
-            toast('Network error — reply not saved.');
-        });
+        fetch('/api/reviews.php', { method: 'POST', body: params })
+            .then(res => res.json())
+            .then(data => {
+                if (!data || !data.success) {
+                    toast('Could not save store reply: ' + ((data && data.message) ? data.message : 'Please try again.'));
+                    return;
+                }
+                toast('Official store reply published successfully!');
+                setTimeout(() => location.reload(), 600);
+            })
+            .catch(() => {
+                toast('Network error — reply not saved.');
+            });
+    });
 }
 
 function unpublishReview(id) {
-    if (!confirm('Unpublish this review from the storefront and move back to the moderation queue?')) return;
+    window.dtShowConfirmModal('Unpublish this review from the storefront and move back to the moderation queue?', function() {
+        const params = new URLSearchParams();
+        params.append('action', 'unpublish');
+        params.append('id', id);
 
-    const params = new URLSearchParams();
-    params.append('action', 'unpublish');
-    params.append('id', id);
-
-    fetch('/api/reviews.php', { method: 'POST', body: params })
-        .then(res => res.json())
-        .then(data => {
-            if (!data || !data.success) {
-                toast('Could not unpublish review: ' + ((data && data.message) ? data.message : 'Please try again.'));
-                return;
-            }
-            const r = document.getElementById('appReviewRow_' + id);
-            if (r) r.remove();
-            toast('Review unpublished and returned to pending queue.');
-        })
-        .catch(() => {
-            toast('Network error during unpublish.');
-        });
+        fetch('/api/reviews.php', { method: 'POST', body: params })
+            .then(res => res.json())
+            .then(data => {
+                if (!data || !data.success) {
+                    toast('Could not unpublish review: ' + ((data && data.message) ? data.message : 'Please try again.'));
+                    return;
+                }
+                const r = document.getElementById('appReviewRow_' + id);
+                if (r) r.remove();
+                toast('Review unpublished and returned to pending queue.');
+            })
+            .catch(() => {
+                toast('Network error during unpublish.');
+            });
+    });
 }
 
 function deleteReview(id) {
-    if (!confirm('Are you sure you want to permanently delete this customer review?')) return;
+    window.dtShowConfirmModal('Are you sure you want to permanently delete this customer review?', function() {
+        const params = new URLSearchParams();
+        params.append('action', 'delete');
+        params.append('id', id);
 
-    const params = new URLSearchParams();
-    params.append('action', 'delete');
-    params.append('id', id);
-
-    fetch('/api/reviews.php', { method: 'POST', body: params })
-        .then(res => res.json())
-        .then(data => {
-            if (!data || !data.success) {
-                toast('Could not delete review: ' + ((data && data.message) ? data.message : 'Please try again.'));
-                return;
-            }
-            const r = document.getElementById('appReviewRow_' + id);
-            if (r) r.remove();
-            toast('Review permanently deleted.');
-        })
-        .catch(() => {
-            toast('Network error during deletion.');
-        });
+        fetch('/api/reviews.php', { method: 'POST', body: params })
+            .then(res => res.json())
+            .then(data => {
+                if (!data || !data.success) {
+                    toast('Could not delete review: ' + ((data && data.message) ? data.message : 'Please try again.'));
+                    return;
+                }
+                const r = document.getElementById('appReviewRow_' + id);
+                if (r) r.remove();
+                toast('Review permanently deleted.');
+            })
+            .catch(() => {
+                toast('Network error during deletion.');
+            });
+    });
 }
 </script>
 <script src="/admin/assets/js/admin.js?v=<?= @filemtime(__DIR__ . '/../assets/js/admin.js') ?: '3.2.1' ?>"></script>

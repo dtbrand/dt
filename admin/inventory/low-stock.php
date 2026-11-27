@@ -127,9 +127,15 @@ function reorderSingleSku(id, title, qty) {
     params.append('reason', `Emergency loom re-order restock (+${qty} pcs) for critical SKU`);
     params.append('movement_type', 'inward');
 
-    fetch('/api/products.php', { method: 'POST', body: params })
+    fetch('/api/products.php', { method: 'POST', credentials: 'same-origin', body: params })
         .then(res => res.json())
         .then(data => {
+            if (!data || !data.success) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast((data && data.message) || `Could not restock ${title}.`);
+                }
+                return;
+            }
             const el = document.getElementById('stockQtyVal_' + id);
             if (el) {
                 const cur = parseInt(el.textContent) || 0;
@@ -142,7 +148,7 @@ function reorderSingleSku(id, title, qty) {
         })
         .catch(() => {
             if (typeof window.showToast === 'function') {
-                window.showToast(`Restock PO sent for ${title}!`);
+                window.showToast(`Network error restocking ${title}. Please try again.`);
             }
         });
 }

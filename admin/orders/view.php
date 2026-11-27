@@ -123,7 +123,7 @@ if ($order_id !== '' && $dt_order_error === '') {
                 'shipping_method' => '',
                 'carrier' => (string)($dbOrder['courier_name'] ?? ''),
                 'tracking_id' => (string)($dbOrder['tracking_number'] ?? ''),
-                'notes' => '',
+                'notes' => (string)($dbOrder['notes'] ?? ''),
                 'items_count' => count($parsedItems),
                 'address' => [
                     'billing' => (string)($dbOrder['shipping_address'] ?? ''),

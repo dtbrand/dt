@@ -182,18 +182,54 @@
             stepper.innerHTML = html;
         },
 
+        _collectOrderNotes: function() {
+            const list = document.getElementById('adminNotesList');
+            if (!list) return [];
+            return Array.from(list.querySelectorAll('.dt-smart-note-card')).map(card => ({
+                id: card.id,
+                author: (card.dataset.author || 'Admin Staff'),
+                role: (card.dataset.role || 'Admin Staff'),
+                tag: (card.dataset.tag || 'Order Note'),
+                time: (card.dataset.time || ''),
+                text: (card.querySelector('.dt-note-body-text')?.innerText || '').trim()
+            })).filter(n => n.text !== '');
+        },
+
+        _persistNotes: function(orderId, notesArr, okMsg) {
+            const targetId = orderId || (new URLSearchParams(window.location.search)).get('id') || '';
+            if (!targetId) return;
+            fetch('/api/orders.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'save_notes', order_id: targetId, notes: notesArr })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (!res || !res.success) {
+                    if (window.DT_ORDERS) window.DT_ORDERS.showToast((res && res.message) || 'Could not save notes in database.');
+                    return;
+                }
+                if (window.DT_ORDERS && okMsg) window.DT_ORDERS.showToast(okMsg);
+            })
+            .catch(() => {
+                if (window.DT_ORDERS) window.DT_ORDERS.showToast('Network error saving order notes.');
+            });
+        },
+
         addDrawerNote: function() {
             const input = document.getElementById('drawerQuickNoteInput');
             if (!input || !input.value.trim()) {
                 if (window.DT_ORDERS) window.DT_ORDERS.showToast('Please enter dispatch note text');
                 return;
             }
-
             const noteVal = input.value.trim();
+            const activeId = (document.getElementById('drawerOrderId')?.textContent || '').replace(/[^A-Za-z0-9_-]/g, '')
+                || (new URLSearchParams(window.location.search)).get('id') || '';
             input.value = '';
-            if (window.DT_ORDERS) {
-                window.DT_ORDERS.showToast('Note saved: "' + noteVal + '"');
-            }
+            const existing = this._collectOrderNotes();
+            existing.unshift({ id: 'note_' + Date.now(), author: 'Admin Staff', role: 'Admin', tag: 'Drawer Note', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), text: noteVal });
+            this._persistNotes(activeId, existing, 'Note saved in database: "' + noteVal + '"');
         },
 
         toggleRowDetails: function(orderId, btn) {
@@ -264,7 +300,7 @@
                         const count = noteList.querySelectorAll('.dt-smart-note-card').length;
                         countBadge.textContent = `${count} Note${count === 1 ? '' : 's'}`;
                     }
-                    if (window.DT_ORDERS) window.DT_ORDERS.showToast('Note deleted successfully');
+                    this._persistNotes('', this._collectOrderNotes(), 'Note deleted from database');
                 }, 200);
             }
         },
@@ -334,7 +370,7 @@
                     countBadge.textContent = `${count} Note${count === 1 ? '' : 's'}`;
                 }
 
-                if (window.DT_ORDERS) window.DT_ORDERS.showToast('Internal admin note posted successfully!');
+                this._persistNotes('', this._collectOrderNotes(), 'Internal admin note saved to database!');
             }
         },
 
@@ -510,11 +546,32 @@
                 }
             }
 
-            this.closeAddressEditModal();
-
-            if (window.DT_ORDERS) {
-                window.DT_ORDERS.showToast('Shipping & Billing addresses updated successfully!');
-            }
+            fetch('/api/orders.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update_address',
+                    order_id: orderId,
+                    customer_name: recipient,
+                    customer_phone: phone,
+                    shipping_address: fullShipping
+                })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (!res || !res.success) {
+                    if (window.DT_ORDERS) window.DT_ORDERS.showToast((res && res.message) || 'Failed to update shipping address in DB.');
+                    return;
+                }
+                this.closeAddressEditModal();
+                if (window.DT_ORDERS) {
+                    window.DT_ORDERS.showToast('Shipping & Billing addresses saved in MariaDB!');
+                }
+            })
+            .catch(() => {
+                if (window.DT_ORDERS) window.DT_ORDERS.showToast('Network error saving address update.');
+            });
         },
 
         openLedgerModal: function(name, phone, email) {

@@ -366,10 +366,10 @@ function testCarrierHealth(carrierCode, btn) {
             if (typeof window.showToast === 'function') window.showToast('Carrier Diagnostic Notice: ' + (data.error || 'Failed to ping carrier endpoint.'), 'warning');
         }
     })
-    .catch(function(err) {
+    .catch(function() {
         btn.disabled = false;
         btn.innerHTML = originalHtml;
-        if (typeof window.showToast === 'function') window.showToast('Diagnostic ping completed (simulated test).', 'info');
+        if (typeof window.showToast === 'function') window.showToast('Carrier ping failed: endpoint unreachable.', 'error');
     });
 }
 

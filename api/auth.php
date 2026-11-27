@@ -9,12 +9,16 @@ cors_json();
 
 require_once __DIR__ . '/../src/Database.php';
 require_once __DIR__ . '/../src/Auth.php';
+require_once __DIR__ . '/../src/CartManager.php';
 require_once __DIR__ . '/_guard.php';
 
 use DTBrand\Auth;
+use DTBrand\CartManager;
 use DTBrand\Database;
 
 try {
+    Auth::initSession();
+    $preAuthSessionId = session_id();
     $action = $_GET['action'] ?? ($_POST['action'] ?? 'session');
     $rawInput = file_get_contents('php://input');
     $data = json_decode($rawInput, true) ?: $_POST;
@@ -28,6 +32,8 @@ try {
         $res = Auth::login($phoneOrEmail, $password);
         if (!$res['success']) {
             http_response_code(401);
+        } elseif (!empty($res['user']['id'])) {
+            CartManager::mergeGuestCartToCustomer($preAuthSessionId, (int)$res['user']['id']);
         }
         echo json_encode($res, JSON_PRETTY_PRINT);
         exit;
@@ -37,6 +43,8 @@ try {
         $res = Auth::register($data);
         if (!$res['success']) {
             http_response_code(400);
+        } elseif (!empty($res['user']['id'])) {
+            CartManager::mergeGuestCartToCustomer($preAuthSessionId, (int)$res['user']['id']);
         }
         echo json_encode($res, JSON_PRETTY_PRINT);
         exit;

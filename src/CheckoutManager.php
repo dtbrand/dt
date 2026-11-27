@@ -181,6 +181,11 @@ class CheckoutManager
         $orderNumber = $orderResult['order_number'];
         $orderId = $orderResult['id'];
 
+        // Clear user/session persisted cart once order commits
+        try {
+            CartManager::clearCart(!empty($currentUser['id']) ? (int)$currentUser['id'] : 0, session_id());
+        } catch (\Throwable $e) {}
+
         // ── STEP 13: PAYMENT INITIATION ──
         $paymentPayload = null;
         if ($paymentMethod === 'direct_upi') {

@@ -355,6 +355,58 @@ try {
             exit;
         }
 
+        // Save / Update Internal Order Notes in MariaDB
+        if ($action === 'save_notes' || $action === 'add_note') {
+            dt_api_require_admin('update order notes');
+            $orderId = trim((string)($data['order_id'] ?? ($data['id'] ?? '')));
+            if ($orderId === '') {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Order ID required.']);
+                exit;
+            }
+            $pdo = Database::getConnection();
+            if ($pdo === null || Database::isMockMode()) {
+                http_response_code(503);
+                echo json_encode(['success' => false, 'message' => 'Database unavailable.']);
+                exit;
+            }
+            $notesRaw = $data['notes'] ?? ($data['note'] ?? '');
+            $notesVal = is_array($notesRaw) ? json_encode(array_values($notesRaw), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : (string)$notesRaw;
+            $st = $pdo->prepare("UPDATE orders SET notes = ?, updated_at = NOW() WHERE order_number = ? OR id = ?");
+            $ok = $st->execute([$notesVal, $orderId, (int)$orderId]);
+            echo json_encode(['success' => (bool)$ok, 'order_id' => $orderId, 'message' => $ok ? 'Order notes saved in database.' : 'Failed to save order notes.']);
+            exit;
+        }
+
+        // Update Order Shipping Address & Consignee in MariaDB
+        if ($action === 'update_address') {
+            dt_api_require_admin('update order shipping address');
+            $orderId = trim((string)($data['order_id'] ?? ($data['id'] ?? '')));
+            $shippingAddress = trim((string)($data['shipping_address'] ?? ''));
+            if ($orderId === '' || $shippingAddress === '') {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Order ID and shipping address are required.']);
+                exit;
+            }
+            $pdo = Database::getConnection();
+            if ($pdo === null || Database::isMockMode()) {
+                http_response_code(503);
+                echo json_encode(['success' => false, 'message' => 'Database unavailable.']);
+                exit;
+            }
+            $recipient = trim((string)($data['customer_name'] ?? ''));
+            $phone = trim((string)($data['customer_phone'] ?? ''));
+            if ($recipient !== '' && $phone !== '') {
+                $st = $pdo->prepare("UPDATE orders SET shipping_address = ?, customer_name = ?, customer_phone = ?, updated_at = NOW() WHERE order_number = ? OR id = ?");
+                $ok = $st->execute([$shippingAddress, $recipient, $phone, $orderId, (int)$orderId]);
+            } else {
+                $st = $pdo->prepare("UPDATE orders SET shipping_address = ?, updated_at = NOW() WHERE order_number = ? OR id = ?");
+                $ok = $st->execute([$shippingAddress, $orderId, (int)$orderId]);
+            }
+            echo json_encode(['success' => (bool)$ok, 'order_id' => $orderId, 'shipping_address' => $shippingAddress, 'message' => $ok ? 'Shipping address saved in database.' : 'Failed to update shipping address.']);
+            exit;
+        }
+
         // Create Order
         if (!empty($data['items']) && is_string($data['items'])) {
             $data['items'] = json_decode($data['items'], true);

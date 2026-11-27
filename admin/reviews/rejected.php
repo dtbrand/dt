@@ -192,8 +192,13 @@ function toast(m, type) {
     else console.warn(m);
 }
 
-function moderateAction(id, action) {
-    if (action === 'delete' && !confirm('Are you sure you want to permanently purge this entry from the database?')) return;
+function moderateAction(id, action, skipConfirm = false) {
+    if (action === 'delete' && !skipConfirm) {
+        window.dtShowConfirmModal('Are you sure you want to permanently purge this entry from the database?', function() {
+            moderateAction(id, action, true);
+        });
+        return;
+    }
 
     const params = new URLSearchParams();
     params.append('action', action);

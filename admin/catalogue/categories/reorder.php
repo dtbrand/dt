@@ -35,8 +35,24 @@ $active_subnav = "categories";
                     <h1 class="wp-heading-inline" style="font-size:20px; font-weight:800; color:#181512; margin:0;">Reorder Categories</h1>
                     <p style="font-size:12px; color:#64748b; margin:2px 0 0 0;">Move categories up or down to set their display order across the storefront menu and catalogue grids.</p>
                 </div>
-                <button type="button" class="dt-btn-action-sm gold" onclick="if(window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Category sort order saved successfully!')" style="height:30px; padding:0 14px; font-size:11.5px;">Save Order</button>
+                <button type="button" class="dt-btn-action-sm gold" onclick="window.dtSaveCategoryHierarchyOrder()" style="height:30px; padding:0 14px; font-size:11.5px;">Save Order</button>
             </div>
+            <script>
+            window.dtSaveCategoryHierarchyOrder = function() {
+                var items = Array.from(document.querySelectorAll('.dt-tree-root > .dt-tree-node')).map(function(n, idx) {
+                    return { id: Number(String(n.dataset.catId || idx + 1)), display_order: idx + 1 };
+                });
+                fetch('/api/categories.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'reorder', items: items })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(res) { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'Category sort order saved!'); })
+                .catch(function() { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving order.'); });
+            };
+            </script>
 
             <?php include_once __DIR__ . '/../components/hierarchy-tree.php'; ?>
 

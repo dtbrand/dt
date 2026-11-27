@@ -194,6 +194,25 @@
         }
     }
 
+    function mapServerCartItem(srv) {
+        return {
+            id: parseInt(srv.product_id || srv.id, 10),
+            product_id: parseInt(srv.product_id || srv.id, 10),
+            variant_id: srv.variant_id ? parseInt(srv.variant_id, 10) : null,
+            product_type: srv.product_type || 'single_piece',
+            selling_type: srv.selling_type || 'single_piece',
+            sku: srv.sku || '',
+            name: srv.name || srv.title || 'Ethnic Wear',
+            price: Number(srv.unit_price || srv.price || 0),
+            old_price: srv.old_price ? Number(srv.old_price) : null,
+            image: srv.image || '/assets/images/no-image.svg',
+            size: srv.size || '',
+            color: srv.color || '',
+            qty: Math.max(1, parseInt(srv.qty || srv.quantity || 1, 10) || 1),
+            mcq: Math.max(1, parseInt(srv.mcq || 1, 10) || 1)
+        };
+    }
+
     function syncCartWithServer(cartItems) {
         clearTimeout(_cartSyncTimer);
         _cartSyncTimer = setTimeout(function() {
@@ -209,21 +228,19 @@
                 };
             }).filter(function(x) { return x.id > 0; });
 
-            if (payloadItems.length === 0) {
-                window.DT_CART_SERVER_VALIDATION = null;
-                return;
-            }
-
             fetch('/api/cart.php', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfTok },
-                body: JSON.stringify({ items: payloadItems, csrf_token: csrfTok })
+                body: JSON.stringify({ action: 'sync', items: payloadItems, csrf_token: csrfTok })
             })
             .then(function(r) { return r.json(); })
             .then(function(res) {
                 if (!res || typeof res !== 'object') return;
                 window.DT_CART_SERVER_VALIDATION = res;
+                if (payloadItems.length === 0) {
+                    return;
+                }
                 if (res.success && Array.isArray(res.items) && res.items.length > 0) {
                     var current = readJsonList(CART_KEY);
                     var changed = false;
@@ -555,6 +572,24 @@
     };
 
     function hydrateFromServer() {
+        // Hydrate user-wise SQL cart across guest/customer/reseller/retailer/wholesale roles
+        fetch('/api/cart.php?action=view', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (!res || typeof res !== 'object') return;
+                window.DT_CART_SERVER_VALIDATION = res;
+                var localItems = readJsonList(CART_KEY);
+                if (Array.isArray(res.items) && res.items.length > 0) {
+                    var mappedCart = res.items.map(mapServerCartItem);
+                    writeJsonList(CART_KEY, mappedCart);
+                    dtSyncBadges();
+                } else if (localItems.length > 0) {
+                    // First-time bridge: push pre-existing local bag into SQL cart_items for role pricing
+                    syncCartWithServer(localItems);
+                }
+            })
+            .catch(function() {});
+
         // Sync wishlist with DB for logged-in members seamlessly on page load
         if (window.DT_CURRENT_USER && window.DT_CURRENT_USER.id) {
             fetch('/api/wishlist.php?action=view', { credentials: 'same-origin' })
@@ -569,6 +604,90 @@
                 .catch(function() {});
         }
     }
+
+    // ── Global Styled Confirm & Prompt Modals (replaces raw browser confirm/prompt) ──
+    function ensureDialogStyles() {
+        if (document.getElementById('dtDialogModalStyles')) return;
+        var st = document.createElement('style');
+        st.id = 'dtDialogModalStyles';
+        st.textContent = '.dt-dlg-backdrop{position:fixed;inset:0;background:rgba(17,24,39,0.62);backdrop-filter:blur(3px);z-index:100020;display:flex;align-items:center;justify-content:center;padding:16px;}' +
+            '.dt-dlg-card{width:100%;max-width:410px;background:#fff;border-radius:14px;border:1.5px solid #D4AF37;box-shadow:0 24px 50px rgba(0,0,0,0.32);overflow:hidden;font-family:Inter,Plus Jakarta Sans,sans-serif;}' +
+            '.dt-dlg-head{padding:14px 18px;background:linear-gradient(135deg,#181512,#2C241B);color:#D4AF37;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:space-between;}' +
+            '.dt-dlg-body{padding:18px;color:#1F2937;font-size:13.5px;line-height:1.5;}' +
+            '.dt-dlg-input{width:100%;box-sizing:border-box;margin-top:10px;padding:10px 12px;border:1.5px solid #D1D5DB;border-radius:8px;font-size:13.5px;color:#111827;}' +
+            '.dt-dlg-foot{padding:12px 18px 16px;display:flex;justify-content:flex-end;gap:10px;background:#F9FAFB;border-top:1px solid #E5E7EB;}' +
+            '.dt-dlg-btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid transparent;}' +
+            '.dt-dlg-cancel{background:#fff;border-color:#D1D5DB;color:#374151;}' +
+            '.dt-dlg-ok{background:linear-gradient(135deg,#B8860B,#D4AF37);color:#111827;border-color:#8A681F;}';
+        document.head.appendChild(st);
+    }
+
+    window.dtShowConfirmModal = function(message, onConfirm, opts) {
+        opts = opts || {};
+        ensureDialogStyles();
+        var backdrop = document.createElement('div');
+        backdrop.className = 'dt-dlg-backdrop';
+        var title = opts.title || 'Please Confirm';
+        var okLabel = opts.okText || 'Confirm';
+        backdrop.innerHTML =
+            '<div class="dt-dlg-card" role="dialog" aria-modal="true">' +
+                '<div class="dt-dlg-head"><span></span><button type="button" aria-label="Close" style="background:none;border:none;color:#FAF5E8;font-size:18px;cursor:pointer;line-height:1;">&times;</button></div>' +
+                '<div class="dt-dlg-body"></div>' +
+                '<div class="dt-dlg-foot">' +
+                    '<button type="button" class="dt-dlg-btn dt-dlg-cancel">Cancel</button>' +
+                    '<button type="button" class="dt-dlg-btn dt-dlg-ok"></button>' +
+                '</div>' +
+            '</div>';
+        backdrop.querySelector('.dt-dlg-head span').textContent = title;
+        backdrop.querySelector('.dt-dlg-body').textContent = message;
+        backdrop.querySelector('.dt-dlg-ok').textContent = okLabel;
+        function closeDlg() { backdrop.remove(); }
+        backdrop.querySelector('.dt-dlg-head button').addEventListener('click', closeDlg);
+        backdrop.querySelector('.dt-dlg-cancel').addEventListener('click', closeDlg);
+        backdrop.querySelector('.dt-dlg-ok').addEventListener('click', function() {
+            closeDlg();
+            if (typeof onConfirm === 'function') onConfirm();
+        });
+        backdrop.addEventListener('click', function(e) { if (e.target === backdrop) closeDlg(); });
+        document.body.appendChild(backdrop);
+        backdrop.querySelector('.dt-dlg-ok').focus();
+    };
+
+    window.dtShowPromptModal = function(message, defaultValue, onSubmit, opts) {
+        opts = opts || {};
+        ensureDialogStyles();
+        var backdrop = document.createElement('div');
+        backdrop.className = 'dt-dlg-backdrop';
+        backdrop.innerHTML =
+            '<div class="dt-dlg-card" role="dialog" aria-modal="true">' +
+                '<div class="dt-dlg-head"><span></span><button type="button" aria-label="Close" style="background:none;border:none;color:#FAF5E8;font-size:18px;cursor:pointer;line-height:1;">&times;</button></div>' +
+                '<div class="dt-dlg-body"><div class="dt-dlg-msg"></div><input type="text" class="dt-dlg-input"></div>' +
+                '<div class="dt-dlg-foot">' +
+                    '<button type="button" class="dt-dlg-btn dt-dlg-cancel">Cancel</button>' +
+                    '<button type="button" class="dt-dlg-btn dt-dlg-ok">Submit</button>' +
+                '</div>' +
+            '</div>';
+        backdrop.querySelector('.dt-dlg-head span').textContent = opts.title || 'Enter Value';
+        backdrop.querySelector('.dt-dlg-msg').textContent = message;
+        var input = backdrop.querySelector('.dt-dlg-input');
+        input.value = defaultValue || '';
+        function closeDlg() { backdrop.remove(); }
+        backdrop.querySelector('.dt-dlg-head button').addEventListener('click', closeDlg);
+        backdrop.querySelector('.dt-dlg-cancel').addEventListener('click', closeDlg);
+        backdrop.querySelector('.dt-dlg-ok').addEventListener('click', function() {
+            var val = input.value.trim();
+            closeDlg();
+            if (val && typeof onSubmit === 'function') onSubmit(val);
+        });
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') backdrop.querySelector('.dt-dlg-ok').click();
+            if (e.key === 'Escape') closeDlg();
+        });
+        backdrop.addEventListener('click', function(e) { if (e.target === backdrop) closeDlg(); });
+        document.body.appendChild(backdrop);
+        input.focus();
+        input.select();
+    };
 
     function init() {
         dtSyncBadges();

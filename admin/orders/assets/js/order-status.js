@@ -109,57 +109,62 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(r => r.json()).then(res => {
-                if (res && res.success) {
-                    console.log('Order status updated live in database:', res);
-                } else {
-                    console.warn('Order status update warning:', res);
+                if (!res || !res.success) {
+                    if (window.DT_ORDERS) {
+                        window.DT_ORDERS.showToast((res && res.message) ? res.message : 'Failed to update order status in database.');
+                    }
+                    return;
                 }
-            }).catch(err => console.log('Order status network sync:', err));
 
-            // Update badge in table row or view page header
-            const allBadges = document.querySelectorAll(`#statusBadge_${orderId}, #viewPageStatusBadge, .dt-status-badge[data-order-id="${orderId}"]`);
-            allBadges.forEach(b => {
-                b.className = `dt-status-badge ${newStatus}`;
-                b.innerHTML = `<span class="dt-status-dot"></span><span>${newStatus.replace(/_/g, ' ')}</span>`;
+                // Update badge in table row or view page header
+                const allBadges = document.querySelectorAll(`#statusBadge_${orderId}, #viewPageStatusBadge, .dt-status-badge[data-order-id="${orderId}"]`);
+                allBadges.forEach(b => {
+                    b.className = `dt-status-badge ${newStatus}`;
+                    b.innerHTML = `<span class="dt-status-dot"></span><span>${newStatus.replace(/_/g, ' ')}</span>`;
+                });
+
+                // Update Stepper Progression Timeline if on view.php
+                const statusOrderMap = {'pending': 1, 'confirmed': 2, 'processing': 3, 'packed': 4, 'shipped': 5, 'dispatched': 5, 'out_for_delivery': 5, 'delivered': 6};
+                const targetRank = statusOrderMap[newStatus] || 1;
+                const stepNodes = document.querySelectorAll('.dt-status-stepper .dt-step-node');
+                stepNodes.forEach((node, idx) => {
+                    const nodeRank = idx + 1;
+                    node.classList.remove('completed', 'current');
+                    if (targetRank > nodeRank) {
+                        node.classList.add('completed');
+                        const iconEl = node.querySelector('.dt-step-icon');
+                        if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#FFFFFF" stroke-width="3" style="margin:auto;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                    } else if (targetRank === nodeRank) {
+                        node.classList.add('current');
+                        const iconEl = node.querySelector('.dt-step-icon');
+                        if (iconEl) iconEl.textContent = nodeRank;
+                    } else {
+                        const iconEl = node.querySelector('.dt-step-icon');
+                        if (iconEl) iconEl.textContent = nodeRank;
+                    }
+                });
+
+                // Synchronize in-memory order object
+                if (window.DT_ORDERS && window.DT_ORDERS.orders) {
+                    const targetOrder = window.DT_ORDERS.orders.find(o => o.id === orderId);
+                    if (targetOrder) {
+                        targetOrder.status = newStatus;
+                        targetOrder.shipping = carrier;
+                        targetOrder.tracking = tracking;
+                    }
+                }
+
+                this.closeStatusModal();
+
+                if (window.DT_ORDERS) {
+                    const waMsg = notifyWA ? ' (WhatsApp alert dispatched to consignee)' : '';
+                    window.DT_ORDERS.showToast(`Order ${orderId} updated in DB to ${newStatus.toUpperCase()}${waMsg}`);
+                }
+            }).catch(() => {
+                if (window.DT_ORDERS) {
+                    window.DT_ORDERS.showToast('Network error: order status was NOT updated.');
+                }
             });
-
-            // Update Stepper Progression Timeline if on view.php
-            const statusOrderMap = {'pending': 1, 'confirmed': 2, 'processing': 3, 'packed': 4, 'shipped': 5, 'out_for_delivery': 5, 'delivered': 6};
-            const targetRank = statusOrderMap[newStatus] || 1;
-            const stepNodes = document.querySelectorAll('.dt-status-stepper .dt-step-node');
-            stepNodes.forEach((node, idx) => {
-                const nodeRank = idx + 1;
-                node.classList.remove('completed', 'current');
-                if (targetRank > nodeRank) {
-                    node.classList.add('completed');
-                    const iconEl = node.querySelector('.dt-step-icon');
-                    if (iconEl) iconEl.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#FFFFFF" stroke-width="3" style="margin:auto;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                } else if (targetRank === nodeRank) {
-                    node.classList.add('current');
-                    const iconEl = node.querySelector('.dt-step-icon');
-                    if (iconEl) iconEl.textContent = nodeRank;
-                } else {
-                    const iconEl = node.querySelector('.dt-step-icon');
-                    if (iconEl) iconEl.textContent = nodeRank;
-                }
-            });
-
-            // Synchronize in-memory order object
-            if (window.DT_ORDERS && window.DT_ORDERS.orders) {
-                const targetOrder = window.DT_ORDERS.orders.find(o => o.id === orderId);
-                if (targetOrder) {
-                    targetOrder.status = newStatus;
-                    targetOrder.shipping = carrier;
-                    targetOrder.tracking = tracking;
-                }
-            }
-
-            this.closeStatusModal();
-
-            if (window.DT_ORDERS) {
-                const waMsg = notifyWA ? ' (WhatsApp alert dispatched to consignee)' : '';
-                window.DT_ORDERS.showToast(`Order ${orderId} updated to ${newStatus.toUpperCase()}${waMsg}`);
-            }
         },
 
         openCancelModal: function(orderId) {

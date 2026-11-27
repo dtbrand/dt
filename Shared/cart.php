@@ -528,30 +528,36 @@ if (!window.allProducts || !window.allProducts.length) {
             }
             wrap.dataset.emptyRendered = '1';
 
-            /* Render Animated SVG Empty Cart + Auto Product Recommendation Slider */
-            var products = window.allProducts || window.catalogProducts || window.products || [
-                { id: 1, name: 'Nilambari Silk Saree', price: 4899, image: '/assets/images/product1.png' },
-                { id: 3, name: 'Kanjivaram Temple Silk', price: 12999, image: '/assets/images/product3.png' },
-                { id: 5, name: 'Royal Anarkali Kurti', price: 2799, image: '/assets/images/product5.png' },
-                { id: 8, name: 'Ivory Designer Gown', price: 7499, image: '/assets/images/product8.png' },
-                { id: 4, name: 'Georgette Bloom Saree', price: 3299, image: '/assets/images/product4.png' }
-            ];
+            /* Render Animated SVG Empty Cart + Live Catalog Recommendation Slider */
+            var products = window.allProducts || window.catalogProducts || window.products || [];
 
             var fullList = products.slice(0, 6);
 
             var sliderCardsHtml = fullList.map(function(p) {
-                var imgSrc = p.image || p.img || '/assets/images/product1.png';
+                var imgSrc = p.image || p.img || '/assets/images/no-image.svg';
                 return '<div class="cd-rec-card">' +
                     '<div class="cd-rec-img-wrap">' +
-                        '<img src="' + imgSrc + '" alt="' + (p.name || 'Ethnic Attire') + '" class="cd-rec-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=\'/assets/images/product1.png\';" />' +
+                        '<img src="' + imgSrc + '" alt="' + (p.name || 'Ethnic Attire') + '" class="cd-rec-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=\'/assets/images/no-image.svg\';" />' +
                     '</div>' +
                     '<h5 class="cd-rec-title">' + (p.name || 'Ethnic Attire') + '</h5>' +
                     '<div class="cd-price-row">' +
-                        '<span class="cd-rec-price">₹' + Number(p.price || 2999).toLocaleString('en-IN') + '</span>' +
+                        '<span class="cd-rec-price">₹' + Number(p.price || 0).toLocaleString('en-IN') + '</span>' +
                         '<button class="cd-rec-add-btn" onclick="window.addRecToCart(' + p.id + ')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> <span>ADD</span></button>' +
                     '</div>' +
                 '</div>';
             }).join('');
+
+            var recSectionHtml = fullList.length > 0 ? (
+                    '<div class="cd-recommend-section">' +
+                        '<div class="cd-rec-head">' +
+                            '<span style="display:inline-flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="#D4AF37" stroke="#8A681F" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>TRENDING LUXURY PICKS</span></span>' +
+                            '<span style="font-size:0.65rem; opacity:0.8;">SWIPE &rsaquo;</span>' +
+                        '</div>' +
+                        '<div class="cd-rec-track" id="cdRecTrack">' +
+                            sliderCardsHtml +
+                        '</div>' +
+                    '</div>'
+            ) : '';
 
             wrap.innerHTML =
                 '<div class="cd-empty-container">' +
@@ -574,16 +580,7 @@ if (!window.allProducts || !window.allProducts.length) {
                         '<a href="/shop.php?category=Kurti" class="cd-quick-chip">Kurti Sets</a>' +
                         '<a href="/shop.php?category=Gown" class="cd-quick-chip">Ethnic Gowns</a>' +
                     '</div>' +
-
-                    '<div class="cd-recommend-section">' +
-                        '<div class="cd-rec-head">' +
-                            '<span style="display:inline-flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="#D4AF37" stroke="#8A681F" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>TRENDING LUXURY PICKS</span></span>' +
-                            '<span style="font-size:0.65rem; opacity:0.8;">SWIPE &rsaquo;</span>' +
-                        '</div>' +
-                        '<div class="cd-rec-track" id="cdRecTrack">' +
-                            sliderCardsHtml +
-                        '</div>' +
-                    '</div>' +
+                    recSectionHtml +
 
                     '<div class="cd-atelier-foot">' +
                         '<div class="cd-atelier-pill"><strong>Silk Mark</strong><span>100% Certified</span></div>' +

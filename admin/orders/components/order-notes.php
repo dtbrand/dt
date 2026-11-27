@@ -5,28 +5,40 @@
  * order-notes.php — Smart & Luxury Internal Admin Notes Component
  * DT Brand's & Jai Hanuman Tex
  */
-$existing_notes = [
-    [
-        'id' => 'note_1',
-        'author' => 'Gautam Sethi',
-        'initials' => 'GS',
-        'role' => 'Super Admin',
-        'tag' => 'Dispatch Verification',
-        'tag_class' => 'gold',
-        'time' => '11:45 AM • Today',
-        'text' => isset($order['notes']) && $order['notes'] ? $order['notes'] : 'Verified order manifest with warehouse floor. Ready for Surat central dispatch lot.'
-    ],
-    [
-        'id' => 'note_2',
-        'author' => 'Suresh Kumar',
-        'initials' => 'SK',
-        'role' => 'Warehouse Supervisor',
-        'tag' => 'QC Passed',
-        'tag_class' => 'emerald',
-        'time' => '11:35 AM • Today',
-        'text' => '100% Handloom Silk Mark certificate barcode inspected and affixed on master parcel carton.'
-    ]
-];
+$existing_notes = [];
+$rawNotes = trim((string)($order['notes'] ?? ''));
+if ($rawNotes !== '') {
+    $decodedNotes = json_decode($rawNotes, true);
+    if (is_array($decodedNotes)) {
+        foreach ($decodedNotes as $idx => $item) {
+            if (!is_array($item) || empty($item['text'])) continue;
+            $author = (string)($item['author'] ?? 'Admin Staff');
+            $parts = preg_split('/\s+/', trim($author));
+            $initials = strtoupper(substr($parts[0] ?? 'A', 0, 1) . substr($parts[1] ?? '', 0, 1));
+            $existing_notes[] = [
+                'id' => (string)($item['id'] ?? ('note_' . ($idx + 1))),
+                'author' => $author,
+                'initials' => $initials !== '' ? $initials : 'AD',
+                'role' => (string)($item['role'] ?? 'Admin Staff'),
+                'tag' => (string)($item['tag'] ?? 'Dispatch Verification'),
+                'tag_class' => stripos((string)($item['tag'] ?? ''), 'qc') !== false ? 'emerald' : 'gold',
+                'time' => (string)($item['time'] ?? ''),
+                'text' => (string)$item['text']
+            ];
+        }
+    } else {
+        $existing_notes[] = [
+            'id' => 'note_1',
+            'author' => 'Admin Staff',
+            'initials' => 'AD',
+            'role' => 'Staff Note',
+            'tag' => 'Order Note',
+            'tag_class' => 'gold',
+            'time' => (string)($order['date'] ?? ''),
+            'text' => $rawNotes
+        ];
+    }
+}
 ?>
 <div class="dt-detail-card" style="background:#FFFFFF; border:1px solid #E2DFD7; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.04); overflow:hidden;">
     <!-- Card Header -->

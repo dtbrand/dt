@@ -2097,7 +2097,14 @@ window.DT_SAVED_ADDRESSES = <?php echo json_encode($coSavedAddresses ?? []); ?>;
         orderFormData.append('items', JSON.stringify(cart));
 
         fetch('/api/orders.php', { method: 'POST', body: orderFormData })
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+            return r.json().catch(function() { return {}; }).then(function(res) {
+                if (!r.ok || !res || !res.success) {
+                    throw new Error((res && res.message) || 'Could not create order in database. Please verify your items and address.');
+                }
+                return res;
+            });
+        })
         .then(function(res) {
             if (res.order && res.order.order_number) {
                 orderNum = res.order.order_number;
@@ -2105,13 +2112,22 @@ window.DT_SAVED_ADDRESSES = <?php echo json_encode($coSavedAddresses ?? []); ?>;
                 window.coActiveOrderNumber = orderNum;
                 orderPayload.order_number = orderNum;
             }
+            if (activePaymentMethod === 'cod' || activePaymentMethod === 'whatsapp') {
+                return { success: true, gateway: activePaymentMethod, order_created: true };
+            }
             return fetch('/api/payment/create_order.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderPayload)
+            }).then(function(r) {
+                return r.json().catch(function() { return {}; }).then(function(data) {
+                    if (!r.ok || !data || !data.success) {
+                        throw new Error((data && (data.error || data.message)) || 'Payment gateway initialization failed.');
+                    }
+                    return data;
+                });
             });
         })
-        .then(function(r) { return r.json(); })
         .then(function(data) {
             coIsPlacingOrder = false;
             if (placeBtn) {
@@ -2148,16 +2164,7 @@ window.DT_SAVED_ADDRESSES = <?php echo json_encode($coSavedAddresses ?? []); ?>;
                 placeBtn.style.cursor = 'pointer';
                 window.selectPaymentMethod(activePaymentMethod);
             }
-            // Fallback: Direct WhatsApp Order Routing
-            completeOrderSuccess(orderNum, {
-                order_number: orderNum,
-                amount: grandTotal,
-                customer_name: fullName,
-                customer_phone: whatsApp,
-                address: `${address}, ${city}, ${state} - ${pincode}`,
-                note: note,
-                cart: cart
-            });
+            showCoNotice((err && err.message) ? err.message : 'Unable to place order right now. Please try again.', false);
         });
     }
 
@@ -2258,18 +2265,22 @@ window.DT_SAVED_ADDRESSES = <?php echo json_encode($coSavedAddresses ?? []); ?>;
                 utr_reference: utr
             })
         })
-        .then(r => r.json())
-        .then(data => {
-            btn.innerText = 'Submit & Confirm';
-            btn.disabled = false;
-            document.getElementById('coUpiModalOverlay').classList.remove('active');
-            completeOrderSuccess(currentOrderData.order_number, currentOrderData, utr);
+        .then(function(r) {
+            return r.json().catch(function() { return {}; }).then(function(data) {
+                btn.innerText = 'Submit & Confirm';
+                btn.disabled = false;
+                if (!r.ok || !data || data.success === false) {
+                    showCoNotice((data && (data.message || data.error)) || 'UTR verification failed. Please double-check your 12-digit UTR number.', false);
+                    return;
+                }
+                document.getElementById('coUpiModalOverlay').classList.remove('active');
+                completeOrderSuccess(currentOrderData.order_number, currentOrderData, utr);
+            });
         })
-        .catch(err => {
+        .catch(function() {
             btn.innerText = 'Submit & Confirm';
             btn.disabled = false;
-            document.getElementById('coUpiModalOverlay').classList.remove('active');
-            completeOrderSuccess(currentOrderData.order_number, currentOrderData, utr);
+            showCoNotice('Network error while verifying UTR. Please try again.', false);
         });
     };
 
@@ -2372,9 +2383,19 @@ window.DT_SAVED_ADDRESSES = <?php echo json_encode($coSavedAddresses ?? []); ?>;
         if (successWaLink) successWaLink.href = waUrl;
         if (successOverlay) successOverlay.classList.add('active');
 
-        // Clear cart and sync all storefront widgets immediately without reload
+        // Clear cart and sync all storefront widgets + SQL backend immediately without reload
         localStorage.removeItem('dtbrands_cart');
         window.cartState = [];
+        try {
+            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            var csrfTok = (csrfMeta && csrfMeta.getAttribute('content')) || window.DT_CSRF_TOKEN || '';
+            fetch('/api/cart.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfTok },
+                body: JSON.stringify({ action: 'clear', csrf_token: csrfTok })
+            }).catch(function() {});
+        } catch (e) {}
         if (typeof window.dtSyncBadges === 'function') window.dtSyncBadges();
         if (typeof window.updateGlobalBadges === 'function') window.updateGlobalBadges();
         if (typeof window.renderCart === 'function') window.renderCart();
@@ -2411,6 +2432,16 @@ window.DT_SAVED_ADDRESSES = <?php echo json_encode($coSavedAddresses ?? []); ?>;
 
         var placeBtn = document.getElementById('coPlaceOrderBtn');
         if (placeBtn) placeBtn.addEventListener('click', handlePlaceOrder);
+
+        ['coDirectUpiIntentBtn', 'coGpayLink', 'coPhonepeLink', 'coPaytmLink', 'coCredLink'].forEach(function(id) {
+            var a = document.getElementById(id);
+            if (a) {
+                a.addEventListener('click', function(e) {
+                    var href = a.getAttribute('href') || '#';
+                    if (href === '#') e.preventDefault();
+                });
+            }
+        });
     });
 
 })();

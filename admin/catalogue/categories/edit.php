@@ -9,17 +9,22 @@ $page_title = "Edit Category";
 $active_nav = "catalogue";
 $active_subnav = "categories";
 
-$cat_id = isset($_GET['id']) ? intval($_GET['id']) : 1;
+require_once __DIR__ . '/../../../src/Database.php';
+use DTBrand\Database;
+
+$cat_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$dbRow = $cat_id > 0 ? Database::fetchOne('SELECT * FROM categories WHERE id = ? LIMIT 1', [$cat_id]) : null;
 $category_data = [
-    'name' => ($cat_id === 2 ? 'Bridal Lehengas' : ($cat_id === 3 ? 'Designer Kurtis' : 'Silk Sarees')),
-    'slug' => ($cat_id === 2 ? 'bridal-lehengas' : ($cat_id === 3 ? 'designer-kurtis' : 'silk-sarees')),
+    'id' => $dbRow ? (int)$dbRow['id'] : $cat_id,
+    'name' => $dbRow ? (string)$dbRow['name'] : '',
+    'slug' => $dbRow ? (string)$dbRow['slug'] : '',
     'parent' => '',
-    'desc' => 'Surat central depot master handloom and powerloom weaves. Certified pure silk and zari border designs.',
-    'short_desc' => 'Authentic Surat Pure Silk & Jacquard Weaves',
-    'image' => ($cat_id === 2 ? '/assets/images/product6.png' : ($cat_id === 3 ? '/assets/images/product4.png' : '/assets/images/product1.png')),
-    'banner' => '/assets/images/product2.png',
+    'desc' => $dbRow ? (string)($dbRow['description'] ?? '') : '',
+    'short_desc' => '',
+    'image' => $dbRow && !empty($dbRow['image']) ? (string)$dbRow['image'] : '/assets/images/no-image.svg',
+    'banner' => $dbRow && !empty($dbRow['banner_image']) ? (string)$dbRow['banner_image'] : '/assets/images/no-image.svg',
     'display_style' => 'banner_grid',
-    'active' => 1,
+    'active' => (!$dbRow || ($dbRow['status'] ?? 'active') === 'active') ? 1 : 0,
     'featured' => 1,
     'show_menu' => 1,
     'show_home' => 1,

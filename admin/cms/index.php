@@ -17,38 +17,60 @@ $cmsPages = [
         'title' => "About DT Brand's & Jai Hanuman Tex",
         'slug' => '/about-us',
         'type' => 'Brand Story',
-        'last_modified' => date('d M Y', strtotime('-5 days')),
-        'status' => 'Published & Live'
+        'content' => "DT Brand's & Jai Hanuman Tex heritage manufacturer of Surat pure silk & wedding bridal wear.",
     ],
     [
         'title' => 'Wholesale B2B Terms & MOQ Bale Policy',
         'slug' => '/wholesale-policy',
         'type' => 'B2B Policy',
-        'last_modified' => date('d M Y', strtotime('-2 days')),
-        'status' => 'Published & Live'
+        'content' => 'Direct Surat Mill B2B MOQ rules, bale billing, and GST invoicing policy.',
     ],
     [
         'title' => 'Return, Exchange & Damage Replacement',
         'slug' => '/return-policy',
         'type' => 'Customer Policy',
-        'last_modified' => date('d M Y', strtotime('-7 days')),
-        'status' => 'Published & Live'
+        'content' => '7-day transit damage and manufacturing defect replacement policy.',
     ],
     [
         'title' => 'Privacy Policy & Data Security',
         'slug' => '/privacy-policy',
         'type' => 'Compliance',
-        'last_modified' => date('d M Y', strtotime('-12 days')),
-        'status' => 'Published & Live'
+        'content' => 'Customer personal information protection and payment encryption standards.',
     ],
     [
         'title' => 'Shipping & Delhivery Courier SLAs',
         'slug' => '/shipping-policy',
         'type' => 'Logistics',
-        'last_modified' => date('d M Y', strtotime('-3 days')),
-        'status' => 'Published & Live'
+        'content' => '24-48h dispatch and pan-India courier delivery SLAs.',
     ]
 ];
+try {
+    $dbRows = Database::query("SELECT id, slug, title, content, status, updated_at FROM cms_pages ORDER BY id ASC");
+    if (empty($dbRows)) {
+        $pdo = Database::getConnection();
+        if ($pdo) {
+            $ins = $pdo->prepare("INSERT INTO cms_pages (slug, title, content, status, created_at, updated_at) VALUES (?, ?, ?, 'published', NOW(), NOW())");
+            foreach ($cmsPages as $seed) {
+                $ins->execute([$seed['slug'], $seed['title'], $seed['content']]);
+            }
+            $dbRows = Database::query("SELECT id, slug, title, content, status, updated_at FROM cms_pages ORDER BY id ASC");
+        }
+    }
+    if (!empty($dbRows)) {
+        $typeLookup = array_column($cmsPages, 'type', 'slug');
+        $cmsPages = array_map(static function ($r) use ($typeLookup) {
+            return [
+                'id' => (int)$r['id'],
+                'title' => (string)$r['title'],
+                'slug' => (string)$r['slug'],
+                'content' => (string)($r['content'] ?? ''),
+                'type' => $typeLookup[$r['slug']] ?? 'CMS Page',
+                'last_modified' => !empty($r['updated_at']) ? date('d M Y', strtotime($r['updated_at'])) : date('d M Y'),
+                'status' => ucfirst((string)($r['status'] ?? 'published'))
+            ];
+        }, $dbRows);
+    }
+} catch (\Throwable $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -139,7 +161,7 @@ $cmsPages = [
             <div class="adm-card">
                 <div class="adm-card-head" style="display:flex; justify-content:space-between; align-items:center;">
                     <h3 class="adm-card-title"><span>Static &amp; Policy Content Pages</span></h3>
-                    <button type="button" class="dt-btn dt-btn-gold" style="font-weight:800; font-size:12px; height:32px; padding:0 14px;" onclick="window.showToast('All CMS policy pages synchronized and published live!');">
+                    <button type="button" class="dt-btn dt-btn-gold" style="font-weight:800; font-size:12px; height:32px; padding:0 14px;" onclick="window.publishAllCmsPages(this)">
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#111827" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         <span>Publish All Changes</span>
                     </button>
@@ -167,7 +189,12 @@ $cmsPages = [
                                     <td>
                                         <div style="display:flex; gap:6px;">
                                             <a href="<?= htmlspecialchars($p['slug']) ?>" target="_blank" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px; text-decoration:none;">View</a>
-                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;" onclick="window.showToast('CMS Editor ready for <?= htmlspecialchars($p['title']) ?>');">Edit</button>
+                                            <button type="button" class="dt-btn dt-btn-pale" style="height:26px; padding:0 8px; font-size:11px;"
+                                                data-slug="<?= htmlspecialchars($p['slug'], ENT_QUOTES, 'UTF-8') ?>"
+                                                data-title="<?= htmlspecialchars($p['title'], ENT_QUOTES, 'UTF-8') ?>"
+                                                data-content="<?= htmlspecialchars((string)($p['content'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                                data-status="<?= htmlspecialchars(strtolower((string)($p['status'] ?? 'published')), ENT_QUOTES, 'UTF-8') ?>"
+                                                onclick="window.openCmsPageModal(this)">Edit</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -180,6 +207,89 @@ $cmsPages = [
         <?php include_once __DIR__ . '/../includes/adminfooter.php'; ?>
     </div>
 </div>
+<div id="cmsPageEditorModal" style="display:none; position:fixed; inset:0; background:rgba(17,24,39,0.55); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:12px; max-width:560px; width:100%; border:1.5px solid #D4AF37; overflow:hidden; box-shadow:0 24px 50px rgba(0,0,0,0.3);">
+        <div style="padding:14px 18px; background:#181512; color:#D4AF37; display:flex; justify-content:space-between; align-items:center;">
+            <strong style="font-size:14px;">Edit CMS Page</strong>
+            <button type="button" onclick="document.getElementById('cmsPageEditorModal').style.display='none'" style="background:none;border:none;color:#FAF5E8;font-size:20px;cursor:pointer;">&times;</button>
+        </div>
+        <form onsubmit="return window.saveCmsPageModal(event)" style="padding:18px; display:flex; flex-direction:column; gap:12px;">
+            <input type="hidden" id="cmsEditSlug">
+            <div>
+                <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Page Title</label>
+                <input type="text" id="cmsEditTitle" class="adm-form-input" required>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Content Body</label>
+                <textarea id="cmsEditContent" class="adm-form-textarea" rows="5"></textarea>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">Status</label>
+                <select id="cmsEditStatus" class="adm-form-select">
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                    <option value="archived">Archived</option>
+                </select>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">
+                <button type="button" class="dt-btn dt-btn-pale" onclick="document.getElementById('cmsPageEditorModal').style.display='none'">Cancel</button>
+                <button type="submit" class="dt-btn dt-btn-gold">Save CMS Page</button>
+            </div>
+        </form>
+    </div>
+</div>
 <script src="/admin/assets/js/admin.js?v=<?php echo time(); ?>"></script>
+<script>
+window.openCmsPageModal = function(btn) {
+    document.getElementById('cmsEditSlug').value = btn.dataset.slug || '';
+    document.getElementById('cmsEditTitle').value = btn.dataset.title || '';
+    document.getElementById('cmsEditContent').value = btn.dataset.content || '';
+    var st = (btn.dataset.status || 'published').toLowerCase();
+    document.getElementById('cmsEditStatus').value = (st === 'draft' || st === 'archived') ? st : 'published';
+    document.getElementById('cmsPageEditorModal').style.display = 'flex';
+};
+window.saveCmsPageModal = function(e) {
+    if (e) e.preventDefault();
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'save_cms_page',
+            slug: document.getElementById('cmsEditSlug').value,
+            title: document.getElementById('cmsEditTitle').value.trim(),
+            content: document.getElementById('cmsEditContent').value,
+            status: document.getElementById('cmsEditStatus').value
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (!res || !res.success) {
+            if (typeof window.showToast === 'function') window.showToast((res && res.message) || 'Failed to save CMS page.');
+            return;
+        }
+        document.getElementById('cmsPageEditorModal').style.display = 'none';
+        if (typeof window.showToast === 'function') window.showToast(res.message || 'CMS page saved.');
+        setTimeout(function() { window.location.reload(); }, 500);
+    })
+    .catch(function() { if (typeof window.showToast === 'function') window.showToast('Network error saving CMS page.'); });
+    return false;
+};
+window.publishAllCmsPages = function(btn) {
+    if (btn) btn.disabled = true;
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'publish_all_cms' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (btn) btn.disabled = false;
+        if (typeof window.showToast === 'function') window.showToast((res && res.message) || 'Published all CMS pages.');
+    })
+    .catch(function() { if (btn) btn.disabled = false; if (typeof window.showToast === 'function') window.showToast('Network error publishing CMS pages.'); });
+};
+</script>
 </body>
 </html>

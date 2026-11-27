@@ -22,9 +22,34 @@ $display_cat_name = isset($cat_name) && !empty($cat_name) ? $cat_name : 'Silk Sa
                 <option value="5" <?php echo $display_cat_name === 'Banarasi Brocades' ? 'selected' : ''; ?>>Category: Banarasi Brocades (185 SKUs)</option>
                 <option value="6" <?php echo $display_cat_name === 'Festive Dupattas & Stoles' ? 'selected' : ''; ?>>Category: Festive Dupattas (95 SKUs)</option>
             </select>
-            <button type="button" class="dt-btn-action-sm gold" onclick="if(window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Merchandising order saved live!')" style="height:28px; padding:0 12px; font-size:11px;">Save Merchandising</button>
+            <button type="button" class="dt-btn-action-sm gold" onclick="window.dtSaveMerchandising('<?php echo htmlspecialchars(addslashes($display_cat_name), ENT_QUOTES, 'UTF-8'); ?>')" style="height:28px; padding:0 12px; font-size:11px;">Save Merchandising</button>
         </div>
     </div>
+<script>
+window.dtSaveMerchandising = function(catName) {
+    var items = Array.from(document.querySelectorAll('.dt-merch-item')).map(function(card, idx) {
+        var posSel = card.querySelector('.dt-merch-pos-select');
+        return {
+            id: card.id,
+            title: (card.querySelector('strong')?.textContent || '').trim(),
+            position: posSel ? Number(posSel.value) : (idx + 1),
+            pinned: card.classList.contains('is-pinned'),
+            hidden: card.classList.contains('is-hidden')
+        };
+    });
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_merchandising', category: catName || 'default', items: items })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'Merchandising order saved!');
+    })
+    .catch(function() { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving merchandising.'); });
+};
+</script>
 
     <div style="padding:16px;">
         <div class="dt-merch-grid">

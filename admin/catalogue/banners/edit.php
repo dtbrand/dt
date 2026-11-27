@@ -8,40 +8,29 @@
 $page_title = "Edit Banner";
 $active_nav = "catalogue";
 $active_subnav = "banners";
+require_once __DIR__ . '/../../../src/Database.php';
+use DTBrand\Database;
+
 $banner_id = isset($_GET['id']) ? intval($_GET['id']) : 1;
-
-$banners_db = [
-    1 => [
-        'title' => 'Surat Heritage Silk Festival 2026',
-        'subtitle' => 'Direct Surat Factory Wholesale Rates • Certified Silk Mark',
-        'cta' => 'Explore Wholesale Catalogues',
-        'link' => '/shop/silk-sarees',
-        'desk_ratio' => '16-5',
-        'mobile_ratio' => '1080-520',
-        'slot' => 'Homepage Main Top Hero Slider',
-        'visibility' => 'All Devices (Responsive Auto-Switch)',
-        'priority' => 1,
-        'status' => 'Active (Visible Live)',
-        'desk_img' => '/assets/images/product1.png',
-        'mobile_img' => '/assets/images/product2.png'
-    ],
-    2 => [
-        'title' => 'Bridal Season Grandeur Spotlight',
-        'subtitle' => 'Heavy Velvet Zardosi & Hand Embroidered Lehengas',
-        'cta' => 'View Bridal Assortment',
-        'link' => '/shop/bridal-lehengas',
-        'desk_ratio' => '16-5',
-        'mobile_ratio' => '1080-520',
-        'slot' => 'Category Page Header Banner',
-        'visibility' => 'All Devices (Responsive Auto-Switch)',
-        'priority' => 2,
-        'status' => 'Active (Visible Live)',
-        'desk_img' => '/assets/images/product6.png',
-        'mobile_img' => '/assets/images/product6.png'
-    ]
+$dbBanner = Database::fetchOne('SELECT * FROM banners WHERE id = ? LIMIT 1', [$banner_id]);
+if (!$dbBanner) {
+    $dbBanner = Database::fetchOne('SELECT * FROM banners ORDER BY id ASC LIMIT 1') ?: [];
+}
+$banner_id = (int)($dbBanner['id'] ?? $banner_id);
+$banner = [
+    'title' => (string)($dbBanner['title'] ?? ''),
+    'subtitle' => (string)($dbBanner['subtitle'] ?? ''),
+    'cta' => (string)($dbBanner['cta_text'] ?? 'Explore Catalog'),
+    'link' => (string)($dbBanner['cta_link'] ?? ($dbBanner['cta_url'] ?? '/shop')),
+    'desk_ratio' => '16-5',
+    'mobile_ratio' => '1080-520',
+    'slot' => (string)($dbBanner['placement'] ?? 'hero'),
+    'visibility' => 'All Devices (Responsive Auto-Switch)',
+    'priority' => (int)($dbBanner['display_order'] ?? 1),
+    'status' => strtolower((string)($dbBanner['status'] ?? 'active')) === 'active' ? 'Active (Visible Live)' : 'Draft / Hidden',
+    'desk_img' => !empty($dbBanner['image']) ? (string)$dbBanner['image'] : '/assets/images/no-image.svg',
+    'mobile_img' => !empty($dbBanner['image_mobile']) ? (string)$dbBanner['image_mobile'] : (!empty($dbBanner['image']) ? (string)$dbBanner['image'] : '/assets/images/no-image.svg'),
 ];
-
-$banner = isset($banners_db[$banner_id]) ? $banners_db[$banner_id] : $banners_db[1];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -74,7 +63,7 @@ $banner = isset($banners_db[$banner_id]) ? $banners_db[$banner_id] : $banners_db
                 </div>
             </div>
 
-            <form onsubmit="if(window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Banner changes saved live!'); return false;" class="dt-form-grid">
+            <form id="editBannerForm" onsubmit="return window.saveBannerForm(event, <?= (int)$banner_id ?>)" class="dt-form-grid">
                 <!-- Left 2-Col Main Form -->
                 <div>
                     <!-- 1. Banner Content & Headlines -->
@@ -292,5 +281,44 @@ $banner = isset($banners_db[$banner_id]) ? $banners_db[$banner_id] : $banners_db
 </div>
 
 <script src="/admin/catalogue/assets/js/catalogue.js?v=<?php echo time(); ?>"></script>
+<script>
+window.saveBannerForm = function(e, bid) {
+    if (e) e.preventDefault();
+    var form = e ? e.target : document.getElementById('editBannerForm');
+    var slotSel = form.querySelectorAll('select.dt-form-select');
+    var slot = slotSel[3] ? slotSel[3].value : 'hero';
+    var statusVal = slotSel[5] ? slotSel[5].value : 'active';
+    var priInput = form.querySelector('input[type="number"]');
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'save_banner',
+            id: Number(bid || 0),
+            title: document.getElementById('bannerTitle')?.value.trim() || '',
+            subtitle: document.getElementById('bannerSubtitle')?.value.trim() || '',
+            cta_text: document.getElementById('bannerCta')?.value.trim() || 'Explore',
+            cta_link: document.getElementById('bannerLink')?.value.trim() || '/shop',
+            placement: slot,
+            display_order: priInput ? Number(priInput.value || 1) : 1,
+            status: statusVal,
+            image: document.getElementById('deskBannerPreview')?.getAttribute('src') || '/assets/images/no-image.svg',
+            image_mobile: document.getElementById('mobileBannerPreview')?.getAttribute('src') || ''
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (!res || !res.success) {
+            if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'Failed to save banner.');
+            return;
+        }
+        if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast(res.message || 'Banner saved to database!');
+        setTimeout(function() { window.location.href = '/admin/catalogue/banners/'; }, 600);
+    })
+    .catch(function() { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving banner.'); });
+    return false;
+};
+</script>
 </body>
 </html>

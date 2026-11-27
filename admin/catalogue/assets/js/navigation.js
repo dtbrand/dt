@@ -125,11 +125,29 @@ window.DT_NAVIGATION = {
         }
     },
 
-    // Save Menu
+    // Save Menu to MariaDB settings
     saveMenu: function() {
-        if (window.DT_CATALOGUE) {
-            window.DT_CATALOGUE.showToast('Navigation tree & Mega Menu saved live!');
-        }
+        const items = Array.from(document.querySelectorAll('#navMenuList .dt-menu-nest-item')).map(function(li, idx) {
+            return {
+                order: idx + 1,
+                label: (li.querySelector('.dt-menu-label')?.textContent || '').trim(),
+                url: (li.querySelector('.dt-menu-url')?.textContent || '#').trim(),
+                is_child: li.classList.contains('is-child')
+            };
+        });
+        fetch('/api/content.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'save_menu', items: items })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'Navigation menu saved!');
+        })
+        .catch(function() {
+            if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving navigation menu.');
+        });
     },
 
     // Direct Mouse HTML5 Drag and Drop

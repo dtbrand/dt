@@ -6,303 +6,64 @@
 (function() {
     'use strict';
 
-    // ════ LIVE DATASETS & REAL DYNAMIC ENGINE ════
-    let products = (window.DT_DASH && Array.isArray(window.DT_DASH.products) && window.DT_DASH.products.length)
+    // ════ LIVE DATASETS & REAL DYNAMIC ENGINE (No Demo Fallbacks) ════
+    let products = (window.DT_DASH && Array.isArray(window.DT_DASH.products))
         ? window.DT_DASH.products
-        : ((window.DT_GLOBAL_PRODS && Array.isArray(window.DT_GLOBAL_PRODS) && window.DT_GLOBAL_PRODS.length)
-            ? window.DT_GLOBAL_PRODS
-            : [
-        {
-            id: 111,
-            sku: 'KLN-SR-111',
-            hsn: '5007',
-            name: 'Pure Dola Silk Meenakari Saree',
-            category: 'Sarees',
-            retail_price: 3499,
-            wholesale_price: 1399,
-            reseller_price: 1599,
-            moq: 8,
-            stock: 95,
-            image: '/assets/images/product2.png',
-            badge: 'New Catalogue',
-            color: 'Crimson Rani',
-            fabric: 'Dola Silk',
-            status: 'In Stock'
-        },
-        {
-            id: 109,
-            sku: 'KLN-KT-109',
-            hsn: '6204',
-            name: 'Party Festive Sharara Suit Set',
-            category: 'Kurtis',
-            retail_price: 2699,
-            wholesale_price: 989,
-            reseller_price: 1199,
-            moq: 8,
-            stock: 125,
-            image: '/assets/images/product5.png',
-            badge: 'New Arrival',
-            color: 'Teal Blue',
-            fabric: 'Chanderi Gotapatti',
-            status: 'In Stock'
-        },
-        {
-            id: 110,
-            sku: 'KLN-SR-110',
-            hsn: '5007',
-            name: 'Paithani Rich Pallu Saree',
-            category: 'Sarees',
-            retail_price: 3199,
-            wholesale_price: 1249,
-            reseller_price: 1449,
-            moq: 8,
-            stock: 110,
-            image: '/assets/images/product1.png',
-            badge: 'New Catalogue',
-            color: 'Bottle Green',
-            fabric: 'Art Silk Peacock Pallu',
-            status: 'In Stock'
-        },
-        {
-            id: 106,
-            sku: 'KLN-SR-106',
-            hsn: '5007',
-            name: 'Chanderi Silk Festive Saree',
-            category: 'Sarees',
-            retail_price: 1599,
-            wholesale_price: 649,
-            reseller_price: 799,
-            moq: 12,
-            stock: 190,
-            image: '/assets/images/product1.png',
-            badge: 'Festive Hot',
-            color: 'Peacock Green',
-            fabric: 'Chanderi Zari',
-            status: 'In Stock'
-        },
-        {
-            id: 6,
-            sku: 'KLN-LH-006',
-            hsn: '6204',
-            name: 'Bridal Zardosi Lehenga Set',
-            category: 'Lehengas',
-            retail_price: 24999,
-            wholesale_price: 16499,
-            reseller_price: 18999,
-            moq: 2,
-            stock: 35,
-            image: '/assets/images/product6.png',
-            badge: 'Bridal Couture',
-            color: 'Crimson Red',
-            fabric: 'Micro Velvet & Zari',
-            status: 'In Stock'
-        },
-        {
-            id: 104,
-            sku: 'KLN-KT-104',
-            hsn: '6204',
-            name: 'Chikan Embroidered Rayon Kurti',
-            category: 'Kurtis',
-            retail_price: 999,
-            wholesale_price: 399,
-            reseller_price: 499,
-            moq: 18,
-            stock: 8,
-            image: '/assets/images/product6.png',
-            badge: 'Low Stock',
-            color: 'Pastel Mint',
-            fabric: 'Lakhnavi Handwork',
-            status: 'Low Stock'
-        },
-        {
-            id: 114,
-            sku: 'KLN-GW-114',
-            hsn: '6204',
-            name: 'Indo-Western Embroidered Gown',
-            category: 'Gowns',
-            retail_price: 4599,
-            wholesale_price: 1999,
-            reseller_price: 2299,
-            moq: 6,
-            stock: 65,
-            image: '/assets/images/product6.png',
-            badge: 'New Catalogue',
-            color: 'Wine Burgundy',
-            fabric: 'Silk Velvet Zari',
-            status: 'In Stock'
-        },
-        {
-            id: 116,
-            sku: 'KLN-DM-116',
-            hsn: '5208',
-            name: 'Pure Cotton Unstitched Suit Lot',
-            category: 'Dress Materials',
-            retail_price: 1499,
-            wholesale_price: 599,
-            reseller_price: 749,
-            moq: 12,
-            stock: 180,
-            image: '/assets/images/product8.png',
-            badge: 'New Arrival',
-            color: 'Pastel Sky',
-            fabric: '60x60 Cambric Cotton',
-            status: 'In Stock'
-        }
-    ]);
+        : ((window.DT_GLOBAL_PRODS && Array.isArray(window.DT_GLOBAL_PRODS)) ? window.DT_GLOBAL_PRODS : []);
 
-    let orders = (window.DT_DASH && Array.isArray(window.DT_DASH.orders) && window.DT_DASH.orders.length)
+    let orders = (window.DT_DASH && Array.isArray(window.DT_DASH.orders))
         ? window.DT_DASH.orders
-        : ((window.DT_GLOBAL_ORDERS && Array.isArray(window.DT_GLOBAL_ORDERS) && window.DT_GLOBAL_ORDERS.length)
-            ? window.DT_GLOBAL_ORDERS
-            : [
-        {
-            id: 'ORD-9842',
-            date: 'Today, 04:30 PM',
-            customer: 'Ananya Sharma',
-            phone: '7046363528',
-            city: 'Mumbai, MH',
-            channel: 'B2C Shop',
-            items: 'Nilambari Silk Saree (Qty: 1)',
-            total: 4899,
-            payment: 'Prepaid (UPI)',
-            status: 'In Transit',
-            tracking: 'DELHIVERY: DL789234901'
-        },
-        {
-            id: 'ORD-9841',
-            date: 'Today, 02:15 PM',
-            customer: 'Vardhman Textiles',
-            phone: '7046363528',
-            city: 'Surat, GJ',
-            channel: 'Wholesale B2B',
-            items: 'Pure Dola Silk Lot (Qty: 24 pcs)',
-            total: 33576,
-            payment: 'Bank Wire / RTGS',
-            status: 'Packed',
-            tracking: 'TCI FREIGHT: TCI-66291'
-        },
-        {
-            id: 'ORD-9840',
-            date: 'Today, 11:45 AM',
-            customer: 'Pooja Varma',
-            phone: '7046363528',
-            city: 'Jaipur, RJ',
-            channel: 'Reseller',
-            items: 'Chikan Rayon Kurti (Qty: 3)',
-            total: 2997,
-            payment: 'COD',
-            status: 'Confirmed',
-            tracking: 'Pending Dispatch'
-        },
-        {
-            id: 'ORD-9839',
-            date: 'Yesterday, 06:10 PM',
-            customer: 'Meera Boutique',
-            phone: '7046363528',
-            city: 'Bengaluru, KA',
-            channel: 'Retailer',
-            items: 'Bridal Zardosi Lehenga (Qty: 2)',
-            total: 32998,
-            payment: 'Credit (Net 15)',
-            status: 'Delivered',
-            tracking: 'BLUEDART: BD992018273'
-        },
-        {
-            id: 'ORD-9838',
-            date: 'Yesterday, 03:20 PM',
-            customer: 'Sneha Patel',
-            phone: '7046363528',
-            city: 'Ahmedabad, GJ',
-            channel: 'B2C Shop',
-            items: 'Georgette Bloom Saree (Qty: 1)',
-            total: 3299,
-            payment: 'Prepaid (Card)',
-            status: 'Delivered',
-            tracking: 'DELHIVERY: DL782019283'
-        }
-    ]);
+        : ((window.DT_GLOBAL_ORDERS && Array.isArray(window.DT_GLOBAL_ORDERS)) ? window.DT_GLOBAL_ORDERS : []);
 
-    let partners = (window.DT_DASH && Array.isArray(window.DT_DASH.partners) && window.DT_DASH.partners.length)
+    let partners = (window.DT_DASH && Array.isArray(window.DT_DASH.partners))
         ? window.DT_DASH.partners
-        : ((window.DT_GLOBAL_PARTNERS && Array.isArray(window.DT_GLOBAL_PARTNERS) && window.DT_GLOBAL_PARTNERS.length)
-            ? window.DT_GLOBAL_PARTNERS
-            : [
-        {
-            id: 'WS-101',
-            name: 'Kalyan Brocade Hub',
-            phone: '7046363528',
-            type: 'Wholesaler',
-            tier: 'Tier 1 (Diamond)',
-            gst: '24AAACR4920M1Z2',
-            orders_count: 18,
-            total_spend: '₹4,85,200',
-            kyc: 'Verified'
-        },
-        {
-            id: 'RS-402',
-            name: 'Pooja Collection',
-            phone: '7046363528',
-            type: 'Reseller',
-            tier: 'Gold Reseller',
-            gst: 'Unregistered (Individual)',
-            orders_count: 42,
-            total_spend: '₹1,24,600',
-            kyc: 'Verified'
-        },
-        {
-            id: 'RET-305',
-            name: 'Radha Krishna Silks',
-            phone: '7046363528',
-            type: 'Retailer',
-            tier: 'Silver Retailer',
-            gst: '24BBBCR5921M1Z1',
-            orders_count: 6,
-            total_spend: '₹68,900',
-            kyc: 'Pending Review'
-        },
-        {
-            id: 'WS-102',
-            name: 'Shree Balaji Sarees',
-            phone: '7046363528',
-            type: 'Wholesaler',
-            tier: 'Tier 2 (Platinum)',
-            gst: '19AAECJ1928K1Z5',
-            orders_count: 14,
-            total_spend: '₹3,42,000',
-            kyc: 'Verified'
-        }
-    ]);
+        : ((window.DT_GLOBAL_PARTNERS && Array.isArray(window.DT_GLOBAL_PARTNERS)) ? window.DT_GLOBAL_PARTNERS : []);
 
-    let waLeads = [
-        {
-            name: 'Kavita Joshi',
-            phone: '7046363528',
-            inquiry: 'Interested in Paithani Rich Pallu Saree wholesale batch (20 pcs)',
-            time: '5m ago',
-            tag: 'Wholesale Lead'
-        },
-        {
-            name: 'Amitabh Textiles',
-            phone: '7046363528',
-            inquiry: 'Need GST invoice download for Consignment #ORD-9841',
-            time: '24m ago',
-            tag: 'Order Support'
-        },
-        {
-            name: 'Simran Sethi (Reseller)',
-            phone: '7046363528',
-            inquiry: 'How to calculate 25% margin in smart share catalog links?',
-            time: '1h ago',
-            tag: 'Reseller Help'
-        },
-        {
-            name: 'Ritu Chawla',
-            phone: '7046363528',
-            inquiry: 'Is the Crimson Red Bridal Lehenga available in Free Size?',
-            time: '2h ago',
-            tag: 'Product Inquiry'
-        }
-    ];
+    let waLeads = (window.DT_DASH && Array.isArray(window.DT_DASH.wa_leads)) ? window.DT_DASH.wa_leads : [];
+
+    function admConfirmAction(msg, onConfirm) {
+        var old = document.getElementById('admInlineConfirmBox');
+        if (old) old.remove();
+        var el = document.createElement('div');
+        el.id = 'admInlineConfirmBox';
+        el.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+        el.innerHTML = '<div style="background:#fff;border-radius:12px;max-width:390px;width:100%;border:1.5px solid #D4AF37;box-shadow:0 20px 45px rgba(0,0,0,0.3);overflow:hidden;font-family:Inter,sans-serif;">' +
+            '<div style="padding:13px 18px;background:#181512;color:#D4AF37;font-weight:800;font-size:14px;">Confirm Action</div>' +
+            '<div class="adm-confirm-msg" style="padding:18px;font-size:13.5px;color:#1F2937;line-height:1.5;"></div>' +
+            '<div style="padding:12px 18px;display:flex;justify-content:flex-end;gap:10px;background:#F9FAFB;border-top:1px solid #E5E7EB;">' +
+                '<button type="button" class="adm-btn-secondary adm-cnf-cancel">Cancel</button>' +
+                '<button type="button" class="adm-btn-primary adm-cnf-ok">Confirm</button>' +
+            '</div></div>';
+        el.querySelector('.adm-confirm-msg').textContent = msg;
+        el.querySelector('.adm-cnf-cancel').onclick = function() { el.remove(); };
+        el.querySelector('.adm-cnf-ok').onclick = function() { el.remove(); onConfirm(); };
+        el.onclick = function(e) { if (e.target === el) el.remove(); };
+        document.body.appendChild(el);
+    }
+    window.dtShowConfirmModal = admConfirmAction;
+    window.dtShowPromptModal = function(msg, defVal, onSubmit) {
+        var old = document.getElementById('admInlinePromptBox');
+        if (old) old.remove();
+        var el = document.createElement('div');
+        el.id = 'admInlinePromptBox';
+        el.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+        el.innerHTML = '<div style="background:#fff;border-radius:12px;max-width:410px;width:100%;border:1.5px solid #D4AF37;box-shadow:0 20px 45px rgba(0,0,0,0.3);overflow:hidden;font-family:Inter,sans-serif;">' +
+            '<div style="padding:13px 18px;background:#181512;color:#D4AF37;font-weight:800;font-size:14px;">Input Required</div>' +
+            '<div style="padding:18px;"><div class="adm-prm-msg" style="font-size:13px;color:#1F2937;margin-bottom:10px;"></div><input type="text" class="adm-form-input adm-prm-inp" style="width:100%;box-sizing:border-box;"></div>' +
+            '<div style="padding:12px 18px;display:flex;justify-content:flex-end;gap:10px;background:#F9FAFB;border-top:1px solid #E5E7EB;">' +
+                '<button type="button" class="adm-btn-secondary adm-prm-cancel">Cancel</button>' +
+                '<button type="button" class="adm-btn-primary adm-prm-ok">Submit</button>' +
+            '</div></div>';
+        el.querySelector('.adm-prm-msg').textContent = msg;
+        var inp = el.querySelector('.adm-prm-inp');
+        inp.value = defVal || '';
+        el.querySelector('.adm-prm-cancel').onclick = function() { el.remove(); };
+        el.querySelector('.adm-prm-ok').onclick = function() { var v = inp.value.trim(); el.remove(); if (v && typeof onSubmit === 'function') onSubmit(v); };
+        inp.onkeydown = function(e) { if (e.key === 'Enter') el.querySelector('.adm-prm-ok').click(); if (e.key === 'Escape') el.remove(); };
+        el.onclick = function(e) { if (e.target === el) el.remove(); };
+        document.body.appendChild(el);
+        inp.focus();
+    };
 
     // ════ INITIALIZATION ════
     document.addEventListener('DOMContentLoaded', function() {
@@ -1485,21 +1246,21 @@
     };
 
     window.openEditProductModal = function(id) {
-        const prod = products.find(p => p.id === id);
+        const prod = products.find(p => Number(p.id) === Number(id));
         if (!prod) return;
 
         document.getElementById('admProductModalTitle').textContent = 'Edit Product — ' + prod.name;
         document.getElementById('admProductId').value = prod.id;
-        document.getElementById('admProductName').value = prod.name;
-        document.getElementById('admProductSku').value = prod.sku;
-        document.getElementById('admProductHsn').value = prod.hsn;
-        document.getElementById('admProductCategory').value = prod.category;
-        document.getElementById('admProductRetailPrice').value = prod.retail_price;
-        document.getElementById('admProductWholesalePrice').value = prod.wholesale_price;
-        document.getElementById('admProductMoq').value = prod.moq;
-        document.getElementById('admProductStock').value = prod.stock;
-        document.getElementById('admProductFabric').value = prod.fabric;
-        document.getElementById('admProductStatus').value = prod.status;
+        document.getElementById('admProductName').value = prod.name || '';
+        document.getElementById('admProductSku').value = prod.sku || '';
+        document.getElementById('admProductHsn').value = prod.hsn || '5007';
+        document.getElementById('admProductCategory').value = prod.category || 'Sarees';
+        document.getElementById('admProductRetailPrice').value = prod.retail_price || 0;
+        document.getElementById('admProductWholesalePrice').value = prod.wholesale_price || 0;
+        document.getElementById('admProductMoq').value = prod.moq || 1;
+        document.getElementById('admProductStock').value = prod.stock || 0;
+        document.getElementById('admProductFabric').value = prod.fabric || '';
+        document.getElementById('admProductStatus').value = prod.status || 'In Stock';
 
         document.getElementById('admProductModal').classList.add('open');
     };
@@ -1521,66 +1282,116 @@
         const moq = parseInt(document.getElementById('admProductMoq').value, 10) || 8;
         const stock = parseInt(document.getElementById('admProductStock').value, 10) || 0;
         const fabric = document.getElementById('admProductFabric').value.trim();
-        const status = document.getElementById('admProductStatus').value;
+        const statusLabel = document.getElementById('admProductStatus').value;
+        const dbStatus = statusLabel === 'Out of Stock' ? 'out_of_stock' : (statusLabel === 'Low Stock' ? 'low_stock' : 'in_stock');
 
-        if (id) {
-            // Update
-            const p = products.find(prod => prod.id == id);
-            if (p) {
-                p.name = name;
-                p.sku = sku;
-                p.hsn = hsn;
-                p.category = category;
-                p.retail_price = retail;
-                p.wholesale_price = wholesale;
-                p.moq = moq;
-                p.stock = stock;
-                p.fabric = fabric;
-                p.status = status;
-                window.showToast('Product updated successfully: ' + name);
+        const payload = {
+            action: id ? 'update' : 'create',
+            id: id ? Number(id) : undefined,
+            title: name,
+            name: name,
+            sku: sku,
+            hsn_code: hsn,
+            category: category,
+            retail_price: retail,
+            wholesale_price: wholesale,
+            reseller_price: wholesale > 0 ? wholesale + 200 : retail,
+            moq: moq,
+            stock_qty: stock,
+            fabric: fabric,
+            status: dbStatus
+        };
+
+        fetch('/api/products.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) { return r.json().catch(function() { return {}; }).then(function(d) { return { ok: r.ok, d: d }; }); })
+        .then(function(res) {
+            if (!res.ok || !res.d || !res.d.success) {
+                window.showToast((res.d && res.d.message) ? res.d.message : 'Failed to save product in database.');
+                return;
             }
-        } else {
-            // Create
-            const newProd = {
-                id: Date.now(),
-                sku: sku,
-                hsn: hsn,
-                name: name,
-                category: category,
-                retail_price: retail,
-                wholesale_price: wholesale,
-                reseller_price: wholesale + 200,
-                moq: moq,
-                stock: stock,
-                image: '/assets/images/product1.png',
-                badge: 'New Arrival',
-                color: 'Assorted',
-                fabric: fabric,
-                status: status
+            const saved = res.d.product || {};
+            const row = {
+                id: Number(saved.id || id || Date.now()),
+                sku: saved.sku || sku,
+                hsn: saved.hsn_code || hsn,
+                name: saved.title || saved.name || name,
+                category: saved.category_name || category,
+                retail_price: Number(saved.retail_price ?? retail),
+                wholesale_price: Number(saved.wholesale_price ?? wholesale),
+                reseller_price: Number(saved.reseller_price ?? (wholesale + 200)),
+                moq: Number(saved.moq ?? moq),
+                stock: Number(saved.stock_qty ?? stock),
+                image: saved.primary_image || '/assets/images/no-image.svg',
+                fabric: saved.fabric || fabric,
+                status: stock <= 0 ? 'Out of Stock' : statusLabel
             };
-            products.unshift(newProd);
-            window.showToast('New product added to catalog: ' + name);
-        }
-
-        window.closeAdmModal('admProductModal');
-        renderProductsTable();
+            if (id) {
+                const idx = products.findIndex(prod => Number(prod.id) === Number(id));
+                if (idx >= 0) products[idx] = Object.assign({}, products[idx], row);
+            } else {
+                products.unshift(row);
+            }
+            window.showToast(res.d.message || ('Product saved to database: ' + name));
+            window.closeAdmModal('admProductModal');
+            renderProductsTable();
+        })
+        .catch(function() {
+            window.showToast('Network error while saving product.');
+        });
     };
 
     window.deleteProduct = function(id) {
-        if (confirm('Are you sure you want to remove this product from the catalog?')) {
-            products = products.filter(p => p.id !== id);
-            renderProductsTable();
-            window.showToast('Product removed from catalog.');
-        }
+        admConfirmAction('Are you sure you want to permanently remove this product from the database catalog?', function() {
+            fetch('/api/products.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', id: Number(id) })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (!res || !res.success) {
+                    window.showToast((res && res.message) ? res.message : 'Failed to delete product.');
+                    return;
+                }
+                products = products.filter(p => Number(p.id) !== Number(id));
+                renderProductsTable();
+                window.showToast(res.message || 'Product removed from live database.');
+            })
+            .catch(function() {
+                window.showToast('Network error while deleting product.');
+            });
+        });
     };
 
     window.approveKYC = function(partnerId) {
-        const partner = partners.find(p => p.id === partnerId);
-        if (partner) {
+        const partner = partners.find(p => String(p.id) === String(partnerId) || Number(p.raw_id) === Number(partnerId));
+        if (!partner) return;
+        const dbId = Number(partner.raw_id || String(partner.id).replace(/[^0-9]/g, ''));
+        fetch('/api/customers.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update_status', id: dbId, status: 'active' })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res || !res.success) {
+                window.showToast((res && res.message) ? res.message : 'Failed to approve KYC in database.');
+                return;
+            }
             partner.kyc = 'Verified';
             renderPartnersTable();
-            window.showToast(`Partner KYC Approved for ${partner.name}!`);
-        }
+            window.showToast(`Partner KYC Approved in database for ${partner.name}!`);
+        })
+        .catch(function() {
+            window.showToast('Network error approving partner KYC.');
+        });
     };
 
     // ════ WHATSAPP ACTIONS ════
@@ -1605,8 +1416,94 @@
     // The surviving one fetches the product from /api/products.php.
 
     window.launchBroadcast = function() {
-        const count = document.getElementById('admBroadcastAudience')?.value === 'all' ? '1,420' : '285';
-        window.showToast(`WhatsApp Broadcast initiated successfully to ${count} recipients.`);
+        const rawAud = (document.getElementById('admBroadcastAudience')?.value || 'all').toLowerCase();
+        const audienceMap = { wholesalers: 'wholesale', resellers: 'reseller', vip: 'retail', all: 'all' };
+        const audience = audienceMap[rawAud] || rawAud;
+        const message = (document.getElementById('admBroadcastMessage')?.value || '').trim();
+        const templateKey = document.getElementById('admBroadcastTemplate')?.value || 'dt_festive_alert';
+        if (!message) {
+            window.showToast('Please enter a broadcast message before sending.');
+            return;
+        }
+        window.showToast('Queuing WhatsApp Broadcast campaign...');
+        fetch('/api/whatsapp.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'broadcast', audience: audience, message: message, template_key: templateKey })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (!res || !res.success) {
+                window.showToast((res && (res.error || res.message)) ? (res.error || res.message) : 'Broadcast failed.');
+                return;
+            }
+            const cnt = res.recipients_count ?? res.recipient_count ?? 0;
+            const cmp = res.campaign_id ? ` (${res.campaign_id})` : '';
+            window.showToast(`Broadcast queued${cmp} to ${cnt} verified contact(s).`);
+        })
+        .catch(function() {
+            window.showToast('Network error launching WhatsApp broadcast.');
+        });
+    };
+
+    window.saveAdminStoreSettings = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        const btn = document.getElementById('admSaveStoreSettingsBtn');
+        const settings = {
+            site_name: document.getElementById('admSetSiteName')?.value.trim() || '',
+            store_title: document.getElementById('admSetSiteName')?.value.trim() || '',
+            company_gstin: document.getElementById('admSetGstin')?.value.trim() || '',
+            company_address: document.getElementById('admSetAddress')?.value.trim() || '',
+            whatsapp_number: document.getElementById('admSetWhatsapp')?.value.trim() || '',
+            support_email: document.getElementById('admSetEmail')?.value.trim() || ''
+        };
+        if (btn) btn.disabled = true;
+        fetch('/api/settings.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'save', settings: settings })
+        })
+        .then(function(r) { return r.json().catch(function() { return {}; }).then(function(d) { return { ok: r.ok, d: d }; }); })
+        .then(function(res) {
+            if (btn) btn.disabled = false;
+            if (!res.ok || !res.d || !res.d.success) {
+                window.showToast((res.d && res.d.message) ? res.d.message : 'Failed to save settings.');
+                return;
+            }
+            window.showToast(res.d.message || 'Store settings saved to MariaDB.');
+        })
+        .catch(function() {
+            if (btn) btn.disabled = false;
+            window.showToast('Network error saving settings.');
+        });
+        return false;
+    };
+
+    window.triggerDashboardDbBackup = function(btn) {
+        if (btn) btn.disabled = true;
+        window.showToast('Creating real MariaDB SQL backup snapshot...');
+        const body = new URLSearchParams({ action: 'create' });
+        fetch('/api/system/backup.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        })
+        .then(function(r) { return r.json().catch(function() { return {}; }).then(function(d) { return { ok: r.ok, d: d }; }); })
+        .then(function(res) {
+            if (btn) btn.disabled = false;
+            if (!res.ok || !res.d || !res.d.success) {
+                window.showToast((res.d && res.d.message) ? res.d.message : 'Backup failed.');
+                return;
+            }
+            window.showToast(res.d.message || ('Snapshot created: ' + res.d.name));
+        })
+        .catch(function() {
+            if (btn) btn.disabled = false;
+            window.showToast('Network error creating database snapshot.');
+        });
     };
 
     // ════ INVOICE MODAL ════
@@ -1826,7 +1723,7 @@
         if (pid <= 0) return;
         // The products table has no "archived" state; draft is the one that
         // takes a product off the storefront while keeping the row.
-        if (!confirm('Move this product to draft so it no longer appears on the storefront?')) return;
+        admConfirmAction('Move this product to draft so it no longer appears on the storefront?', function() {
         fetch('/api/products.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1844,6 +1741,7 @@
             .catch(function() {
                 if (typeof window.showToast === 'function') window.showToast('Network error while archiving the product.');
             });
+        });
     };
 
 })();

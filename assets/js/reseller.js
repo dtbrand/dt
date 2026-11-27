@@ -1878,6 +1878,7 @@ window.animateTargetGauge = animateTargetGauge;
                     });
                 }
                 localStorage.setItem('dtbrands_cart', JSON.stringify(cart));
+                if (typeof window.dtSyncCartServer === 'function') window.dtSyncCartServer();
                 updateWholesaleCartBadge();
                 if (typeof window.openCartDrawer === 'function') {
                     window.openCartDrawer();
@@ -2597,6 +2598,7 @@ window.animateTargetGauge = animateTargetGauge;
                     });
                 }
                 localStorage.setItem('dtbrands_cart', JSON.stringify(cart));
+                if (typeof window.dtSyncCartServer === 'function') window.dtSyncCartServer();
                 updateWholesaleCartBadge();
 
                 // Button Ripple & Check Animation
@@ -2851,12 +2853,17 @@ window.animateTargetGauge = animateTargetGauge;
 
         /* ── Reseller Logout ── */
         function handleWholesalerLogout() {
-            if (confirm('Are you sure you want to log out of the Reseller Portal?')) {
+            var doLogout = function() {
                 try {
                     fetch('/api/auth.php?action=logout', { method: 'POST', credentials: 'same-origin', headers: dtJsonHeaders(), body: JSON.stringify({ csrf_token: dtGetCsrfToken() }) }).catch(function(){});
                 } catch(e) {}
                 localStorage.removeItem('dtbrands_user');
                 window.location.href = '/account.php';
+            };
+            if (typeof window.dtShowConfirmModal === 'function') {
+                window.dtShowConfirmModal('Are you sure you want to log out of the Reseller Portal?', doLogout, { title: 'Confirm Logout', okText: 'Log Out' });
+            } else {
+                doLogout();
             }
         };
         window.handleWholesalerLogout = handleWholesalerLogout;
@@ -3461,41 +3468,45 @@ window.animateTargetGauge = animateTargetGauge;
 
         window.deleteUserAddress = function(addrId) {
             if (!addrId) return;
-            if (!confirm('Are you sure you want to remove this address from your Address Book?')) return;
-            var apiEndpoint = '/api/reseller.php';
+            var performDelete = function() {
+                var apiEndpoint = '/api/reseller.php';
 
-            fetch(apiEndpoint, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: dtJsonHeaders(),
-                body: JSON.stringify({
-                    action: 'delete_address',
-                    csrf_token: dtGetCsrfToken(),
-                    address_id: addrId
+                fetch(apiEndpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: dtJsonHeaders(),
+                    body: JSON.stringify({
+                        action: 'delete_address',
+                        csrf_token: dtGetCsrfToken(),
+                        address_id: addrId
+                    })
                 })
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(res) {
-                if (res && res.success) {
-                    (window.showWsToast || showWsToast)(res.message || 'Address removed from Address Book.', 'success');
-                    var card = document.getElementById('wsUserAddrCard-' + addrId);
-                    if (card) {
-                        card.style.transition = 'all 0.3s ease';
-                        card.style.opacity = '0';
-                        card.style.transform = 'scale(0.95)';
-                        setTimeout(function() { if (card) card.remove(); }, 300);
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (res && res.success) {
+                        (window.showWsToast || showWsToast)(res.message || 'Address removed from Address Book.', 'success');
+                        var card = document.getElementById('wsUserAddrCard-' + addrId);
+                        if (card) {
+                            card.style.transition = 'all 0.3s ease';
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.95)';
+                            setTimeout(function() { if (card) card.remove(); }, 300);
+                        } else {
+                            setTimeout(function() { window.location.reload(); }, 500);
+                        }
                     } else {
-                        setTimeout(function() { window.location.reload(); }, 500);
+                        (window.showWsToast || showWsToast)((res && res.message) ? res.message : 'Could not delete address.', 'error');
                     }
-                } else {
-                    (window.showWsToast || showWsToast)((res && res.message) ? res.message : 'Could not delete address.', 'error');
-                }
-            })
-            .catch(function() {
-                (window.showWsToast || showWsToast)('Address removed.', 'success');
-                var card = document.getElementById('wsUserAddrCard-' + addrId);
-                if (card) card.remove();
-            });
+                })
+                .catch(function() {
+                    (window.showWsToast || showWsToast)('Failed to connect to server while removing address.', 'error');
+                });
+            };
+            if (typeof window.dtShowConfirmModal === 'function') {
+                window.dtShowConfirmModal('Are you sure you want to remove this address from your Address Book?', performDelete, { title: 'Remove Address', okText: 'Remove' });
+            } else {
+                performDelete();
+            }
         };
 
         function setTopupAmount(amount, btn) {
@@ -5031,14 +5042,20 @@ window.animateTargetGauge = animateTargetGauge;
         };
 
         function deleteFollowupTask(custId, fId) {
-            if (!confirm('Are you sure you want to remove this follow-up reminder?')) return;
-            var customers = getResellerCustomers();
-            var c = customers.find(function(x) { return x.id === custId; });
-            if (c && c.followups) {
-                c.followups = c.followups.filter(function(x) { return x.id !== fId; });
-                saveResellerCustomers(customers, c);
-                renderFollowupsTable();
-                showWsToast('Follow-up reminder removed.');
+            var doDelete = function() {
+                var customers = getResellerCustomers();
+                var c = customers.find(function(x) { return x.id === custId; });
+                if (c && c.followups) {
+                    c.followups = c.followups.filter(function(x) { return x.id !== fId; });
+                    saveResellerCustomers(customers, c);
+                    renderFollowupsTable();
+                    showWsToast('Follow-up reminder removed.');
+                }
+            };
+            if (typeof window.dtShowConfirmModal === 'function') {
+                window.dtShowConfirmModal('Are you sure you want to remove this follow-up reminder?', doDelete, { title: 'Remove Reminder', okText: 'Remove' });
+            } else {
+                doDelete();
             }
         };
 
@@ -6031,15 +6048,19 @@ ${senderName} (Reseller Partner)`;
             }
             var customers = getResellerCustomers();
             var selected = customers.filter(function(c) { return selectedCustomerIds.has(c.id); });
-            var msg = prompt('Enter WhatsApp broadcast message template:', 'Namaste! Check out our latest festive saree catalogue at exclusive reseller discounts: https://jaihanumantex.in/shop.php');
-            if (!msg) return;
-
-            var first = selected[0];
-            var cleanPhone = first.whatsapp || first.mobile;
-            cleanPhone = cleanPhone.replace(/[^0-9]/g, '');
-            if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
-            window.open('https://api.whatsapp.com/send?phone=' + cleanPhone + '&text=' + encodeURIComponent(msg), '_blank');
-            showWsToast(' Opened WhatsApp broadcast for ' + selected.length + ' selected customers!');
+            var sendMsg = function(msg) {
+                if (!msg) return;
+                var first = selected[0];
+                var cleanPhone = first.whatsapp || first.mobile;
+                cleanPhone = cleanPhone.replace(/[^0-9]/g, '');
+                if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+                window.open('https://api.whatsapp.com/send?phone=' + cleanPhone + '&text=' + encodeURIComponent(msg), '_blank');
+                showWsToast(' Opened WhatsApp broadcast for ' + selected.length + ' selected customers!');
+            };
+            var defMsg = 'Namaste! Check out our latest festive saree catalogue at exclusive reseller discounts: https://jaihanumantex.in/shop.php';
+            if (typeof window.dtShowPromptModal === 'function') {
+                window.dtShowPromptModal('Enter WhatsApp broadcast message template:', defMsg, sendMsg, { title: 'WhatsApp Broadcast Template' });
+            }
         }
         window.bulkWhatsAppCustomers = bulkWhatsAppCustomers;
 
@@ -6048,18 +6069,22 @@ ${senderName} (Reseller Partner)`;
                 showWsToast('Please select at least one customer.');
                 return;
             }
-            var tag = prompt('Enter tag name to add (e.g. VIP, FESTIVE, HIGH VALUE, PROMO):', 'PROMO');
-            if (!tag) return;
-            tag = tag.trim().toUpperCase();
-            var customers = getResellerCustomers();
-            customers.forEach(function(c) {
-                if (selectedCustomerIds.has(c.id)) {
-                    if (!c.tags) c.tags = [];
-                    if (!c.tags.includes(tag)) c.tags.push(tag);
-                }
-            });
-            saveResellerCustomers(customers);
-            showWsToast('Added tag "' + tag + '" to ' + selectedCustomerIds.size + ' customers!', 'success');
+            var applyTag = function(tag) {
+                if (!tag) return;
+                tag = tag.trim().toUpperCase();
+                var customers = getResellerCustomers();
+                customers.forEach(function(c) {
+                    if (selectedCustomerIds.has(c.id)) {
+                        if (!c.tags) c.tags = [];
+                        if (!c.tags.includes(tag)) c.tags.push(tag);
+                    }
+                });
+                saveResellerCustomers(customers);
+                showWsToast('Added tag "' + tag + '" to ' + selectedCustomerIds.size + ' customers!', 'success');
+            };
+            if (typeof window.dtShowPromptModal === 'function') {
+                window.dtShowPromptModal('Enter tag name to add (e.g. VIP, FESTIVE, HIGH VALUE, PROMO):', 'PROMO', applyTag, { title: 'Add Customer Tag' });
+            }
         }
         window.bulkAddTagToCustomers = bulkAddTagToCustomers;
 
@@ -6114,10 +6139,19 @@ ${senderName} (Reseller Partner)`;
         window.closeSavedFiltersModal = closeSavedFiltersModal;
 
         function saveCurrentFilterPreset() {
-            var name = prompt('Enter a name for this filter preset:', 'My Custom Filter');
-            if (!name) return;
-            showWsToast(' Saved filter preset: ' + name);
-            closeSavedFiltersModal();
+            var doSave = function(name) {
+                if (!name) return;
+                try {
+                    var presets = JSON.parse(localStorage.getItem('dtbrands_reseller_filter_presets') || '[]');
+                    presets.push({ name: name, savedAt: new Date().toISOString() });
+                    localStorage.setItem('dtbrands_reseller_filter_presets', JSON.stringify(presets));
+                } catch(e) {}
+                showWsToast(' Saved filter preset: ' + name);
+                closeSavedFiltersModal();
+            };
+            if (typeof window.dtShowPromptModal === 'function') {
+                window.dtShowPromptModal('Enter a name for this filter preset:', 'My Custom Filter', doSave, { title: 'Save Filter Preset' });
+            }
         }
         window.saveCurrentFilterPreset = saveCurrentFilterPreset;
 

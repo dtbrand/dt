@@ -243,30 +243,28 @@ function executeBatchAction(action) {
 
     const ids = Array.from(checkedBoxes).map(cb => parseInt(cb.value, 10));
     const verb = action === 'batch_approve' ? 'approve and publish' : 'reject';
-    if (!confirm(`Are you sure you want to ${verb} ${ids.length} selected review(s)?`)) {
-        return;
-    }
-
-    fetch('/api/reviews.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: action, ids: ids })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (!data || !data.success) {
-            toast('Batch action failed: ' + ((data && data.message) ? data.message : 'Please try again.'));
-            return;
-        }
-        ids.forEach(id => {
-            const r = document.getElementById('reviewRow_' + id);
-            if (r) r.remove();
+    window.dtShowConfirmModal(`Are you sure you want to ${verb} ${ids.length} selected review(s)?`, function() {
+        fetch('/api/reviews.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action, ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data || !data.success) {
+                toast('Batch action failed: ' + ((data && data.message) ? data.message : 'Please try again.'));
+                return;
+            }
+            ids.forEach(id => {
+                const r = document.getElementById('reviewRow_' + id);
+                if (r) r.remove();
+            });
+            toast(data.message || 'Batch action completed successfully.');
+            updateSelectedCount();
+        })
+        .catch(() => {
+            toast('Network error during batch action.');
         });
-        toast(data.message || 'Batch action completed successfully.');
-        updateSelectedCount();
-    })
-    .catch(() => {
-        toast('Network error during batch action.');
     });
 }
 </script>

@@ -6,12 +6,13 @@
  * DT Brand's & Jai Hanuman Tex
  */
 $cat = isset($category_data) ? $category_data : [
+    'id' => 0,
     'name' => '',
     'slug' => '',
     'parent' => '',
     'desc' => '',
     'short_desc' => '',
-    'image' => '/assets/images/product1.png',
+    'image' => '/assets/images/no-image.svg',
     'banner' => '',
     'display_style' => 'banner_grid',
     'active' => 1,
@@ -23,6 +24,7 @@ $cat = isset($category_data) ? $category_data : [
 ];
 ?>
 <form onsubmit="return window.DT_CATEGORIES.saveCategoryForm(event)" class="dt-form-grid">
+    <input type="hidden" id="catId" value="<?= (int)($cat['id'] ?? 0) ?>">
     <!-- Left 2-Col Main Section -->
     <div>
         <div class="dt-form-card">
@@ -110,7 +112,7 @@ $cat = isset($category_data) ? $category_data : [
 
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">
-                    <input type="checkbox" checked style="width:15px; height:15px;">
+                    <input type="checkbox" id="catActiveChk" <?= !empty($cat['active']) ? 'checked' : '' ?> style="width:15px; height:15px;">
                     <span>Active Status (Live on Store)</span>
                 </label>
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; cursor:pointer;">

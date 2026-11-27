@@ -3661,5 +3661,6 @@ $page_title = "My Account — DT Brand's | Ethnic Luxury";
     <?php include_once __DIR__ . '/Shared/checkout.php'; ?>
     <!-- ════════════ MASTER LUXURY FOOTER ════════════ -->
     <?php include_once __DIR__ . '/includes/footer.php'; ?>
+    <script src="/assets/js/dt-cart-sync.js?v=<?= @filemtime(__DIR__ . '/assets/js/dt-cart-sync.js') ?: '1' ?>"></script>
 </body>
 </html>

@@ -40,7 +40,7 @@ $active_subnav = "banners";
                 </div>
             </div>
 
-            <form onsubmit="if(window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('New Banner successfully published live!'); return false;" class="dt-form-grid">
+            <form id="addBannerForm" onsubmit="return window.saveNewBannerForm(event)" class="dt-form-grid">
                 <!-- Left 2-Col Main Form -->
                 <div>
                     <!-- 1. Banner Copy & Links -->
@@ -258,5 +258,44 @@ $active_subnav = "banners";
 </div>
 
 <script src="/admin/catalogue/assets/js/catalogue.js?v=<?php echo time(); ?>"></script>
+<script>
+window.saveNewBannerForm = function(e) {
+    if (e) e.preventDefault();
+    var form = e ? e.target : document.getElementById('addBannerForm');
+    var selects = form.querySelectorAll('select.dt-form-select');
+    var slot = selects[3] ? selects[3].value : 'hero';
+    var statusVal = selects[5] ? selects[5].value : 'active';
+    var priInput = form.querySelector('input[type="number"]');
+    fetch('/api/content.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'save_banner',
+            id: 0,
+            title: document.getElementById('bannerTitle')?.value.trim() || '',
+            subtitle: document.getElementById('bannerSubtitle')?.value.trim() || '',
+            cta_text: document.getElementById('bannerCta')?.value.trim() || 'Explore',
+            cta_link: document.getElementById('bannerLink')?.value.trim() || '/shop',
+            placement: slot,
+            display_order: priInput ? Number(priInput.value || 1) : 1,
+            status: statusVal,
+            image: document.getElementById('deskBannerPreview')?.getAttribute('src') || '/assets/images/no-image.svg',
+            image_mobile: document.getElementById('mobileBannerPreview')?.getAttribute('src') || ''
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (!res || !res.success) {
+            if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast((res && res.message) || 'Failed to publish banner.');
+            return;
+        }
+        if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast(res.message || 'New Banner published live in MariaDB!');
+        setTimeout(function() { window.location.href = '/admin/catalogue/banners/'; }, 600);
+    })
+    .catch(function() { if (window.DT_CATALOGUE) window.DT_CATALOGUE.showToast('Network error saving banner.'); });
+    return false;
+};
+</script>
 </body>
 </html>

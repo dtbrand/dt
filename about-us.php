@@ -12,7 +12,7 @@ Auth::initSession();
 
 $contactSettings = [];
 try {
-    foreach (Database::query('SELECT key_name, `value` FROM settings WHERE key_name LIKE "contact_%"') as $r) {
+    foreach (Database::query('SELECT key_name, `value` FROM settings WHERE key_name LIKE "contact_%" OR key_name LIKE "about_%"') as $r) {
         $contactSettings[$r['key_name']] = (string)$r['value'];
     }
 } catch (\Throwable $e) {}
@@ -22,11 +22,16 @@ function getContactSetting(string $k, string $def, array $settings): string {
     return $v !== '' ? $v : $def;
 }
 
-$showroomAddress = getContactSetting('contact_showroom_address', 'Ring Road, Surat Textile Market, Surat, Gujarat 395002', $contactSettings);
-$whatsappHotline = getContactSetting('contact_whatsapp_hotline', '+91 70463 63528', $contactSettings);
-$wholesaleLine   = getContactSetting('contact_wholesale_line', '+91 70463 63528', $contactSettings);
-$supportEmail    = getContactSetting('contact_support_email', 'care@jaihanumantex.in', $contactSettings);
-$businessHours   = getContactSetting('contact_business_hours', '10:00 AM – 8:00 PM IST (Mon–Sat)', $contactSettings);
+$showroomAddress    = getContactSetting('contact_showroom_address', 'Ring Road, Surat Textile Market, Surat, Gujarat 395002', $contactSettings);
+$whatsappHotline    = getContactSetting('contact_whatsapp_hotline', '+91 70463 63528', $contactSettings);
+$wholesaleLine      = getContactSetting('contact_wholesale_line', '+91 70463 63528', $contactSettings);
+$supportEmail       = getContactSetting('contact_support_email', 'care@jaihanumantex.in', $contactSettings);
+$businessHours      = getContactSetting('contact_business_hours', '10:00 AM – 8:00 PM IST (Mon–Sat)', $contactSettings);
+$aboutHeadline      = getContactSetting('about_headline', "Direct Mill Craftsmanship & Pure Silk Heritage", $contactSettings);
+$aboutNarrative     = getContactSetting('about_narrative', "Founded at the epicenter of India's silk capital, DT Brand's & Jai Hanuman Tex was born with a single founding mission: to bring the authentic artistry of pure jacquard weaving, rich zari brocades, and heritage bridal textiles directly from master weavers to retailers, boutiques, and saree connoisseurs worldwide.", $contactSettings);
+$aboutLoomsStat     = getContactSetting('about_looms_stat', '120+ Active Looms', $contactSettings);
+$aboutEstablished   = getContactSetting('about_wholesale_stat', '1994 (Surat, Gujarat)', $contactSettings);
+$aboutMetaDesc      = getContactSetting('about_meta_desc', "Discover the artisanal handloom heritage of DT Brand's & Jai Hanuman Tex. Direct manufacturer and exporter of pure silk sarees in Surat Textile Market.", $contactSettings);
 
 $cleanPhone = preg_replace('/[^0-9]/', '', $whatsappHotline);
 if (!$cleanPhone) {
@@ -40,7 +45,7 @@ $pageTitle = "About Our Heritage — DT Brand's & Jai Hanuman Tex Surat";
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="description" content="Discover the artisanal handloom heritage of DT Brand's & Jai Hanuman Tex. Direct manufacturer and exporter of pure silk sarees in Surat Textile Market." />
+    <meta name="description" content="<?= htmlspecialchars($aboutMetaDesc, ENT_QUOTES, 'UTF-8') ?>" />
     <title><?= htmlspecialchars($pageTitle) ?></title>
 
     <link rel="manifest" href="/manifest.json">
@@ -74,21 +79,21 @@ $pageTitle = "About Our Heritage — DT Brand's & Jai Hanuman Tex Surat";
                 <span>Surat Loom Direct Manufacturing</span>
             </div>
 
-            <h1 class="dt-policy-title">Direct Mill Craftsmanship &amp; <span class="gold">Pure Silk Heritage</span></h1>
+            <h1 class="dt-policy-title"><?= htmlspecialchars($aboutHeadline, ENT_QUOTES, 'UTF-8') ?></h1>
             <p class="dt-policy-subtitle">Three decades of artisanal handloom mastery, authentic Banarasi zari brocades, and transparent B2B mill pricing directly from the heart of Surat Textile Market.</p>
 
             <div class="dt-policy-meta-strip">
                 <div class="dt-policy-meta-item">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>Established: <strong>1994 (Surat, Gujarat)</strong></span>
+                    <span>Established: <strong><?= htmlspecialchars($aboutEstablished, ENT_QUOTES, 'UTF-8') ?></strong></span>
                 </div>
                 <div class="dt-policy-meta-item">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                    <span>Loom Capacity: <strong>120+ Active Looms</strong></span>
+                    <span>Loom Capacity: <strong><?= htmlspecialchars($aboutLoomsStat, ENT_QUOTES, 'UTF-8') ?></strong></span>
                 </div>
                 <div class="dt-policy-meta-item">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    <span>Hub: <strong>Ring Road, Surat</strong></span>
+                    <span>Hub: <strong><?= htmlspecialchars($showroomAddress, ENT_QUOTES, 'UTF-8') ?></strong></span>
                 </div>
             </div>
         </div>
@@ -104,7 +109,7 @@ $pageTitle = "About Our Heritage — DT Brand's & Jai Hanuman Tex Surat";
             <article class="dt-policy-section">
                 <div class="dt-section-badge">01</div>
                 <h2 class="dt-section-title">The Surat Handloom Legacy</h2>
-                <p>Founded at the epicenter of India's silk capital, <strong>DT Brand's &amp; Jai Hanuman Tex</strong> was born with a single founding mission: to bring the authentic artistry of pure jacquard weaving, rich zari brocades, and heritage bridal textiles directly from master weavers to retailers, boutiques, and saree connoisseurs worldwide.</p>
+                <p><?= nl2br(htmlspecialchars($aboutNarrative, ENT_QUOTES, 'UTF-8')) ?></p>
                 <p>Over the last thirty years, our manufacturing facilities have expanded across Surat's premier textile corridor on Ring Road, combining generational weaving wisdom with precision high-speed rapier and electronic jacquard looms.</p>
                 <div class="dt-callout-box">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8A681F" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>

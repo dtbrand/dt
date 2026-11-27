@@ -1899,6 +1899,7 @@
                     });
                 }
                 localStorage.setItem('dtbrands_cart', JSON.stringify(cart));
+                if (typeof window.dtSyncCartServer === 'function') window.dtSyncCartServer();
                 window.updateWholesaleCartBadge();
                 if (typeof window.openCartDrawer === 'function') {
                     window.openCartDrawer();
@@ -2619,6 +2620,7 @@
                     });
                 }
                 localStorage.setItem('dtbrands_cart', JSON.stringify(cart));
+                if (typeof window.dtSyncCartServer === 'function') window.dtSyncCartServer();
                 window.updateWholesaleCartBadge();
 
                 // Button Ripple & Check Animation
@@ -2927,12 +2929,17 @@
 
         /* ── Retailer Logout ── */
         window.handleWholesalerLogout = function() {
-            if (confirm('Are you sure you want to log out of the Retailer Portal?')) {
+            var doLogout = function() {
                 try {
                     fetch('/api/auth.php?action=logout', { method: 'POST', credentials: 'same-origin', headers: dtJsonHeaders(), body: JSON.stringify({ csrf_token: dtGetCsrfToken() }) }).catch(function(){});
                 } catch(e) {}
                 localStorage.removeItem('dtbrands_user');
                 window.location.href = '/account.php';
+            };
+            if (typeof window.dtShowConfirmModal === 'function') {
+                window.dtShowConfirmModal('Are you sure you want to log out of the Retailer Portal?', doLogout, { title: 'Confirm Logout', okText: 'Log Out' });
+            } else {
+                doLogout();
             }
         };
 
@@ -3572,42 +3579,46 @@
 
         window.deleteUserAddress = function(addrId) {
             if (!addrId) return;
-            if (!confirm('Are you sure you want to remove this address from your Address Book?')) return;
-            var apiEndpoint = window.location.pathname.indexOf('retailer') !== -1 ? '/api/retailer.php'
-                            : (window.location.pathname.indexOf('reseller') !== -1 ? '/api/reseller.php' : '/api/wholesale.php');
+            var performDelete = function() {
+                var apiEndpoint = window.location.pathname.indexOf('retailer') !== -1 ? '/api/retailer.php'
+                                : (window.location.pathname.indexOf('reseller') !== -1 ? '/api/reseller.php' : '/api/wholesale.php');
 
-            fetch(apiEndpoint, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: dtJsonHeaders(),
-                body: JSON.stringify({
-                    action: 'delete_address',
-                    csrf_token: dtGetCsrfToken(),
-                    address_id: addrId
+                fetch(apiEndpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: dtJsonHeaders(),
+                    body: JSON.stringify({
+                        action: 'delete_address',
+                        csrf_token: dtGetCsrfToken(),
+                        address_id: addrId
+                    })
                 })
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(res) {
-                if (res && res.success) {
-                    (window.showWsToast || showWsToast)(res.message || 'Address removed from Address Book.', 'success');
-                    var card = document.getElementById('wsUserAddrCard-' + addrId);
-                    if (card) {
-                        card.style.transition = 'all 0.3s ease';
-                        card.style.opacity = '0';
-                        card.style.transform = 'scale(0.95)';
-                        setTimeout(function() { if (card) card.remove(); }, 300);
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (res && res.success) {
+                        (window.showWsToast || showWsToast)(res.message || 'Address removed from Address Book.', 'success');
+                        var card = document.getElementById('wsUserAddrCard-' + addrId);
+                        if (card) {
+                            card.style.transition = 'all 0.3s ease';
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.95)';
+                            setTimeout(function() { if (card) card.remove(); }, 300);
+                        } else {
+                            setTimeout(function() { window.location.reload(); }, 500);
+                        }
                     } else {
-                        setTimeout(function() { window.location.reload(); }, 500);
+                        (window.showWsToast || showWsToast)((res && res.message) ? res.message : 'Could not delete address.', 'error');
                     }
-                } else {
-                    (window.showWsToast || showWsToast)((res && res.message) ? res.message : 'Could not delete address.', 'error');
-                }
-            })
-            .catch(function() {
-                (window.showWsToast || showWsToast)('Address removed.', 'success');
-                var card = document.getElementById('wsUserAddrCard-' + addrId);
-                if (card) card.remove();
-            });
+                })
+                .catch(function() {
+                    (window.showWsToast || showWsToast)('Failed to connect to server while removing address.', 'error');
+                });
+            };
+            if (typeof window.dtShowConfirmModal === 'function') {
+                window.dtShowConfirmModal('Are you sure you want to remove this address from your Address Book?', performDelete, { title: 'Remove Address', okText: 'Remove' });
+            } else {
+                performDelete();
+            }
         };
 
         window.openWalletTopupModal = function() {
@@ -3795,6 +3806,7 @@ function directAddWholesaleToCart(prodOrId, btn) {
         }
         localStorage.setItem('dtbrands_cart', JSON.stringify(cart));
         window.cartState = cart;
+        if (typeof window.dtSyncCartServer === 'function') window.dtSyncCartServer();
         if (typeof window.renderCart === 'function') window.renderCart();
         if (typeof window.updateGlobalBadges === 'function') window.updateGlobalBadges();
         if (typeof window.openCartDrawer === 'function') window.openCartDrawer();
